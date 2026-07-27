@@ -47,6 +47,8 @@ export interface ViewInfo {
   skipRatio: number;
   rebases: number;
   atDepthLimit: boolean;
+  /** Set when the backend has stopped working, e.g. a lost GPU device. */
+  error?: string;
 }
 
 export class MandelbrotView {
@@ -280,6 +282,10 @@ export class MandelbrotView {
       this.publishView(stats);
     } catch (error) {
       console.error("[mandelbrot] draw failed:", error);
+      this.setView({
+        ...this.view(),
+        error: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       this.drawing = false;
       if (this.queued) {

@@ -15,6 +15,8 @@ export class WebGpuBackend implements RenderBackend {
 
   private renderer: WebGpuRenderer;
   adapterInfo: string;
+  /** Set when the driver takes the device away, usually a watchdog kill. */
+  private lostReason: string | null = null;
 
   private constructor(renderer: WebGpuRenderer, adapterInfo: string) {
     this.renderer = renderer;
@@ -25,10 +27,19 @@ export class WebGpuBackend implements RenderBackend {
     const ctx = await acquireGpu();
     const renderer = new WebGpuRenderer(ctx, canvas);
     await renderer.init();
-    return new WebGpuBackend(renderer, ctx.capabilities.adapterInfo);
+    const backend = new WebGpuBackend(renderer, ctx.capabilities.adapterInfo);
+    // A lost device does not throw; every later call just silently does
+    // nothing, which looks exactly like a hung tab. Notice it and say so.
+    void ctx.lost.then((info) => {
+      if (info.reason === "destroyed") return;
+      backend.lostReason = info.message || "the GPU device was lost";
+      console.error("[mandelbrot] WebGPU device lost:", info.message);
+    });
+    return backend;
   }
 
   async draw(request: DrawRequest): Promise<BackendStats> {
+    if (this.lostReason) throw new Error(this.lostReason);
     const stats = await this.renderer.render(request);
     return {
       precision: `${stats.limbs} limbs / ${stats.decimalDigits} digits`,

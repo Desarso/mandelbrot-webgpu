@@ -588,6 +588,13 @@ const App: Component = () => {
             <Show when={view()?.atDepthLimit}>
               <p class={styles.hint}>At this backend's depth limit.</p>
             </Show>
+            <Show when={view()?.error}>
+              <p class={styles.hint}>
+                Rendering stopped: {view()!.error}. This usually means the GPU
+                driver gave up on a frame that took too long — lower the
+                iteration count and reload.
+              </p>
+            </Show>
 
             <div class={styles.buttonRow}>
               <button class={styles.button} onClick={() => renderer()?.resetView()}>

@@ -64,6 +64,17 @@ const ORBIT_BATCH = 512;
  */
 const DISPATCHES_PER_SUBMIT = 24;
 
+/**
+ * How long one submission should aim to take.
+ *
+ * A GPU command that runs too long is killed by the driver's watchdog, which
+ * takes the WebGPU device and the tab with it. The work per submission is not
+ * predictable in advance -- it scales with the limb count, the iteration
+ * count and the hardware -- so both loops below measure what they just did
+ * and size the next piece from it.
+ */
+const SUBMIT_BUDGET_MS = 50;
+
 export interface RenderRequest {
   centerX: Decimal;
   centerY: Decimal;
@@ -223,6 +234,8 @@ export class WebGpuRenderer {
    * recolouring would recompute the frame it is trying to avoid.
    */
   private fieldKey = "";
+  /** Rolling cost of one screen row, used to size the next frame's bands. */
+  private msPerRow = 0;
   /** True when the last render stopped early. */
   private aborted = false;
   private laBuffer: GPUBuffer | null = null;
@@ -438,13 +451,15 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
 
     let sampleCount = 1;
     let escaped = false;
+    let batchLimit = DISPATCHES_PER_SUBMIT;
 
     while (sampleCount - 1 < request.maxIterations) {
       const remaining = request.maxIterations - (sampleCount - 1);
       const dispatches = Math.min(
-        DISPATCHES_PER_SUBMIT,
+        batchLimit,
         Math.max(1, Math.ceil(remaining / ORBIT_BATCH))
       );
+      const batchStarted = performance.now();
 
       // Many dispatches per submission. Each readback is a full pipeline
       // flush, and one per 512 iterations meant hundreds of stalls on a deep
@@ -460,6 +475,16 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
 
       // Only the 4-word status comes back; the big state never leaves the GPU.
       const raw = new Uint32Array(await readBuffer(device, status, 16));
+
+      // Aim the next submission at the budget. A deep view at a high limb
+      // count can take milliseconds per dispatch, and 24 of those in one
+      // command is long enough for the driver to give up on the device.
+      const elapsed = performance.now() - batchStarted;
+      if (elapsed > SUBMIT_BUDGET_MS * 1.5) {
+        batchLimit = Math.max(1, Math.floor(batchLimit / 2));
+      } else if (elapsed < SUBMIT_BUDGET_MS * 0.5) {
+        batchLimit = Math.min(DISPATCHES_PER_SUBMIT, batchLimit * 2);
+      }
       if (raw[0] <= sampleCount) break; // no progress: escaped or done
       sampleCount = Math.min(raw[0], maxSamples);
       if (raw[1] === 1) {
@@ -580,6 +605,17 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
    * The orbit buffer is bound on every render, so it has to exist even when the
    * direct method never reads it.
    */
+  /**
+   * Rows per dispatch: four bands normally, fewer rows when the last frame
+   * showed this view is slow enough to risk the watchdog.
+   */
+  private bandHeightFor(width: number, height: number): number {
+    const even = Math.max(TILE_ROWS, Math.ceil(height / MAX_TILES));
+    if (this.msPerRow <= 0) return even;
+    const affordable = Math.floor(SUBMIT_BUDGET_MS / this.msPerRow);
+    return Math.max(8, Math.min(even, affordable));
+  }
+
   /** Largest sample grid up to `wanted` whose field fits in one binding. */
   private affordableGrid(wanted: number, width: number, height: number): number {
     const limit = this.ctx.device.limits.maxStorageBufferBindingSize;
@@ -877,7 +913,8 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     // band is short enough to abandon, so a stale frame costs one band, not a
     // whole screen.
     this.aborted = false;
-    const bandRows = request.tileRows ?? Math.max(TILE_ROWS, Math.ceil(request.height / MAX_TILES));
+    const bandRows =
+      request.tileRows ?? this.bandHeightFor(request.width, request.height);
     let completed = true;
 
     for (let top = 0; fieldStale && top < request.height; top += bandRows) {
@@ -905,6 +942,12 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         this.aborted = true;
         break;
       }
+    }
+    if (fieldStale && completed) {
+      // Smoothed, because one frame's timing is noisy and a band size that
+      // swings every frame is worse than one that is slightly wrong.
+      const measured = (performance.now() - started) / Math.max(request.height, 1);
+      this.msPerRow = this.msPerRow > 0 ? this.msPerRow * 0.5 + measured * 0.5 : measured;
     }
     this.fieldKey = completed ? fieldKey : "";
 
