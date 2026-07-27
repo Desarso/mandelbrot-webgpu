@@ -4,6 +4,10 @@ A browser Mandelbrot renderer with an arbitrary-precision reference orbit
 computed on the GPU, and perturbation rendering whose per-pixel deltas carry
 their own exponent. Solid + Vite. GPLv3 — see [LICENSE.md](LICENSE.md).
 
+Live at **[mandelbrot.gabrielmalek.com](https://mandelbrot.gabrielmalek.com)**,
+with a walkthrough of the techniques at
+[/tech.html](https://mandelbrot.gabrielmalek.com/tech.html).
+
 ```bash
 pnpm install
 pnpm dev
@@ -20,7 +24,7 @@ View section of the control panel.
 | Reference orbit | decimal.js on the CPU, uploaded as an `RG32F` texture | arbitrary-precision fixed point, GPU-resident |
 | Per-pixel delta | plain `f32` | mantissa + explicit exponent |
 | Depth limit | span `1e-34` (measured: `1e-34` renders, `1e-36` collapses) | bounded by limb count, not the renderer |
-| Linear approximation | no | yes — 21.7x at 2.8e40x, verified bit-identical |
+| Approximation | no | second-order BLA — 21x at 2.8e40x, verified bit-identical |
 | Precision | ~15 digits | 8–256 limbs = 67–2450 decimal digits, chosen from the zoom |
 
 The WebGL depth limit is not the orbit — it is the per-pixel delta underflowing
@@ -51,14 +55,20 @@ never leaves the GPU. Samples are emitted in a reduced HDR format
 around `1e-60` and grows to `O(1)` before escaping — a range no `f32` holds. The
 shader carries it as a mantissa/exponent pair, renormalised each iteration.
 
-**Linear approximation skips most of the work.** While the delta stays far below
-the reference, `dz <- 2*X*dz + dz^2 + d` is linear, so a whole range collapses
-into `dz_{n+m} = A*dz_n + B*d`. Steps are precomputed in levels (8, 16, 32, …
-iterations) and a pixel greedily takes the largest one whose validity radius
-still contains its delta. Measured at 2.8e40x: **21.7x faster, 96.9% of
-iterations skipped, and the image is bit-identical** to the unapproximated
-render. At shallow zoom the deltas are too large to qualify and it correctly
-declines to fire — those views are already fast.
+**Second-order approximation skips most of the work.** While the delta stays
+far below the reference, `w <- 2*X*w + w^2 + d` is nearly linear, so a whole
+range collapses into a truncated polynomial
+
+    w_out = A*w + B*d + C*w^2 + D*w*d + E*d^2
+
+Keeping only `A` and `B` is the usual bilinear approximation; carrying the
+second-order terms pushes the first neglected term from quadratic to cubic, so
+the same error budget admits an entry delta larger by roughly its square root.
+Steps are built in doubling levels (8, 16, 32, … iterations) and a pixel
+greedily takes the largest one its delta fits inside. Measured at 2.8e40x:
+**21x faster, 96.9% of iterations skipped, bit-identical** to the
+unapproximated render. At shallow zoom the deltas are too large to qualify and
+it correctly declines to fire — those views are already fast.
 
 `A` over a 4096-iteration step routinely reaches 10^700, so coefficients and
 radii carry explicit exponents; stored as plain doubles they become `Infinity`
@@ -133,6 +143,24 @@ Interaction renders at 25% resolution and restores full resolution 160 ms after
 you stop. Only resolution is reduced, never the iteration count — capping
 iterations makes deep views collapse to a solid interior colour.
 
+## Open bug: views centred on a minibrot nucleus
+
+A view centred exactly on a nucleus renders entirely interior, where an exact
+`BigInt` oracle says its pixels escape at ~6000 iterations. What is ruled out:
+
+- the reference orbit — all 20000 samples match the oracle to 2.4e-15;
+- the approximation — with it disabled the image is unchanged.
+
+What the diagnostic view (`/gpu.html?…&mode=2`) shows: the delta plateaus at
+2^-104 against a pixel offset of 2^-139. That is an amplification of ~2^35 per
+period, where the minibrot's own size estimate implies ~2^71, so the delta
+never reaches the quadratic regime that would make it escape. The fault is
+somewhere in the per-pixel iteration; it is not yet found.
+
+At a nucleus the orbit also returns to zero every period, forcing a rebase each
+time, and after a rebase the delta is `O(1)` and too large for any
+approximation step — so even when correct these views are slow.
+
 ## Not done
 
 - **NTT multiplication.** The schoolbook multiplier is `O(n²)`; fine through the
@@ -140,11 +168,13 @@ iterations makes deep views collapse to a solid interior colour.
   limited by precision and starts being limited by iteration count.
 - **Orbit compression.** Orbits are stored in full: 6 floats per sample, so
   200k iterations is ~4.8 MB.
-- **Bilinear approximation.** Only the linear form is implemented.
+- **Series approximation** for the initial segment, **progressive/tiled
+  rendering**, **frame reprojection** on zoom, and moving orchestration into a
+  **Web Worker**.
 - Browser matrix beyond Chrome on macOS; device-loss recovery.
 
-Known weakness: at a minibrot nucleus the reference orbit returns to zero every
-period, which forces a rebase each time. After a rebase the delta is `O(1)` and
-too large for any approximation step, so linear approximation stops firing
-exactly at the coordinates **Find minibrot** takes you to. Those views are
-correct but slow.
+## Deployment
+
+A two-stage `Dockerfile` builds with pnpm and serves `dist` with nginx. Coolify's
+"static" build pack serves the repository as-is and never runs a build, which
+ships raw `.tsx`; owning the build here avoids depending on that.
