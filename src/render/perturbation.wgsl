@@ -40,8 +40,10 @@ struct Uniforms {
     slopeLighting: u32,
     supersample: u32,
     invGamma: f32,
-    _pad0: u32,
-    _pad1: u32,
+    /// 0 direct f32, 1 plain-f32 perturbation, 2 HDR perturbation.
+    method: u32,
+    /// View centre as plain f32, used only by the direct method.
+    centre: vec2<f32>,
 };
 
 @group(0) @binding(0) var<storage, read> orbit: array<f32>;   // hi, lo, exp per component
@@ -453,6 +455,97 @@ fn delta0For(pixel: vec2<f32>) -> Hdr {
     return hdrAdd(pixelDelta, centreOffset);
 }
 
+fn cmul(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
+    return vec2<f32>(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+fn emptySample() -> Sample {
+    return Sample(false, 0u, vec2<f32>(0.0), 0.0, 0.0, 0u, 0u, 0u, 0.0, 0u);
+}
+
+/// Direct z <- z^2 + c in plain f32.
+///
+/// Perturbation only pays when |delta| << |z|. Zoomed out that is false, the
+/// rebase test fires almost every iteration, and we also pay for an
+/// arbitrary-precision reference orbit the view cannot even resolve. Iterating
+/// c directly is both simpler and much faster, and f32 has precision to spare
+/// until the pixel spacing approaches its resolution near |c| ~ 1.
+fn iterateDirect(c: vec2<f32>, wantDerivative: bool) -> Sample {
+    var z = vec2<f32>(0.0);
+    var deriv = vec2<f32>(0.0);
+    var n: u32 = 0u;
+    var z2: f32 = 0.0;
+    var escaped = false;
+
+    while (n < u.maxIterations) {
+        if (wantDerivative) { deriv = 2.0 * cmul(z, deriv) + vec2<f32>(1.0, 0.0); }
+        z = vec2<f32>(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
+        n = n + 1u;
+        z2 = dot(z, z);
+        if (z2 > ESCAPE_R2) { escaped = true; break; }
+    }
+
+    var logDeriv = 0.0;
+    if (wantDerivative) { logDeriv = 0.5 * log2(max(dot(deriv, deriv), 1e-38)); }
+    return Sample(escaped, n, z, z2, logDeriv, 0u, 0u, 0u, 0.0, 0u);
+}
+
+/// Perturbation with a plain f32 delta.
+///
+/// Same recurrence as iterate(), but without the explicit exponent. Every
+/// iteration of the HDR path pays a log2 and two exp2 for renormalisation;
+/// while the delta stays above f32's smallest normal there is nothing to
+/// renormalise, so that cost is pure overhead.
+fn iteratePlain(delta0: vec2<f32>, wantDerivative: bool) -> Sample {
+    var dz = vec2<f32>(0.0);
+    var deriv = vec2<f32>(0.0);
+    var z = vec2<f32>(0.0);
+    var refIter: u32 = 0u;
+    let lastRef = max(u.refLength - 1u, 1u);
+    var n: u32 = 0u;
+    var z2: f32 = 0.0;
+    var escaped = false;
+    var rebases: u32 = 0u;
+
+    while (n < u.maxIterations) {
+        // 2*X*dz + dz^2 + delta0, factored to one complex multiply.
+        dz = cmul(2.0 * refSample(refIter) + dz, dz) + delta0;
+        if (wantDerivative) { deriv = 2.0 * cmul(z, deriv) + vec2<f32>(1.0, 0.0); }
+        refIter = refIter + 1u;
+
+        z = refSample(refIter) + dz;
+        n = n + 1u;
+
+        z2 = dot(z, z);
+        if (z2 > ESCAPE_R2) { escaped = true; break; }
+
+        if (z2 < dot(dz, dz) || refIter >= lastRef) {
+            dz = z;
+            refIter = 0u;
+            rebases = rebases + 1u;
+        }
+    }
+
+    var logDeriv = 0.0;
+    if (wantDerivative) { logDeriv = 0.5 * log2(max(dot(deriv, deriv), 1e-38)); }
+    return Sample(escaped, n, z, z2, logDeriv, 0u, 0u, rebases,
+                  0.5 * log2(max(dot(dz, dz), 1e-38)), refIter);
+}
+
+/// Dispatches to the method the renderer picked for this zoom depth. The
+/// branch is uniform across the dispatch, so it costs nothing per pixel.
+fn iterateAny(pixel: vec2<f32>, wantDerivative: bool) -> Sample {
+    if (u.method == 0u) {
+        let fromCentre = pixel - 0.5 * u.resolution;
+        let c = u.centre + fromCentre * u.scaleMantissa * exp2(f32(u.scaleExponent));
+        return iterateDirect(c, wantDerivative);
+    }
+    if (u.method == 1u) {
+        return iteratePlain(hdrValue(delta0For(pixel)), wantDerivative);
+    }
+    return iterate(delta0For(pixel), wantDerivative);
+}
+
 // --------------------------------------------------------------------- shading
 
 fn iterationColour(s: Sample) -> vec3<f32> {
@@ -534,7 +627,7 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
                 u.resolution.y - 1.0 - f32(gid.y)
             ) + jitter;
 
-            let centre = iterate(delta0For(pixel), distanceMode);
+            let centre = iterateAny(pixel, distanceMode);
             skipped = skipped + centre.skipped;
             skips = skips + centre.skips;
             rebases = rebases + centre.rebases;

@@ -92,11 +92,16 @@ fn approxValue(base: u32) -> f32 {
     return hi + lo;
 }
 
-/// |z|^2 > 4. Accurate to ~24 bits, far more than a bailout test needs.
+/// |z|^2 > 256, matching ESCAPE_R2 in perturbation.wgsl.
+///
+/// The two bailouts have to agree. When this one was tighter the reference
+/// stopped while the renderer was still iterating, and every pixel had to
+/// rebase to cover the gap -- 691,200 rebases on a frame that needed none.
+/// Accurate to ~24 bits, far more than a bailout test needs.
 fn escapedNow() -> bool {
     let x = approxValue(slot(S_X));
     let y = approxValue(slot(S_Y));
-    return x * x + y * y > 4.0;
+    return x * x + y * y > 256.0;
 }
 
 var<workgroup> resumeAt: u32;

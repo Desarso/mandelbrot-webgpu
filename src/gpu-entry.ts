@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import { acquireGpu } from "./gpu/device";
-import { WebGpuRenderer } from "./render/webgpu-renderer";
+import { WebGpuRenderer, type Method } from "./render/webgpu-renderer";
 import { DEFAULT_COLORS } from "./logic/colorSettings";
 
 const canvas = document.getElementById("c") as HTMLCanvasElement;
@@ -14,6 +14,7 @@ const iterations = Number.parseInt(params.get("i") ?? "1200", 10);
 const palette = Number.parseInt(params.get("p") ?? "1", 10);
 /** `&la=0` disables linear approximation, for A/B comparison. */
 const useApprox = params.get("la") !== "0";
+const forceMethod = params.has("m") ? (Number(params.get("m")) as Method) : undefined;
 const num = (key: string, fallback: number) => {
   const v = Number.parseFloat(params.get(key) ?? "");
   return Number.isFinite(v) ? v : fallback;
@@ -43,6 +44,7 @@ async function main() {
     maxIterations: iterations,
     colors: { ...DEFAULT_COLORS, palette, ...colorOverrides },
     useApprox,
+    forceMethod,
   });
 
   // `&verify=1`: render the same view with and without linear approximation and
@@ -100,7 +102,9 @@ async function main() {
   // Compare the reduced orbit the renderer actually reads against an exact
   // BigInt orbit computed here, so a data problem cannot masquerade as a
   // shader-logic problem.
-  const checkCount = Math.min(iterations, 20000);
+  // Never compare past the end of the reference: once the GPU orbit bails out
+  // its samples read as zero, which is not a mismatch, just absence.
+  const checkCount = Math.min(iterations, 20000, Math.max(result.orbitLength - 1, 0));
   const probe = await renderer.debugReadOrbit(checkCount + 1);
   const bits = 32n * 31n;
   const scaleDec = (t: string) => {
@@ -135,7 +139,15 @@ async function main() {
   const lines: string[] = [];
   let firstBad = -1;
   let worst = 0;
+  let compared = 0;
+  // Once the reference escapes, squaring it doubles the BigInt every step and
+  // the comparison is meaningless anyway, so stop there.
+  const escapeScaled = 16n << bits;
   for (let i = 1; i <= checkCount; i++) {
+    if (ex > escapeScaled || ex < -escapeScaled || ey > escapeScaled || ey < -escapeScaled) {
+      break;
+    }
+    compared = i;
     const xx = bmul(ex, ex);
     const yy = bmul(ey, ey);
     const xy = bmul(ex, ey);
@@ -153,7 +165,7 @@ async function main() {
     }
   }
   lines.push(
-    `  compared ${checkCount} samples, worst error ${worst.toExponential(2)}` +
+    `  compared ${compared} samples, worst error ${worst.toExponential(2)}` +
       (firstBad < 0 ? " — all ok" : ` — FIRST BAD at ${firstBad}`)
   );
 

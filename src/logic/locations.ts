@@ -52,8 +52,11 @@ export const LOCATIONS: Location[] = [
   {
     name: "Scepter Valley",
     blurb: "Along the western needle",
-    centerX: "-1.7690161341144567",
-    centerY: "0.0042968738563383",
+    // Sits above a period-108 nucleus found with findNucleus(); the old
+    // coordinates were off the needle entirely and escaped after 41
+    // iterations, so the whole frame came out one flat colour.
+    centerX: "-1.74920463345901130344710267272610509993390621278893868444415",
+    centerY: "1.04228658044466761986238520891015273896290502200064496392051e-16",
     span: "3e-11",
     iterations: 6000,
   },
