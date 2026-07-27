@@ -1,145 +1,378 @@
-import { createSignal, onMount, type Component } from "solid-js";
-import { Color } from "./logic/Colors";
-import { Mandelbrot } from "./logic/Mandelbrot";
-import { MandelbrotGL } from "./logic/Mandelbrotgl";
-import pixels from "./pixels.json";
+import { createSignal, For, onCleanup, onMount, Show, type Component } from "solid-js";
+import { MandelbrotView, type ViewInfo } from "./logic/MandelbrotView";
+import {
+  ColorSettings,
+  DEFAULT_COLORS,
+  decodeColors,
+  MAPPINGS,
+  MAX_STOPS,
+  PALETTE_CUSTOM,
+} from "./logic/colorSettings";
+import styles from "./App.module.css";
+
+const PALETTES = [
+  { id: 0, name: "Spectrum", swatch: styles.spectrum },
+  { id: 1, name: "Ultra", swatch: styles.ultra },
+  { id: 2, name: "Ember", swatch: styles.ember },
+  { id: 3, name: "Ice", swatch: styles.ice },
+  { id: 4, name: "Mono", swatch: styles.mono },
+  { id: PALETTE_CUSTOM, name: "Custom", swatch: styles.custom },
+];
+
+function formatZoom(zoom: number): string {
+  if (zoom < 1000) return `${zoom.toFixed(zoom < 10 ? 2 : 0)}x`;
+  const exponent = Math.floor(Math.log10(zoom));
+  return `${(zoom / 10 ** exponent).toFixed(1)}e${exponent}x`;
+}
+
+function initialColors(): ColorSettings {
+  const code = new URL(window.location.href).searchParams.get("c");
+  return (code && decodeColors(code)) || DEFAULT_COLORS;
+}
+
+function initialIterations(): number {
+  const raw = new URL(window.location.href).searchParams.get("i");
+  const value = Number.parseInt(raw ?? "", 10);
+  return Number.isFinite(value) ? Math.min(4000, Math.max(50, value)) : 500;
+}
 
 const App: Component = () => {
-  const width = 800;
-  const height = 800;
-  const [maxIterations, setMaxIterations] = createSignal(800);
-  const [roundingFactor, setRoundingFactor] = createSignal(1000000000000000);
+  const [maxIterations, setMaxIterations] = createSignal(initialIterations());
+  const [colors, setColors] = createSignal<ColorSettings>(initialColors());
+  const patch = (change: Partial<ColorSettings>) =>
+    setColors((current) => ({ ...current, ...change }));
 
-  const [startX, setStartX] = createSignal(-2.5);
-  const [endX, setEndX] = createSignal(2.0);
-  const [startY, setStartY] = createSignal(-2.5);
-  const [endY, setEndY] = createSignal(2.5);
-  const [mouseA, setMouseA] = createSignal(0);
-  const [mouseB, setMouseB] = createSignal(0);
-  const [returnValue, setReturnValue] = createSignal(20);
-  const [mouseDown, setMouseDown] = createSignal(false);
-  const inverserLog2 = 1 / Math.log(2);
-  let canvas;
+  const [panelOpen, setPanelOpen] = createSignal(true);
+  const [advanced, setAdvanced] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+  const [renderer, setRenderer] = createSignal<MandelbrotView | null>(null);
+  const [copied, setCopied] = createSignal(false);
 
-  // function mandelbrot(a: number, b: number, maxIter: number) {
-  //   let ac = a;
-  //   let bc = b;
-  //   let iter_count = 0;
-  //   while (true) {
-  //     iter_count++;
-  //     let aa = a * a - b * b;
-  //     let bb = (a + a) * b;
+  const view = (): ViewInfo | null => renderer()?.view() ?? null;
 
-  //     a = aa + ac;
-  //     b = bb + bc;
+  let canvas!: HTMLCanvasElement;
 
-  //     let floatmod = Math.sqrt(a * a + b * b);
-  //     if (floatmod > returnValue()) {
-  //       break;
-  //     }
-  //     if (iter_count >= maxIter) {
-  //       break;
-  //     }
-  //   }
-  //   let aa = a * a - b * b;
-  //   let bb = 2 * a * b;
-  //   a = aa + ac;
-  //   b = bb + bc;
-  //   aa = a * a - b * b;
-  //   bb = 2 * a * b;
-  //   a = aa + ac;
-  //   b = bb + bc;
-  //   let modulus = Math.sqrt(a * a + b * b);
-  //   let log = Math.log(modulus);
-  //   let mu = iter_count + 1 - Math.log(log) * inverserLog2;
-  //   if (Number.isNaN(mu)) {
-  //     mu = maxIter;
-  //   }
-  //   if (iter_count === maxIter) {
-  //     mu = maxIter;
-  //   }
-  //   //mu = N - log (log  |Z(N)|^2) * (1 / log 2)
-  //   let hue = mix(0, 1.0, mu / maxIter);
-  //   let saturation = 1.0;
-  //   let lightness = 0.5;
-  //   let color = new Color(hue, saturation, lightness);
-  //   let rgb = color.hsl_to_rgb();
-  //   return rgb;
-  // }
+  const setStop = (index: number, value: string) => {
+    const stops = [...colors().stops];
+    stops[index] = value;
+    patch({ stops });
+  };
+
+  const addStop = () => {
+    const stops = colors().stops;
+    if (stops.length >= MAX_STOPS) return;
+    patch({ stops: [...stops, "#ffffff"] });
+  };
+
+  const removeStop = (index: number) => {
+    const stops = colors().stops;
+    if (stops.length <= 2) return;
+    patch({ stops: stops.filter((_, i) => i !== index) });
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1400);
+  };
 
   onMount(() => {
+    // Backend selection is async (WebGPU adapter request), so the canvas stays
+    // blank for a frame or two before the first draw.
+    MandelbrotView.create(canvas, { maxIterations, colors })
+      .then(setRenderer)
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
 
-    const mandelbrot = new MandelbrotGL();
-    //const mandelbrot2 = new Mandelbrot();
-    mandelbrot.render();
-    //mandelbrot2.render();
-
-     //load pixels.json
-     //console.log(pixels);
-     console.log(pixels.length);
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      if (event.key === "h" || event.key === "H") setPanelOpen((open) => !open);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    onCleanup(() => window.removeEventListener("keydown", onKeyDown));
   });
 
+  // Keep the iteration count in the shareable URL alongside view and colours.
+  const syncIterations = (value: number) => {
+    setMaxIterations(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set("i", String(value));
+    window.history.replaceState({}, "", decodeURIComponent(url.toString()));
+  };
+
   return (
-    <div>
-      <label for="startX">Start X: {startX()}</label>
-      <input
-        type="range"
-        step="0.01"
-        max="2.5"
-        min="-2.5"
-        id="startX"
-        value={startX()}
-        onChange={(e) => setStartX(+e.target.value)}
-      />
-      <label for="endX">End X: {endX()}</label>
-      <input
-        type="range"
-        step="0.01"
-        max="2.5"
-        min="-2.5"
-        id="endX"
-        value={endX()}
-      />
-      <label for="startY">Start Y: {startY()}</label>
-      <input
-        type="range"
-        step="0.01"
-        max="2.5"
-        min="-2.5"
-        id="startY"
-        value={startY()}
-      />
-      <label for="endY">End Y: {endY()}</label>
-      <input
-        type="range"
-        step="0.01"
-        max="2.5"
-        min="-2.5"
-        id="endY"
-        value={endY()}
-      />
-      {/* <label for="roundingFactor">Rounding Factor: {roundingFactor()}</label>
-      <input type="range" step="10" max="100000" min="10" id="roundingFactor" value={roundingFactor()} /> */}
-      <label for="returnValue">Return Value: {returnValue()}</label>
-      <input
-        type="range"
-        step="1"
-        max="100"
-        min="1"
-        id="returnValue"
-        value={returnValue()}
-      />
-      <label for="maxIterations">Max Iterations: {maxIterations()}</label>
-      <input
-        type="range"
-        step="1"
-        max="2000"
-        min="10"
-        id="maxIterations"
-        value={maxIterations()}
-      />
-      <div class="canvas-holder">
-      </div>
+    <div class={styles.app}>
+      <canvas ref={canvas} class={styles.canvas} />
+
+      <Show when={error()}>
+        <div class={styles.error}>{error()}</div>
+      </Show>
+
+      <Show when={!panelOpen() && !error()}>
+        <button class={styles.showButton} onClick={() => setPanelOpen(true)}>
+          Controls
+        </button>
+      </Show>
+
+      <Show when={panelOpen() && !error()}>
+        <aside class={styles.panel}>
+          <div class={styles.panelHeader}>
+            <span class={styles.title}>Mandelbrot</span>
+            <button
+              class={styles.iconButton}
+              title="Hide controls (H)"
+              aria-label="Hide controls"
+              onClick={() => setPanelOpen(false)}
+            >
+              ×
+            </button>
+          </div>
+
+          <section class={styles.group}>
+            <div class={styles.groupTitle}>Detail</div>
+            <div class={styles.field}>
+              <label class={styles.fieldLabel} for="iterations">
+                <span>Max iterations</span>
+                <span class={styles.value}>{maxIterations()}</span>
+              </label>
+              <input
+                id="iterations"
+                class={styles.slider}
+                type="range"
+                min="50"
+                max="4000"
+                step="10"
+                value={maxIterations()}
+                onInput={(e) => syncIterations(+e.currentTarget.value)}
+              />
+            </div>
+          </section>
+
+          <section class={styles.group}>
+            <div class={styles.groupTitle}>Colour</div>
+
+            <div class={styles.field}>
+              <div class={styles.palettes}>
+                <For each={PALETTES}>
+                  {(entry) => (
+                    <button
+                      class={`${styles.swatch} ${entry.swatch} ${
+                        colors().palette === entry.id ? styles.swatchActive : ""
+                      }`}
+                      title={entry.name}
+                      aria-pressed={colors().palette === entry.id}
+                      onClick={() => patch({ palette: entry.id })}
+                    >
+                      {entry.name}
+                    </button>
+                  )}
+                </For>
+              </div>
+            </div>
+
+            <div class={styles.field}>
+              <label class={styles.fieldLabel} for="cycle">
+                <span>Band width</span>
+                <span class={styles.value}>{colors().cycle}</span>
+              </label>
+              <input
+                id="cycle"
+                class={styles.slider}
+                type="range"
+                min="4"
+                max="400"
+                step="1"
+                value={colors().cycle}
+                onInput={(e) => patch({ cycle: +e.currentTarget.value })}
+              />
+            </div>
+
+            <div class={styles.field}>
+              <label class={styles.fieldLabel} for="offset">
+                <span>Shift</span>
+                <span class={styles.value}>{colors().offset.toFixed(2)}</span>
+              </label>
+              <input
+                id="offset"
+                class={styles.slider}
+                type="range"
+                min="0"
+                max="1"
+                step="0.005"
+                value={colors().offset}
+                onInput={(e) => patch({ offset: +e.currentTarget.value })}
+              />
+            </div>
+
+            <div class={`${styles.field} ${styles.toggleRow}`}>
+              <span>Smooth shading</span>
+              <button
+                class={`${styles.switch} ${colors().smooth ? styles.switchOn : ""}`}
+                role="switch"
+                aria-checked={colors().smooth}
+                aria-label="Smooth shading"
+                onClick={() => patch({ smooth: !colors().smooth })}
+              />
+            </div>
+
+            <button
+              class={styles.disclosure}
+              aria-expanded={advanced()}
+              onClick={() => setAdvanced((open) => !open)}
+            >
+              <span>{advanced() ? "▾" : "▸"}</span> Advanced
+            </button>
+          </section>
+
+          <Show when={advanced()}>
+            <section class={styles.group}>
+              <div class={styles.groupTitle}>Advanced colour</div>
+
+              <div class={styles.field}>
+                <div class={styles.fieldLabel}>
+                  <span>Iteration mapping</span>
+                </div>
+                <div class={styles.segmented}>
+                  <For each={MAPPINGS}>
+                    {(name, index) => (
+                      <button
+                        class={`${styles.segment} ${
+                          colors().mapping === index() ? styles.segmentActive : ""
+                        }`}
+                        onClick={() => patch({ mapping: index() })}
+                      >
+                        {name}
+                      </button>
+                    )}
+                  </For>
+                </div>
+              </div>
+
+              <div class={`${styles.field} ${styles.toggleRow}`}>
+                <span>Mirror bands</span>
+                <button
+                  class={`${styles.switch} ${colors().mirror ? styles.switchOn : ""}`}
+                  role="switch"
+                  aria-checked={colors().mirror}
+                  aria-label="Mirror bands"
+                  onClick={() => patch({ mirror: !colors().mirror })}
+                />
+              </div>
+
+              <div class={`${styles.field} ${styles.toggleRow}`}>
+                <span>Interior</span>
+                <input
+                  class={styles.colorInput}
+                  type="color"
+                  aria-label="Interior colour"
+                  value={colors().interior}
+                  onInput={(e) => patch({ interior: e.currentTarget.value })}
+                />
+              </div>
+
+              <div class={styles.field}>
+                <div class={styles.fieldLabel}>
+                  <span>Custom stops</span>
+                  <span class={styles.value}>{colors().stops.length}</span>
+                </div>
+                <div class={styles.stops}>
+                  <For each={colors().stops}>
+                    {(stop, index) => (
+                      <div class={styles.stopRow}>
+                        <input
+                          class={styles.colorInput}
+                          type="color"
+                          aria-label={`Stop ${index() + 1}`}
+                          value={stop}
+                          onInput={(e) => setStop(index(), e.currentTarget.value)}
+                        />
+                        <button
+                          class={styles.stopRemove}
+                          title="Remove stop"
+                          aria-label={`Remove stop ${index() + 1}`}
+                          disabled={colors().stops.length <= 2}
+                          onClick={() => removeStop(index())}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </For>
+                  <button
+                    class={styles.stopAdd}
+                    title="Add stop"
+                    aria-label="Add stop"
+                    disabled={colors().stops.length >= MAX_STOPS}
+                    onClick={addStop}
+                  >
+                    +
+                  </button>
+                </div>
+                <p class={styles.hint}>
+                  Stops apply to the <strong>Custom</strong> palette and loop back
+                  to the first colour.
+                </p>
+              </div>
+
+              <button
+                class={styles.button}
+                onClick={() => setColors({ ...DEFAULT_COLORS })}
+              >
+                Reset colours
+              </button>
+            </section>
+          </Show>
+
+          <section class={styles.group}>
+            <div class={styles.groupTitle}>View</div>
+            <div class={styles.readout}>
+              <span>Zoom</span>
+              <span>{view() ? formatZoom(view()!.zoom) : "—"}</span>
+            </div>
+            <div class={styles.readout}>
+              <span>Re</span>
+              <span>{view()?.centerX ?? "—"}</span>
+            </div>
+            <div class={styles.readout}>
+              <span>Im</span>
+              <span>{view()?.centerY ?? "—"}</span>
+            </div>
+            <div class={styles.readout}>
+              <span>Engine</span>
+              <span>
+                {view()
+                  ? `${view()!.backend === "webgpu" ? "WebGPU" : "WebGL2"} · ${view()!.precision}`
+                  : "starting…"}
+              </span>
+            </div>
+            <div class={styles.readout}>
+              <span>Timing</span>
+              <span>
+                {view()
+                  ? `orbit ${view()!.orbitMs.toFixed(0)}ms · draw ${view()!.renderMs.toFixed(0)}ms`
+                  : "—"}
+              </span>
+            </div>
+            <Show when={view()?.atDepthLimit}>
+              <p class={styles.hint}>
+                At this backend's depth limit — zoom is clamped here.
+              </p>
+            </Show>
+            <div class={styles.buttonRow}>
+              <button class={styles.button} onClick={() => renderer()?.resetView()}>
+                Reset view
+              </button>
+              <button class={styles.button} onClick={copyLink}>
+                {copied() ? "Copied" : "Copy link"}
+              </button>
+            </div>
+            <p class={styles.hint}>
+              Drag to pan, scroll to zoom. Press <span class={styles.kbd}>H</span> to
+              hide the controls. The URL always holds the current view and colours.
+            </p>
+          </section>
+        </aside>
+      </Show>
     </div>
   );
 };

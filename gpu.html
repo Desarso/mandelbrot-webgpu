@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGPU deep zoom</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0d0f14;
+        color: #e8ecf4;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      canvas { display: block; width: 720px; height: 480px; }
+      #stats { padding: 10px; white-space: pre; }
+      .fail { color: #ff8f8f; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="720" height="480"></canvas>
+    <div id="stats">rendering…</div>
+    <script type="module" src="/src/gpu-entry.ts"></script>
+  </body>
+</html>

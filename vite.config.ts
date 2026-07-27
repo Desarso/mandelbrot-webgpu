@@ -16,5 +16,14 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    rollupOptions: {
+      // The diagnostics pages ship too: selftest.html is the only thing that
+      // checks the WGSL arithmetic against the BigInt oracle on real hardware.
+      input: {
+        main: 'index.html',
+        selftest: 'selftest.html',
+        gpu: 'gpu.html',
+      },
+    },
   },
 });

@@ -6,14 +6,18 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "license": "MIT",
   "devDependencies": {
+    "@webgpu/types": "^0.1.71",
     "solid-devtools": "^0.29.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.11",
-    "vite-plugin-solid": "^2.8.2"
+    "vite-plugin-solid": "^2.8.2",
+    "vitest": "^2.1.9"
   },
   "dependencies": {
     "decimal.js": "^10.4.3",
