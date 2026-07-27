@@ -589,3 +589,13 @@
   opacity: 0.4;
   cursor: default;
 }
+
+.link {
+  color: rgba(127, 212, 238, 0.85);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: #7fd4ee;
+  text-decoration: underline;
+}

@@ -600,6 +600,8 @@ const App: Component = () => {
             <p class={styles.hint}>
               Drag to pan, scroll to zoom. <span class={styles.kbd}>H</span> hides
               the panel. The URL always holds the full state.
+              <br />
+              <a class={styles.link} href="/tech.html">How it works →</a>
             </p>
           </section>
         </aside>

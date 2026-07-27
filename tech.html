@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05060d" />
+    <meta
+      name="description"
+      content="How an arbitrary-precision Mandelbrot renderer works in a browser: perturbation theory, GPU big-number arithmetic, and second-order approximation."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>How it works · Mandelbrot</title>
+    <style>
+      :root {
+        --bg: #05060d;
+        --panel: #0d1018;
+        --line: rgba(255, 255, 255, 0.1);
+        --text: #e8ecf4;
+        --dim: rgba(232, 236, 244, 0.62);
+        --accent: #7fd4ee;
+        --warn: #ffaa00;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 96px; }
+      header { margin-bottom: 48px; }
+      h1 {
+        font-size: clamp(30px, 5vw, 44px);
+        line-height: 1.15;
+        margin: 0 0 12px;
+        letter-spacing: -0.02em;
+      }
+      .lede { font-size: 18px; color: var(--dim); margin: 0; }
+      h2 {
+        font-size: 22px;
+        margin: 48px 0 12px;
+        letter-spacing: -0.01em;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+      h3 { font-size: 16px; margin: 28px 0 8px; color: var(--accent); }
+      p { margin: 0 0 16px; }
+      a { color: var(--accent); }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+        background: rgba(255, 255, 255, 0.07);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      pre code { background: none; padding: 0; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0 16px; }
+      th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { color: var(--dim); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+      .note {
+        border-left: 3px solid var(--warn);
+        background: rgba(255, 170, 0, 0.06);
+        padding: 12px 16px;
+        border-radius: 0 8px 8px 0;
+        margin: 0 0 16px;
+        font-size: 15px;
+      }
+      .back {
+        display: inline-block;
+        margin-bottom: 28px;
+        font-size: 14px;
+        color: var(--dim);
+        text-decoration: none;
+      }
+      .back:hover { color: var(--text); }
+      footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--dim); font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="back" href="/">← back to the renderer</a>
+
+      <header>
+        <h1>How this runs in a browser</h1>
+        <p class="lede">
+          Zooming into the Mandelbrot set past about 10<sup>−15</sup> breaks
+          double precision. Getting to 10<sup>−40</sup> and beyond, at
+          interactive speed, in a tab, takes four ideas stacked on top of each
+          other. This page is what each one does and why it is necessary.
+        </p>
+      </header>
+
+      <h2>1. The problem with just zooming</h2>
+      <p>
+        Rendering the set means iterating <code>z ← z² + c</code> for every pixel
+        and asking how long it takes to escape. The pixel's coordinate
+        <code>c</code> needs enough digits to distinguish it from its neighbour.
+        At a zoom of 10<sup>−40</sup> two adjacent pixels differ in the 43rd
+        decimal place. A <code>double</code> holds about 15. Every pixel on
+        screen collapses to the same number and the image becomes a flat colour.
+      </p>
+      <p>
+        The obvious fix — do all the arithmetic in arbitrary precision — is far
+        too slow. A 1280×720 frame at 20,000 iterations is roughly 18 billion
+        big-number multiplications.
+      </p>
+
+      <h2>2. Perturbation: iterate once, reuse everywhere</h2>
+      <p>
+        Pick one point near the centre of the view, the <em>reference</em>, and
+        iterate it in full precision — once. Call that orbit
+        <code>X₀, X₁, X₂, …</code>. Every pixel is then described by how far it
+        sits from the reference, <code>δ = c − c_ref</code>, and how far its
+        orbit has drifted, <code>w = z − X</code>. Subtracting the two
+        recurrences gives an exact identity:
+      </p>
+      <pre><code>w ← 2·X·w + w² + δ</code></pre>
+      <p>
+        Nothing has been approximated. But the numbers involved are now
+        <em>small</em> — differences rather than positions — so they fit in
+        ordinary floats even though the coordinates they came from do not. One
+        expensive orbit, then millions of cheap pixels.
+      </p>
+      <p>
+        Two details make it work in practice. The reference orbit must be
+        genuinely arbitrary precision, and the per-pixel delta has a dynamic
+        range no <code>f32</code> can hold — it starts around 10<sup>−40</sup>
+        and grows to order 1 before escaping.
+      </p>
+
+      <h2>3. Arbitrary precision on the GPU</h2>
+      <p>
+        The reference orbit is computed by a WebGPU compute shader in
+        two's-complement fixed point: an integer spread over up to 256
+        <code>u32</code> limbs, scaled by 2<sup>−32(n−1)</sup>. That is up to
+        about 2,450 decimal digits.
+      </p>
+
+      <h3>Fixed point, not floating point</h3>
+      <p>
+        Every sample of a reference orbit satisfies <code>|z| &lt; 4</code> or
+        it has already escaped, and <code>|c| &lt; 2</code>. There is nothing for
+        an exponent to do. Dropping it makes addition and subtraction plain
+        carry chains with no alignment step.
+      </p>
+
+      <h3>WGSL has no 64-bit integers</h3>
+      <p>
+        Multiplication needs 32×32→64. WGSL has no <code>u64</code>, so it is
+        built from four 16-bit partial products, with the middle sum's carry
+        tracked by hand:
+      </p>
+      <pre><code>let mid = p01 + p10;                        // may carry out of 32 bits
+let midCarry = select(0u, 0x10000u, mid &lt; p01);
+let lo = p00 + (mid &lt;&lt; 16u);
+let loCarry = select(0u, 1u, lo &lt; p00);
+hi = p11 + (mid &gt;&gt; 16u) + midCarry + loCarry;</code></pre>
+
+      <h3>One workgroup, not a grid</h3>
+      <p>
+        <code>z ← z² + c</code> is strictly serial: iteration n+1 needs
+        iteration n. The only parallelism available is <em>inside</em> each
+        big-number operation, where 256 threads each own a column of the
+        multiplication. Keeping the whole recurrence in a single workgroup means
+        barriers can be used instead of the grid-wide synchronisation WebGPU
+        does not have, and one submission can advance thousands of iterations
+        without a round trip to the CPU.
+      </p>
+      <p>
+        The high-precision state never leaves the GPU. Each batch returns a
+        four-word status buffer and nothing else.
+      </p>
+
+      <h2>4. Deltas that carry their own exponent</h2>
+      <p>
+        The reference samples are order 1 and fit in <code>f32</code>. The
+        per-pixel delta does not, so it is carried as a mantissa and an explicit
+        binary exponent, renormalised every iteration. This is the single thing
+        that separates the two rendering paths here:
+      </p>
+      <table>
+        <tr><th></th><th>WebGL2 fallback</th><th>WebGPU</th></tr>
+        <tr><td>Reference orbit</td><td>CPU, decimal.js, uploaded as a texture</td><td>GPU-resident fixed point</td></tr>
+        <tr><td>Per-pixel delta</td><td>plain <code>f32</code></td><td>mantissa + exponent</td></tr>
+        <tr><td>Depth limit</td><td>span 10<sup>−34</sup></td><td>set by limb count, not the renderer</td></tr>
+      </table>
+      <p>
+        The WebGL limit was measured rather than assumed: 10<sup>−34</sup>
+        renders correctly and 10<sup>−36</sup> collapses, as the deltas fall
+        into subnormal range and underflow to zero.
+      </p>
+
+      <h2>5. Skipping most of the work</h2>
+      <p>
+        While the delta stays far below the reference, the <code>w²</code> term
+        is negligible and the step is linear. A whole range of iterations then
+        collapses into a single polynomial, which can be precomputed once per
+        orbit and applied per pixel:
+      </p>
+      <pre><code>w_out = A·w + B·δ + C·w² + D·w·δ + E·δ²</code></pre>
+      <p>
+        Keeping only <code>A</code> and <code>B</code> is the usual bilinear
+        approximation. Carrying the second-order terms pushes the first
+        neglected term from quadratic to cubic, so the same error budget allows
+        an entry delta larger by roughly its square root — many more pixels take
+        many longer skips.
+      </p>
+      <p>
+        Steps are built in doubling levels — 8, 16, 32, … iterations — and each
+        pixel greedily takes the largest one its delta still fits inside.
+        Measured at a zoom of 2.8×10<sup>40</sup>: <strong>96.9% of iterations
+        skipped, 21× faster</strong>, and the image is bit-identical to the
+        unapproximated render.
+      </p>
+      <div class="note">
+        <strong>Why the coefficients need exponents too.</strong>
+        <code>A</code> is a product of ~2<em>X</em> terms over the whole range,
+        and over a few thousand iterations it routinely reaches 10<sup>700</sup>
+        while the matching validity radius underflows to zero. Stored as plain
+        doubles the coefficient becomes <code>Infinity</code> and every radius
+        derived from it becomes <code>NaN</code>. It is the <em>product</em>
+        that stays sane, never the factors.
+      </div>
+
+      <h2>6. Finding somewhere worth looking</h2>
+      <p>
+        Zooming by hand past about 10<sup>−30</sup> almost always lands in a
+        smooth region where every pixel escapes within an iteration or two of
+        every other — correct, and completely dull. The interesting places are
+        the <em>nuclei</em>: centres of period-<em>p</em> minibrots, where the
+        <em>p</em>-th iterate returns exactly to zero.
+      </p>
+      <p>
+        Newton's method converges on those quadratically, using the companion
+        recurrence <code>D ← 2zD + 1</code> for the derivative. A standard size
+        estimate then says how far to zoom in. Sanity check: applied to the
+        period-2 bulb it returns 0.5, which is that bulb's actual diameter.
+      </p>
+
+      <h2>7. Colouring</h2>
+      <p>
+        Escape counts give the classic bands. The other mode is analytic
+        distance estimation: the orbit carries its own derivative, and on escape
+      </p>
+      <pre><code>distance = 0.5 · |z| · ln|z| / |dz/dc|</code></pre>
+      <p>
+        normalised against the width of one screen pixel so the banding keeps
+        the same visual scale at any depth. The base-2 logarithm of that is a
+        height field, and its screen-space gradient drives a normal-map lighting
+        pass — diffuse plus a Blinn–Phong highlight. Nothing is displaced; it
+        only reads as a surface.
+      </p>
+      <p>
+        The derivative comes for free from the approximation table:
+        <code>D ← 2zD + 1</code> is the same recurrence as the delta with
+        <code>δ = 1</code>, so the same <code>A</code> and <code>B</code>
+        coefficients advance it across a skipped range.
+      </p>
+      <p>
+        Palette mixing and lighting are done in linear light, with a single
+        gamma encode at the end, and up to 3×3 supersampling.
+      </p>
+
+      <h2>8. How any of this is known to be correct</h2>
+      <p>
+        Fractal renderers fail quietly. A subtly wrong image still looks like a
+        fractal, so the project is built around three layers of checking that
+        do not rely on looking at the picture.
+      </p>
+      <table>
+        <tr><th>Layer</th><th>What it proves</th></tr>
+        <tr>
+          <td><code>pnpm test</code></td>
+          <td>46 checks of the CPU arithmetic against exact <code>BigInt</code>: limb encoding, the emulated 64-bit multiply on boundary values, fixed-point add/sub/multiply, Newton, and the approximation polynomials.</td>
+        </tr>
+        <tr>
+          <td><code>/selftest.html</code></td>
+          <td>18 checks that run the actual WGSL on real hardware against the same oracle, including reference orbits compared sample-for-sample and batch sizes 1, 7 and 128 checked separately.</td>
+        </tr>
+        <tr>
+          <td><code>/gpu.html?…&amp;verify=1</code></td>
+          <td>Renders a view twice, with and without approximation, and reports how many sampled pixels differ. An approximation that changes the picture is not an approximation.</td>
+        </tr>
+      </table>
+      <p>
+        These earned their keep. The batch-size check exists because a
+        single-dispatch run could not catch an off-by-one at batch boundaries
+        that skipped one sample and shifted every later index. The A/B verifier
+        exists because the first approximation looked convincing at depth while
+        rendering 782 of 1064 sampled pixels wrong at shallow zoom.
+      </p>
+
+      <h2>Known limits</h2>
+      <p>
+        The schoolbook multiplier is O(n²), which is fine to the 256-limb top
+        profile but is where an NTT would belong. Orbits are stored uncompressed.
+        At a minibrot nucleus the reference orbit returns to zero every period,
+        forcing a rebase each time, and after a rebase the delta is order 1 and
+        too large for any approximation step — so those views are correct but
+        slow. Deep views centred exactly on a nucleus currently fail to escape
+        where an exact oracle says they should; the orbit and the approximation
+        both verify clean, so the fault is isolated to the per-pixel iteration.
+      </p>
+
+      <footer>
+        Built with Solid, Vite, WebGPU and WGSL. Licensed GPLv3, with
+        attribution to
+        <a href="https://github.com/mattsaccount364/FractalShark">FractalShark</a>.
+        Source at
+        <a href="https://github.com/Desarso/mandelbrot_webgl">Desarso/mandelbrot_webgl</a>.
+        <br />
+        Perturbation theory follows K. I. Martin's <em>Superfractalthing
+        Maths</em>; the rebasing rule is Zhuoran's.
+      </footer>
+    </div>
+  </body>
+</html>

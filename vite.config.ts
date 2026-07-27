@@ -23,6 +23,7 @@ export default defineConfig({
         main: 'index.html',
         selftest: 'selftest.html',
         gpu: 'gpu.html',
+        tech: 'tech.html',
       },
     },
   },
