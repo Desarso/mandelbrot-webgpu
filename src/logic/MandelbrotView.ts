@@ -241,18 +241,9 @@ export class MandelbrotView {
     this.requestRender();
   }
 
-  private async render() {
-    const { width, height } = this.canvas;
-    if (width === 0 || height === 0) return;
-
-    // The WebGPU path is async; never let two draws overlap.
-    if (this.drawing) {
-      this.queued = true;
-      return;
-    }
-    this.drawing = true;
-
-    const request: DrawRequest = {
+  /** The current view, as the backend wants it. */
+  private drawRequest(width: number, height: number): DrawRequest {
+    return {
       centerX: this.centerX,
       centerY: this.centerY,
       unitsPerPixel: this.unitsPerPixel(),
@@ -262,6 +253,25 @@ export class MandelbrotView {
       colors: this.opts.colors(),
       interacting: this.quality !== 1,
     };
+  }
+
+  private async render() {
+    const { width, height } = this.canvas;
+    if (width === 0 || height === 0) return;
+
+    // The WebGPU path is async; never let two draws overlap.
+    if (this.drawing) {
+      this.queued = true;
+      // A frame is already being computed for a view the user has since moved
+      // past, so the screen is showing the wrong place until it lands. Shifting
+      // the last finished frame into position costs a single blit and keeps the
+      // gesture tracking the pointer instead of lurching a frame behind.
+      this.backend.reproject?.(this.drawRequest(width, height));
+      return;
+    }
+    this.drawing = true;
+
+    const request = this.drawRequest(width, height);
 
     try {
       const stats = await this.backend.draw(request);

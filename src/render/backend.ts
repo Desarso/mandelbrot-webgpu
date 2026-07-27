@@ -36,5 +36,14 @@ export interface RenderBackend {
   /** Deepest span this backend renders correctly. */
   readonly minSpan: number;
   draw(request: DrawRequest): Promise<BackendStats>;
+  /**
+   * Presents the last completed frame under a new view, without iterating
+   * anything. A pan or a zoom moves the picture far more often than it changes
+   * it: the pixels the user is looking at were nearly all computed already,
+   * just at different screen positions. Returns false when there is no frame
+   * to reuse, or when the new view has moved too far for the reuse to mean
+   * anything, in which case the caller should draw normally.
+   */
+  reproject?(request: DrawRequest): boolean;
   dispose(): void;
 }

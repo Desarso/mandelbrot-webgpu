@@ -12,6 +12,9 @@ import bigfixedSource from "../gpu/shaders/bigfixed.wgsl?raw";
 import orbitBindings from "../gpu/shaders/orbit-bindings.wgsl?raw";
 import orbitSource from "../gpu/shaders/orbit.wgsl?raw";
 import perturbationSource from "./perturbation.wgsl?raw";
+
+/** No scaling, no offset: show the frame exactly as rendered. */
+const IDENTITY_XFORM = new Float32Array([1, 1, 0, 0]);
 import { hexToRgb, MAX_STOPS, type ColorSettings } from "../logic/colorSettings";
 import { parseFixed } from "../arithmetic/types";
 import { BASE_STEP, ENTRY_FLOATS, buildBla } from "./bla";
@@ -58,6 +61,10 @@ export interface RenderStats {
   orbitLength: number;
   orbitEscaped: boolean;
   orbitMs: number;
+  /** Time spent building the skip table on the CPU. */
+  tableMs: number;
+  /** Which per-pixel iteration ran. */
+  method: Method;
   renderMs: number;
   /** Reference iterations skipped by linear approximation, per frame. */
   skippedIterations: number;
@@ -71,10 +78,6 @@ export interface RenderStats {
   skipRatio: number;
 }
 
-/**
- * Picks a limb count with enough fractional bits to resolve one pixel, plus a
- * safety margin. `unitsPerPixel` of 1e-40 needs ~133 bits before margin.
- */
 /** Which per-pixel iteration the shader should run. Must match perturbation.wgsl. */
 export const enum Method {
   /** Plain f32 z <- z^2 + c. No reference orbit. */
@@ -113,6 +116,10 @@ export function methodForScale(unitsPerPixel: Decimal): Method {
   return Method.Hdr;
 }
 
+/**
+ * Picks a limb count with enough fractional bits to resolve one pixel, plus a
+ * safety margin. `unitsPerPixel` of 1e-40 needs ~133 bits before margin.
+ */
 export function limbsForScale(unitsPerPixel: Decimal): number {
   const decimals = Math.max(0, -Math.log10(unitsPerPixel.toNumber()));
   const bitsNeeded = decimals * Math.LOG2E * Math.LN10 + 64;
@@ -166,6 +173,16 @@ export class WebGpuRenderer {
 
   private uniformBuffer: GPUBuffer;
   private stopsBuffer: GPUBuffer;
+  private tableMs = 0;
+  /** The view `target` currently holds, or null when it holds nothing. */
+  private lastFrame: {
+    centerX: Decimal;
+    centerY: Decimal;
+    unitsPerPixel: Decimal;
+    width: number;
+    height: number;
+  } | null = null;
+  private xformBuffer: GPUBuffer | null = null;
   private laBuffer: GPUBuffer | null = null;
   private laIndexBuffer: GPUBuffer | null = null;
   private laLevels = 0;
@@ -228,6 +245,8 @@ export class WebGpuRenderer {
       `
 @group(0) @binding(0) var src: texture_2d<f32>;
 @group(0) @binding(1) var smp: sampler;
+/** uv' = uv * xform.xy + xform.zw. Identity is (1, 1, 0, 0). */
+@group(0) @binding(2) var<uniform> xform: vec4<f32>;
 
 struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
 
@@ -245,7 +264,12 @@ fn vs(@builtin(vertex_index) i: u32) -> VsOut {
 
 @fragment
 fn fs(in: VsOut) -> @location(0) vec4<f32> {
-    return textureSample(src, smp, in.uv);
+    let uv = in.uv * xform.xy + xform.zw;
+    // Off the edge of the reused frame there is nothing to show. Dimming it
+    // reads as "not computed yet" rather than as a smear of stretched pixels.
+    let outside = any(uv < vec2<f32>(0.0)) || any(uv > vec2<f32>(1.0));
+    let texel = textureSample(src, smp, clamp(uv, vec2<f32>(0.0), vec2<f32>(1.0)));
+    return select(texel, texel * 0.35, outside);
 }
 `,
       "blit"
@@ -383,6 +407,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
    */
   private async buildApproxTable(request: RenderRequest) {
     const { device } = this.ctx;
+    const started = performance.now();
 
     // Largest |delta| any pixel can have: the half-diagonal of the view.
     const halfDiagonal = request.unitsPerPixel
@@ -396,6 +421,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     if (table.entryCount === 0) {
       this.laLevels = 0;
     }
+    this.tableMs = performance.now() - started;
 
     this.laBuffer?.destroy();
     this.laBuffer = storageBuffer(
@@ -488,6 +514,95 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     this.orbitCapacity = samples;
   }
 
+  /**
+   * Draws `source` to the swap chain with `xform` applied to its texture
+   * coordinates. Both the real frame and a reprojection go through here, so
+   * they cannot drift apart.
+   */
+  private encodeBlit(
+    encoder: GPUCommandEncoder,
+    source: GPUTexture,
+    xform: Float32Array
+  ) {
+    const { device } = this.ctx;
+    if (!this.xformBuffer) {
+      this.xformBuffer = device.createBuffer({
+        label: "blit-xform",
+        size: 16,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      });
+    }
+    device.queue.writeBuffer(this.xformBuffer, 0, xform.buffer as ArrayBuffer);
+
+    const bind = device.createBindGroup({
+      layout: this.blitPipeline!.getBindGroupLayout(0),
+      entries: [
+        { binding: 0, resource: source.createView() },
+        { binding: 1, resource: this.sampler },
+        { binding: 2, resource: { buffer: this.xformBuffer } },
+      ],
+    });
+    const pass = encoder.beginRenderPass({
+      colorAttachments: [
+        {
+          view: this.context.getCurrentTexture().createView(),
+          loadOp: "clear",
+          storeOp: "store",
+          clearValue: { r: 0, g: 0, b: 0, a: 1 },
+        },
+      ],
+    });
+    pass.setPipeline(this.blitPipeline!);
+    pass.setBindGroup(0, bind);
+    pass.draw(4);
+    pass.end();
+  }
+
+  /**
+   * Re-presents the last completed frame under `request`'s view.
+   *
+   * A pixel's colour depends only on the complex point under it, so moving the
+   * view is a coordinate change on a picture we already have. Mapping the new
+   * view's texture coordinates back into the old frame costs one full-screen
+   * triangle -- microseconds against the tens or hundreds of milliseconds a
+   * real frame takes at depth -- and it is exact wherever the two views
+   * overlap and the scale has not changed.
+   *
+   * It is only ever a stand-in: zooming in magnifies the old pixels rather
+   * than resolving new detail, so the caller still has to draw properly once
+   * the gesture settles.
+   */
+  reproject(request: RenderRequest): boolean {
+    const last = this.lastFrame;
+    if (!last || !this.target || !this.blitPipeline) return false;
+    // A resize invalidates the mapping along with the texture behind it.
+    if (last.width !== request.width || last.height !== request.height) return false;
+
+    const ratio = request.unitsPerPixel.div(last.unitsPerPixel).toNumber();
+    // Past a few doublings there is more stretched pixel than picture, and
+    // zooming out far enough leaves the old frame a speck in the middle.
+    if (!Number.isFinite(ratio) || ratio <= 0 || ratio > 8 || ratio < 1 / 64) {
+      return false;
+    }
+
+    // How far the centre moved, in old-frame pixels. Screen y runs downwards
+    // and the imaginary axis upwards, hence the negation.
+    const dx = request.centerX.minus(last.centerX).div(last.unitsPerPixel).toNumber();
+    const dy = last.centerY.minus(request.centerY).div(last.unitsPerPixel).toNumber();
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+    if (Math.abs(dx) > request.width * 4 || Math.abs(dy) > request.height * 4) {
+      return false;
+    }
+
+    const offsetX = 0.5 * (1 - ratio) + dx / request.width;
+    const offsetY = 0.5 * (1 - ratio) + dy / request.height;
+
+    const encoder = this.ctx.device.createCommandEncoder({ label: "reproject" });
+    this.encodeBlit(encoder, this.target, new Float32Array([ratio, ratio, offsetX, offsetY]));
+    this.ctx.device.queue.submit([encoder.finish()]);
+    return true;
+  }
+
   async render(request: RenderRequest): Promise<RenderStats> {
     const { device } = this.ctx;
     if (!this.renderPipeline || !this.blitPipeline) {
@@ -530,7 +645,8 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       this.refEscaped = orbit.escaped;
       this.refValid = true;
       orbitMs = orbit.ms;
-      await this.buildApproxTable(request);
+      this.tableMs = 0;
+      if (method === Method.Hdr) await this.buildApproxTable(request);
     }
 
     const started = performance.now();
@@ -632,27 +748,18 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     );
     pass.end();
 
-    const blitBind = device.createBindGroup({
-      layout: this.blitPipeline.getBindGroupLayout(0),
-      entries: [
-        { binding: 0, resource: this.target!.createView() },
-        { binding: 1, resource: this.sampler },
-      ],
-    });
-    const view = this.context.getCurrentTexture().createView();
-    const draw = encoder.beginRenderPass({
-      colorAttachments: [
-        { view, loadOp: "clear", storeOp: "store", clearValue: { r: 0, g: 0, b: 0, a: 1 } },
-      ],
-    });
-    draw.setPipeline(this.blitPipeline);
-    draw.setBindGroup(0, blitBind);
-    draw.draw(4);
-    draw.end();
-
+    this.encodeBlit(encoder, this.target!, IDENTITY_XFORM);
     device.queue.submit([encoder.finish()]);
     await device.queue.onSubmittedWorkDone();
     const renderMs = performance.now() - started;
+
+    this.lastFrame = {
+      centerX: request.centerX,
+      centerY: request.centerY,
+      unitsPerPixel: request.unitsPerPixel,
+      width: request.width,
+      height: request.height,
+    };
 
     const counters = new Uint32Array(await readBuffer(device, this.statsBuffer, 16));
     const skippedIterations = counters[0];
@@ -665,6 +772,8 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       orbitLength: this.refLength,
       orbitEscaped: this.refEscaped,
       orbitMs,
+      tableMs: this.tableMs,
+      method,
       renderMs,
       skippedIterations,
       approxSteps: counters[1],

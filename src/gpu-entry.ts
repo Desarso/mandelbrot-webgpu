@@ -196,6 +196,8 @@ async function main() {
     `               ${centerY}`,
     `span           ${span}   (zoom ${new Decimal("2.8").div(spanDecimal).toExponential(2)}x)`,
     `precision      ${result.limbs} limbs = ${result.decimalDigits} decimal digits`,
+    `method         ${["direct", "plain f32 delta", "hdr delta"][result.method]}`,
+    `skip table     ${result.tableMs.toFixed(1)}ms to build`,
     `orbit          ${result.orbitLength} samples, escaped=${result.orbitEscaped}, ${result.orbitMs.toFixed(1)}ms`,
     `render         ${result.renderMs.toFixed(1)}ms for ${canvas.width}x${canvas.height}`,
     `approximation  ${(result.skipRatio * 100).toFixed(1)}% of iterations skipped ` +

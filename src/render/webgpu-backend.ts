@@ -40,6 +40,10 @@ export class WebGpuBackend implements RenderBackend {
     };
   }
 
+  reproject(request: DrawRequest): boolean {
+    return this.renderer.reproject(request);
+  }
+
   dispose() {
     // Buffers are owned by the renderer and released with the device.
   }
