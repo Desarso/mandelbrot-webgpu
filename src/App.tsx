@@ -30,10 +30,24 @@ function initialColors(): ColorSettings {
   return (code && decodeColors(code)) || DEFAULT_COLORS;
 }
 
+/** Ceiling on the iteration slider. Deep views legitimately need tens of
+ * thousands: the iteration count needed grows with zoom depth. */
+export const MAX_ITERATIONS = 200000;
+
+/** The slider is logarithmic; linear would make everything below 20k unusable. */
+function sliderToIterations(position: number): number {
+  const value = Math.round(50 * Math.pow(MAX_ITERATIONS / 50, position / 1000));
+  return Math.min(MAX_ITERATIONS, Math.max(50, value));
+}
+
+function iterationsToSlider(value: number): number {
+  return Math.round((1000 * Math.log(value / 50)) / Math.log(MAX_ITERATIONS / 50));
+}
+
 function initialIterations(): number {
   const raw = new URL(window.location.href).searchParams.get("i");
   const value = Number.parseInt(raw ?? "", 10);
-  return Number.isFinite(value) ? Math.min(4000, Math.max(50, value)) : 500;
+  return Number.isFinite(value) ? Math.min(MAX_ITERATIONS, Math.max(50, value)) : 500;
 }
 
 const App: Component = () => {
@@ -47,6 +61,8 @@ const App: Component = () => {
   const [error, setError] = createSignal<string | null>(null);
   const [renderer, setRenderer] = createSignal<MandelbrotView | null>(null);
   const [copied, setCopied] = createSignal(false);
+  const [searching, setSearching] = createSignal(false);
+  const [foundPeriod, setFoundPeriod] = createSignal<string | null>(null);
 
   const view = (): ViewInfo | null => renderer()?.view() ?? null;
 
@@ -68,6 +84,29 @@ const App: Component = () => {
     const stops = colors().stops;
     if (stops.length <= 2) return;
     patch({ stops: stops.filter((_, i) => i !== index) });
+  };
+
+  // Newton on the nucleus equation. It is CPU-bound decimal arithmetic, so
+  // yield a frame first to let the button's pressed state paint.
+  const findMinibrot = () => {
+    setSearching(true);
+    setFoundPeriod(null);
+    setTimeout(() => {
+      const nucleus = renderer()?.findMinibrot();
+      if (nucleus) {
+        // A period-p minibrot needs several multiples of p before its
+        // surroundings resolve; at the default count everything just reads as
+        // interior and the view looks empty.
+        const needed = Math.min(MAX_ITERATIONS, nucleus.period * 8);
+        if (needed > maxIterations()) syncIterations(needed);
+      }
+      setFoundPeriod(
+        nucleus
+          ? `period ${nucleus.period}, size ${nucleus.size.toExponential(2)}`
+          : "no nucleus found near here"
+      );
+      setSearching(false);
+    }, 16);
   };
 
   const copyLink = async () => {
@@ -139,11 +178,11 @@ const App: Component = () => {
                 id="iterations"
                 class={styles.slider}
                 type="range"
-                min="50"
-                max="4000"
-                step="10"
-                value={maxIterations()}
-                onInput={(e) => syncIterations(+e.currentTarget.value)}
+                min="0"
+                max="1000"
+                step="1"
+                value={iterationsToSlider(maxIterations())}
+                onInput={(e) => syncIterations(sliderToIterations(+e.currentTarget.value))}
               />
             </div>
           </section>
@@ -345,6 +384,15 @@ const App: Component = () => {
                   : "starting…"}
               </span>
             </div>
+            <Show when={(view()?.skipRatio ?? 0) > 0}>
+              <div class={styles.readout}>
+                <span>Approx</span>
+                <span>
+                  {((view()!.skipRatio) * 100).toFixed(1)}% skipped ·{" "}
+                  {view()!.rebases.toLocaleString()} rebases
+                </span>
+              </div>
+            </Show>
             <div class={styles.readout}>
               <span>Timing</span>
               <span>
@@ -366,6 +414,18 @@ const App: Component = () => {
                 {copied() ? "Copied" : "Copy link"}
               </button>
             </div>
+            <button
+              class={styles.button}
+              style={{ "margin-top": "6px" }}
+              disabled={searching() || !renderer()}
+              onClick={findMinibrot}
+              title="Newton-solve for a nearby minibrot centre and zoom to it"
+            >
+              {searching() ? "Searching…" : "Find minibrot"}
+            </button>
+            <Show when={foundPeriod()}>
+              <p class={styles.hint}>{foundPeriod()}</p>
+            </Show>
             <p class={styles.hint}>
               Drag to pan, scroll to zoom. Press <span class={styles.kbd}>H</span> to
               hide the controls. The URL always holds the current view and colours.

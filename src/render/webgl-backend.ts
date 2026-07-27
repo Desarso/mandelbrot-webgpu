@@ -22,7 +22,7 @@ void main() {
 `;
 
 const ORBIT_TEXTURE_WIDTH = 1024;
-const MAX_REF_ITER = 16384;
+const MAX_REF_ITER = 200000;
 
 const UNIFORM_NAMES = [
   "u_maxIterations",
@@ -140,6 +140,9 @@ export class WebGlBackend implements RenderBackend {
       orbitLength: this.refLength,
       orbitMs,
       renderMs: performance.now() - started - orbitMs,
+      // The WebGL path has no approximation and no counters.
+      skipRatio: 0,
+      rebases: 0,
     };
   }
 

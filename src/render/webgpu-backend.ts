@@ -35,6 +35,8 @@ export class WebGpuBackend implements RenderBackend {
       orbitLength: stats.orbitLength,
       orbitMs: stats.orbitMs,
       renderMs: stats.renderMs,
+      skipRatio: stats.skipRatio,
+      rebases: stats.rebases,
     };
   }
 

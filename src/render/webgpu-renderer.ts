@@ -14,6 +14,7 @@ import orbitSource from "../gpu/shaders/orbit.wgsl?raw";
 import perturbationSource from "./perturbation.wgsl?raw";
 import { hexToRgb, MAX_STOPS, type ColorSettings } from "../logic/colorSettings";
 import { parseFixed } from "../arithmetic/types";
+import { BASE_STEP, buildLinearApprox } from "./linear-approx";
 
 const orbitModule = [orbitBindings, bigfixedSource, orbitSource].join("\n");
 
@@ -36,6 +37,8 @@ export interface RenderRequest {
   height: number;
   maxIterations: number;
   colors: ColorSettings;
+  /** Set false to bypass linear approximation, for A/B comparison. */
+  useApprox?: boolean;
 }
 
 export interface RenderStats {
@@ -45,6 +48,16 @@ export interface RenderStats {
   orbitEscaped: boolean;
   orbitMs: number;
   renderMs: number;
+  /** Reference iterations skipped by linear approximation, per frame. */
+  skippedIterations: number;
+  /** Linear-approximation steps taken. */
+  approxSteps: number;
+  /** Reference rebases — the glitch-avoidance path. */
+  rebases: number;
+  /** Iterations that ran the full perturbation step. */
+  plainIterations: number;
+  /** Fraction of iterations avoided by approximation, 0..1. */
+  skipRatio: number;
 }
 
 /**
@@ -104,6 +117,10 @@ export class WebGpuRenderer {
 
   private uniformBuffer: GPUBuffer;
   private stopsBuffer: GPUBuffer;
+  private laBuffer: GPUBuffer | null = null;
+  private laIndexBuffer: GPUBuffer | null = null;
+  private laLevels = 0;
+  private statsBuffer: GPUBuffer;
   private orbitBuffer: GPUBuffer | null = null;
   private orbitCapacity = 0;
 
@@ -139,6 +156,12 @@ export class WebGpuRenderer {
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.stopsBuffer = storageBuffer(ctx.device, MAX_STOPS * 4, "palette-stops");
+    this.statsBuffer = storageBuffer(
+      ctx.device,
+      4,
+      "render-stats",
+      GPUBufferUsage.COPY_SRC
+    );
   }
 
   async init() {
@@ -301,6 +324,49 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     };
   }
 
+  /**
+   * Builds the linear-approximation table from the freshly generated orbit.
+   *
+   * This is the one place the reduced orbit comes back to the CPU — once per
+   * orbit, not per frame. The table then lets each pixel jump whole ranges of
+   * reference iterations instead of stepping through them.
+   */
+  private async buildApproxTable(request: RenderRequest) {
+    const { device } = this.ctx;
+
+    // Largest |delta| any pixel can have: the half-diagonal of the view.
+    const halfDiagonal = request.unitsPerPixel
+      .times(Math.hypot(request.width, request.height) / 2)
+      .toNumber();
+
+    const samples = await this.debugReadOrbit(this.refLength);
+    const table = buildLinearApprox(samples, this.refLength, halfDiagonal);
+
+    this.laLevels = table.levels;
+    if (table.entryCount === 0) {
+      this.laLevels = 0;
+    }
+
+    this.laBuffer?.destroy();
+    this.laBuffer = storageBuffer(
+      device,
+      Math.max(8, table.data.length),
+      "la-table"
+    );
+    // Copied into a fresh array so its buffer type is concrete for writeBuffer;
+    // this runs once per orbit, not per frame.
+    device.queue.writeBuffer(this.laBuffer, 0, new Float32Array(table.data));
+
+    const index = new Uint32Array(Math.max(2, table.levels * 2));
+    for (let level = 0; level < table.levels; level++) {
+      index[level] = table.levelOffsets[level];
+      index[table.levels + level] = table.levelCounts[level];
+    }
+    this.laIndexBuffer?.destroy();
+    this.laIndexBuffer = storageBuffer(device, index.length, "la-index");
+    device.queue.writeBuffer(this.laIndexBuffer, 0, index);
+  }
+
   private ensureTarget(width: number, height: number) {
     if (this.target && this.targetSize.width === width && this.targetSize.height === height) {
       return;
@@ -392,6 +458,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       this.refEscaped = orbit.escaped;
       this.refValid = true;
       orbitMs = orbit.ms;
+      await this.buildApproxTable(request);
     }
 
     const started = performance.now();
@@ -437,7 +504,10 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     f32[17] = interior[1];
     f32[18] = interior[2];
     u32[19] = Math.max(1, Math.min(MAX_STOPS, colors.stops.length));
+    u32[20] = request.useApprox === false ? 0 : this.laLevels;
+    u32[21] = BASE_STEP;
     device.queue.writeBuffer(this.uniformBuffer, 0, uniforms);
+    device.queue.writeBuffer(this.statsBuffer, 0, new Uint32Array(4));
 
     const bind = device.createBindGroup({
       layout: this.renderPipeline.getBindGroupLayout(0),
@@ -446,6 +516,9 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         { binding: 1, resource: { buffer: this.uniformBuffer } },
         { binding: 2, resource: this.target!.createView() },
         { binding: 3, resource: { buffer: this.stopsBuffer } },
+        { binding: 4, resource: { buffer: this.laBuffer! } },
+        { binding: 5, resource: { buffer: this.laIndexBuffer! } },
+        { binding: 6, resource: { buffer: this.statsBuffer } },
       ],
     });
 
@@ -479,6 +552,12 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
 
     device.queue.submit([encoder.finish()]);
     await device.queue.onSubmittedWorkDone();
+    const renderMs = performance.now() - started;
+
+    const counters = new Uint32Array(await readBuffer(device, this.statsBuffer, 16));
+    const skippedIterations = counters[0];
+    const plainIterations = counters[3];
+    const total = skippedIterations + plainIterations;
 
     return {
       limbs,
@@ -486,7 +565,12 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       orbitLength: this.refLength,
       orbitEscaped: this.refEscaped,
       orbitMs,
-      renderMs: performance.now() - started,
+      renderMs,
+      skippedIterations,
+      approxSteps: counters[1],
+      rebases: counters[2],
+      plainIterations,
+      skipRatio: total > 0 ? skippedIterations / total : 0,
     };
   }
 }

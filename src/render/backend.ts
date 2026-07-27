@@ -18,6 +18,10 @@ export interface BackendStats {
   orbitLength: number;
   orbitMs: number;
   renderMs: number;
+  /** Fraction of per-pixel iterations skipped by linear approximation, 0..1. */
+  skipRatio: number;
+  /** Reference rebases this frame — the glitch-avoidance path. */
+  rebases: number;
 }
 
 export interface RenderBackend {

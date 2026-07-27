@@ -20,6 +20,7 @@ View section of the control panel.
 | Reference orbit | decimal.js on the CPU, uploaded as an `RG32F` texture | arbitrary-precision fixed point, GPU-resident |
 | Per-pixel delta | plain `f32` | mantissa + explicit exponent |
 | Depth limit | span `1e-34` (measured: `1e-34` renders, `1e-36` collapses) | bounded by limb count, not the renderer |
+| Linear approximation | no | yes — 21.7x at 2.8e40x, verified bit-identical |
 | Precision | ~15 digits | 8–256 limbs = 67–2450 decimal digits, chosen from the zoom |
 
 The WebGL depth limit is not the orbit — it is the per-pixel delta underflowing
@@ -50,8 +51,33 @@ never leaves the GPU. Samples are emitted in a reduced HDR format
 around `1e-60` and grows to `O(1)` before escaping — a range no `f32` holds. The
 shader carries it as a mantissa/exponent pair, renormalised each iteration.
 
+**Linear approximation skips most of the work.** While the delta stays far below
+the reference, `dz <- 2*X*dz + dz^2 + d` is linear, so a whole range collapses
+into `dz_{n+m} = A*dz_n + B*d`. Steps are precomputed in levels (8, 16, 32, …
+iterations) and a pixel greedily takes the largest one whose validity radius
+still contains its delta. Measured at 2.8e40x: **21.7x faster, 96.9% of
+iterations skipped, and the image is bit-identical** to the unapproximated
+render. At shallow zoom the deltas are too large to qualify and it correctly
+declines to fire — those views are already fast.
+
+`A` over a 4096-iteration step routinely reaches 10^700, so coefficients and
+radii carry explicit exponents; stored as plain doubles they become `Infinity`
+and every radius turns into `NaN`.
+
 Orbits are cached and reused while the view stays near the point they were built
 at, so panning does not pay for regeneration.
+
+## Finding somewhere worth looking
+
+Hand-zooming past ~1e-30 almost always lands in a smooth region where every
+pixel escapes within an iteration or two of every other — correct, and dull.
+**Find minibrot** runs Newton on `f_p(c) = 0` for the p-th iterate, which
+converges on the centre of a nearby period-p minibrot, then uses the standard
+size estimate to frame it and raises the iteration count to match the period.
+
+Newton converges to the *nearest* nucleus, so depth comes from where you start:
+from a shallow point it lands on a big bulb, from a boundary point at depth it
+reaches minibrots of size 1e-43 and smaller.
 
 ```
 src/
@@ -83,6 +109,11 @@ with timings, plus a live comparison of the reduced orbit against an exact
 BigInt orbit computed in the page. `&p=6` and `&p=7` switch to debug views
 (iteration count / escape flag, and delta magnitudes).
 
+Add **`&verify=1`** to render the same view twice — with and without linear
+approximation — and report the speedup alongside how many sampled pixels
+differ. An approximation that changes the picture is not an approximation, and
+this is what caught two real bugs in it.
+
 Verified against ground truth: at spans `1e-40` and `1e-60` the GPU escape
 counts match a BigInt oracle. Reference orbits match to ~1e-15, the limit of the
 reduced sample format.
@@ -104,9 +135,16 @@ iterations makes deep views collapse to a solid interior colour.
 
 ## Not done
 
-- NTT multiplication. The schoolbook multiplier is `O(n²)`; fine through ~256
-  limbs, which is where the profiles stop.
-- Linear/bilinear approximation, orbit compression, glitch statistics.
+- **NTT multiplication.** The schoolbook multiplier is `O(n²)`; fine through the
+  256-limb top profile (~2450 digits), which is where zoom depth stops being
+  limited by precision and starts being limited by iteration count.
+- **Orbit compression.** Orbits are stored in full: 6 floats per sample, so
+  200k iterations is ~4.8 MB.
+- **Bilinear approximation.** Only the linear form is implemented.
 - Browser matrix beyond Chrome on macOS; device-loss recovery.
-- Finding deep coordinates. There is no minibrot search (Newton), so getting a
-  genuinely interesting view past ~1e-30 means bringing your own coordinate.
+
+Known weakness: at a minibrot nucleus the reference orbit returns to zero every
+period, which forces a rebase each time. After a rebase the delta is `O(1)` and
+too large for any approximation step, so linear approximation stops firing
+exactly at the coordinates **Find minibrot** takes you to. Those views are
+correct but slow.

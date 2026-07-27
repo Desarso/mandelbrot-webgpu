@@ -25,12 +25,23 @@ struct Uniforms {
     smoothShading: u32,
     interior: vec3<f32>,
     stopCount: u32,
+    // Linear approximation: levels of precomputed skips. laLevels == 0 disables.
+    laLevels: u32,
+    laBaseStep: u32,
+    _pad0: u32,
+    _pad1: u32,
 };
 
 @group(0) @binding(0) var<storage, read> orbit: array<f32>;   // hi, lo, exp per component
 @group(0) @binding(1) var<uniform> u: Uniforms;
 @group(0) @binding(2) var output: texture_storage_2d<rgba8unorm, write>;
 @group(0) @binding(3) var<storage, read> stops: array<vec4<f32>>;
+/** Ax, Ay, Ae, Bx, By, Be, radiusLog2, pad — per skip entry. */
+@group(0) @binding(4) var<storage, read> la: array<f32>;
+/** levelOffsets then levelCounts, laLevels each. */
+@group(0) @binding(5) var<storage, read> laIndex: array<u32>;
+/** [0] iterations skipped, [1] LA steps taken, [2] rebases, [3] plain steps. */
+@group(0) @binding(6) var<storage, read_write> stats: array<atomic<u32>>;
 
 const TAU: f32 = 6.283185307179586;
 const ESCAPE_R: f32 = 16.0;
@@ -166,6 +177,76 @@ fn wrapCoordinate(t: f32) -> f32 {
     return fract(t);
 }
 
+// ------------------------------------------------- linear approximation steps
+
+const LA_NEVER: f32 = -1e29;
+const LA_MARGIN_LOG2: f32 = 16.0;
+
+struct Skip {
+    a: Hdr,
+    b: Hdr,
+    radiusLog2: f32,
+};
+
+fn loadSkip(entry: u32) -> Skip {
+    let base = entry * 8u;
+    return Skip(
+        Hdr(vec2<f32>(la[base + 0u], la[base + 1u]), i32(la[base + 2u])),
+        Hdr(vec2<f32>(la[base + 3u], la[base + 4u]), i32(la[base + 5u])),
+        la[base + 6u]
+    );
+}
+
+/// log2 of |v|, for comparing against a step's validity radius.
+fn hdrLog2(v: Hdr) -> f32 {
+    let m = dot(v.m, v.m);
+    if (m == 0.0) { return -1e30; }
+    return f32(v.e) + 0.5 * log2(m);
+}
+
+/**
+ * Largest valid skip starting at iteration n, or 0 if none applies.
+ *
+ * Steps are aligned: a level-L step covers laBaseStep << L iterations and only
+ * starts at multiples of that. Bigger levels are tried first, so a pixel with a
+ * tiny delta jumps thousands of iterations at once.
+ */
+fn takeSkip(at: u32, dz: ptr<function, Hdr>, delta0: Hdr) -> u32 {
+    if (u.laLevels == 0u) { return 0u; }
+    let dzLog2 = hdrLog2(*dz);
+
+    // A level-L step starts only at multiples of laBaseStep << L, so the
+    // highest level that can possibly align here is fixed by the trailing zeros
+    // of at / laBaseStep. Walking down from the top level every time wasted most
+    // of its work on steps that were never aligned to begin with.
+    let unit = at / u.laBaseStep;
+    var level: i32 = i32(u.laLevels) - 1;
+    if (unit != 0u) {
+        level = min(level, i32(countTrailingZeros(unit)));
+    }
+
+    loop {
+        if (level < 0) { break; }
+        let count = laIndex[u.laLevels + u32(level)];
+        let index = unit >> u32(level);
+
+        if (index < count) {
+            let skip = loadSkip(laIndex[u32(level)] + index);
+            // Safety margin: the delta must sit well below the radius, not just
+            // inside it. Right at the boundary the linear map is only as good
+            // as the tolerance, and marginal steps visibly shift escape counts.
+            // Deep views sit tens of orders below the radius, so they lose
+            // nothing; shallow views simply stop taking the marginal steps.
+            if (skip.radiusLog2 > LA_NEVER && dzLog2 + LA_MARGIN_LOG2 <= skip.radiusLog2) {
+                *dz = hdrAdd(hdrMul(skip.a, *dz), hdrMul(skip.b, delta0));
+                return u.laBaseStep << u32(level);
+            }
+        }
+        level = level - 1;
+    }
+    return 0u;
+}
+
 // --------------------------------------------------------------------- entry
 
 @compute @workgroup_size(8, 8)
@@ -189,7 +270,39 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
     var z2: f32 = 0.0;
     var escaped = false;
 
+    var skipped: u32 = 0u;
+    var skips: u32 = 0u;
+    var rebases: u32 = 0u;
+
     while (n < u.maxIterations) {
+        // The skip table describes the reference orbit's own map from index j to
+        // j + span, so it is indexed by refIter, not by n. Keying it on n would
+        // switch approximation off permanently after the first rebase — and at a
+        // minibrot nucleus the orbit returns to zero every period, so every
+        // pixel rebases many times.
+        if ((refIter % u.laBaseStep) == 0u &&
+            refIter + u.laBaseStep <= lastRef &&
+            n + u.laBaseStep <= u.maxIterations) {
+            let span = takeSkip(refIter, &dz, delta0);
+            if (span > 0u) {
+                n = n + span;
+                refIter = refIter + span;
+                skipped = skipped + span;
+                skips = skips + 1u;
+                // Re-evaluate z at the new position before deciding anything.
+                let jumped = hdrAdd(Hdr(refSample(refIter), 0), dz);
+                z = hdrValue(jumped);
+                z2 = dot(z, z);
+                if (z2 > ESCAPE_R2) { escaped = true; break; }
+                if (hdrLess(jumped, dz) || refIter >= lastRef) {
+                    dz = jumped;
+                    refIter = 0u;
+                    rebases = rebases + 1u;
+                }
+                continue;
+            }
+        }
+
         // dz <- 2*X_k*dz + dz^2 + delta0
         let twoX = 2.0 * refSample(refIter);
         dz = hdrAdd(hdrAdd(hdrMulPlain(dz, twoX), hdrMul(dz, dz)), delta0);
@@ -206,8 +319,15 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (hdrLess(zHdr, dz) || refIter >= lastRef) {
             dz = zHdr;
             refIter = 0u;
+            rebases = rebases + 1u;
         }
     }
+
+    // Per-frame totals. One atomic add per pixel per counter, not per iteration.
+    atomicAdd(&stats[0], skipped);
+    atomicAdd(&stats[1], skips);
+    atomicAdd(&stats[2], rebases);
+    atomicAdd(&stats[3], n - skipped);
 
     // Debug view: red = iterations used, green = escaped.
     if (u.palette == 6u) {

@@ -8,7 +8,8 @@ import Decimal from "decimal.js";
 import { Accessor, createEffect, createSignal, onCleanup, Setter } from "solid-js";
 import { ColorSettings, encodeColors } from "./colorSettings";
 import { decodeView, encodeView } from "./viewCode";
-import type { DrawRequest, RenderBackend } from "../render/backend";
+import { findNucleus, type Nucleus } from "../orbit/nucleus";
+import type { BackendStats, DrawRequest, RenderBackend } from "../render/backend";
 import { WebGlBackend } from "../render/webgl-backend";
 import { WebGpuBackend } from "../render/webgpu-backend";
 
@@ -43,6 +44,8 @@ export interface ViewInfo {
   orbitLength: number;
   orbitMs: number;
   renderMs: number;
+  skipRatio: number;
+  rebases: number;
   atDepthLimit: boolean;
 }
 
@@ -88,6 +91,8 @@ export class MandelbrotView {
       orbitLength: 0,
       orbitMs: 0,
       renderMs: 0,
+      skipRatio: 0,
+      rebases: 0,
       atDepthLimit: false,
     });
     this.view = view;
@@ -118,6 +123,38 @@ export class MandelbrotView {
       backend = new WebGlBackend(canvas);
     }
     return new MandelbrotView(canvas, backend, opts);
+  }
+
+  /**
+   * Jumps to a minibrot nucleus near the current centre.
+   *
+   * Hand-zooming past ~1e-30 nearly always lands in a smooth region where every
+   * pixel escapes at the same iteration. Newton on f_p(c) = 0 finds the centre
+   * of a nearby period-p minibrot instead, and the size estimate says how far
+   * to zoom. Returns the nucleus, or null if Newton did not converge.
+   */
+  findMinibrot(): Nucleus | null {
+    const digits = Math.max(
+      60,
+      Math.ceil(-Math.log10(this.unitsPerPixel().toNumber())) + 30
+    );
+    const nucleus = findNucleus(this.centerX, this.centerY, {
+      maxPeriod: Math.max(2000, Math.round(this.opts.maxIterations())),
+      digits,
+    });
+    if (!nucleus) return null;
+
+    this.centerX = nucleus.centerX;
+    this.centerY = nucleus.centerY;
+    // Frame the minibrot with a little room around it.
+    const span = nucleus.size.times(4);
+    this.spanY = span.lessThan(this.minSpan())
+      ? new Decimal(this.minSpan())
+      : span.greaterThan(MAX_SPAN)
+        ? new Decimal(MAX_SPAN)
+        : span;
+    this.requestRender();
+    return nucleus;
   }
 
   resetView() {
@@ -225,12 +262,7 @@ export class MandelbrotView {
     }
   }
 
-  private publishView(stats: {
-    precision: string;
-    orbitLength: number;
-    orbitMs: number;
-    renderMs: number;
-  }) {
+  private publishView(stats: BackendStats) {
     const digits = Math.max(
       6,
       Math.ceil(-Math.log10(this.unitsPerPixel().toNumber())) + 2
@@ -245,6 +277,8 @@ export class MandelbrotView {
       orbitLength: stats.orbitLength,
       orbitMs: stats.orbitMs,
       renderMs: stats.renderMs,
+      skipRatio: stats.skipRatio,
+      rebases: stats.rebases,
       atDepthLimit: this.spanY.lessThanOrEqualTo(this.minSpan() * 1.001),
     });
 

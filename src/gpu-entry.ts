@@ -12,6 +12,8 @@ const centerY = params.get("cy") ?? "0.131825904205311970493132056385139";
 const span = params.get("span") ?? "1e-8";
 const iterations = Number.parseInt(params.get("i") ?? "1200", 10);
 const palette = Number.parseInt(params.get("p") ?? "1", 10);
+/** `&la=0` disables linear approximation, for A/B comparison. */
+const useApprox = params.get("la") !== "0";
 
 async function main() {
   Decimal.set({ precision: 200 });
@@ -28,7 +30,60 @@ async function main() {
     height: canvas.height,
     maxIterations: iterations,
     colors: { ...DEFAULT_COLORS, palette },
+    useApprox,
   });
+
+  // `&verify=1`: render the same view with and without linear approximation and
+  // report how far apart the images are. An approximation that changes the
+  // picture is not an approximation, it is a bug.
+  if (params.get("verify") === "1") {
+    const points: [number, number][] = [];
+    for (let y = 8; y < canvas.height; y += 17) {
+      for (let x = 8; x < canvas.width; x += 19) points.push([x, y]);
+    }
+
+    const withApprox = await renderer.debugReadPixels(points);
+    const approxStats = result;
+
+    const plain = await renderer.render({
+      centerX: new Decimal(centerX),
+      centerY: new Decimal(centerY),
+      unitsPerPixel: spanDecimal.div(canvas.height),
+      width: canvas.width,
+      height: canvas.height,
+      maxIterations: iterations,
+      colors: { ...DEFAULT_COLORS, palette },
+      useApprox: false,
+    });
+    const withoutApprox = await renderer.debugReadPixels(points);
+
+    let differing = 0;
+    let worstChannel = 0;
+    for (let i = 0; i < points.length; i++) {
+      let delta = 0;
+      for (let ch = 0; ch < 3; ch++) {
+        delta = Math.max(delta, Math.abs(withApprox[i][ch] - withoutApprox[i][ch]));
+      }
+      if (delta > 0) differing++;
+      worstChannel = Math.max(worstChannel, delta);
+    }
+
+    stats.textContent = [
+      `span           ${span}   (zoom ${new Decimal("2.8").div(spanDecimal).toExponential(2)}x)`,
+      `iterations     ${iterations}`,
+      `sampled        ${points.length} pixels`,
+      ``,
+      `with LA        ${approxStats.renderMs.toFixed(1)}ms, ${(approxStats.skipRatio * 100).toFixed(1)}% skipped`,
+      `without LA     ${plain.renderMs.toFixed(1)}ms`,
+      `speedup        ${(plain.renderMs / approxStats.renderMs).toFixed(1)}x`,
+      ``,
+      `pixels differing  ${differing} / ${points.length}`,
+      `worst channel     ${worstChannel} / 255`,
+      worstChannel <= 2 ? "MATCH" : "MISMATCH",
+    ].join("\n");
+    console.log("[verify]\n" + stats.textContent);
+    return;
+  }
 
   if (palette === 7) {
     const pts: [number, number][] = [[360, 240], [560, 240], [700, 240], [20, 240]];
@@ -125,6 +180,9 @@ async function main() {
     `precision      ${result.limbs} limbs = ${result.decimalDigits} decimal digits`,
     `orbit          ${result.orbitLength} samples, escaped=${result.orbitEscaped}, ${result.orbitMs.toFixed(1)}ms`,
     `render         ${result.renderMs.toFixed(1)}ms for ${canvas.width}x${canvas.height}`,
+    `approximation  ${(result.skipRatio * 100).toFixed(1)}% of iterations skipped ` +
+      `(${result.approxSteps.toLocaleString()} steps, ${result.skippedIterations.toLocaleString()} iterations)`,
+    `rebases        ${result.rebases.toLocaleString()}`,
     `orbit check    (gpu reduced samples vs exact BigInt)`,
     ...lines,
   ].join("\n");
