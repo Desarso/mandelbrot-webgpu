@@ -53,8 +53,12 @@ export interface ColorSettings {
 }
 
 export const DEFAULT_COLORS: ColorSettings = {
-  mode: 1,
-  palette: 5,
+  // Iteration bands by default: one evaluation per pixel, no supersampling.
+  // Distance estimation costs three evaluations per sample (centre plus two
+  // neighbours for the gradient) times the supersample grid, so it is a
+  // deliberate opt-in for stills rather than the everyday mode.
+  mode: 0,
+  palette: 1,
   cycle: 64,
   offset: 0,
   smooth: true,
@@ -72,7 +76,7 @@ export const DEFAULT_COLORS: ColorSettings = {
   diffuseStrength: 0.9,
   specularStrength: 0.25,
   slopeLighting: true,
-  supersample: 2,
+  supersample: 1,
   gamma: 2.2,
 };
 

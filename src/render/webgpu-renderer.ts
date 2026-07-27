@@ -14,7 +14,7 @@ import orbitSource from "../gpu/shaders/orbit.wgsl?raw";
 import perturbationSource from "./perturbation.wgsl?raw";
 import { hexToRgb, MAX_STOPS, type ColorSettings } from "../logic/colorSettings";
 import { parseFixed } from "../arithmetic/types";
-import { BASE_STEP, buildLinearApprox } from "./linear-approx";
+import { BASE_STEP, buildBla } from "./bla";
 
 const orbitModule = [orbitBindings, bigfixedSource, orbitSource].join("\n");
 
@@ -359,7 +359,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       .toNumber();
 
     const samples = await this.debugReadOrbit(this.refLength);
-    const table = buildLinearApprox(samples, this.refLength, halfDiagonal);
+    const table = buildBla(samples, this.refLength, halfDiagonal);
 
     this.laLevels = table.levels;
     if (table.entryCount === 0) {

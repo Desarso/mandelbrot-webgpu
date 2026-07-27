@@ -192,21 +192,57 @@ fn wrapCoordinate(t: f32) -> f32 {
 // ------------------------------------------------- linear approximation steps
 
 const LA_NEVER: f32 = -1e29;
-const LA_MARGIN_LOG2: f32 = 16.0;
+/**
+ * Safety margin, in log2, between a pixel's delta and a step's stated radius.
+ *
+ * At the radius itself the truncation error is only as small as the tolerance,
+ * and marginal steps visibly shift escape counts. The margin is a pure win at
+ * depth — deltas there sit tens of orders below any radius — and simply stops
+ * shallow views taking the borderline steps they gain nothing from.
+ */
+const LA_MARGIN_LOG2: f32 = 24.0;
 
+/**
+ * A precomputed skip: the range's map truncated to second order,
+ * `w_out = A*w + B*d + C*w^2 + D*w*d + E*d^2`, plus the entry radius it holds
+ * for. The second-order terms are what let the radius be roughly the square
+ * root of the first-order one instead of proportional to it.
+ */
 struct Skip {
     a: Hdr,
     b: Hdr,
+    c: Hdr,
+    d: Hdr,
+    e: Hdr,
     radiusLog2: f32,
 };
 
+const SKIP_FLOATS: u32 = 20u;
+
+fn loadCoefficient(base: u32, slot: u32) -> Hdr {
+    let at = base + slot * 3u;
+    return Hdr(vec2<f32>(la[at], la[at + 1u]), i32(la[at + 2u]));
+}
+
 fn loadSkip(entry: u32) -> Skip {
-    let base = entry * 8u;
+    let base = entry * SKIP_FLOATS;
     return Skip(
-        Hdr(vec2<f32>(la[base + 0u], la[base + 1u]), i32(la[base + 2u])),
-        Hdr(vec2<f32>(la[base + 3u], la[base + 4u]), i32(la[base + 5u])),
-        la[base + 6u]
+        loadCoefficient(base, 0u),
+        loadCoefficient(base, 1u),
+        loadCoefficient(base, 2u),
+        loadCoefficient(base, 3u),
+        loadCoefficient(base, 4u),
+        la[base + 15u]
     );
+}
+
+/// Applies the truncated polynomial.
+fn applySkip(skip: Skip, w: Hdr, d: Hdr) -> Hdr {
+    var out = hdrAdd(hdrMul(skip.a, w), hdrMul(skip.b, d));
+    out = hdrAdd(out, hdrMul(skip.c, hdrMul(w, w)));
+    out = hdrAdd(out, hdrMul(skip.d, hdrMul(w, d)));
+    out = hdrAdd(out, hdrMul(skip.e, hdrMul(d, d)));
+    return out;
 }
 
 /// log2 of |v|, for comparing against a step's validity radius.
@@ -256,7 +292,7 @@ fn takeSkip(
             // Deep views sit tens of orders below the radius, so they lose
             // nothing; shallow views simply stop taking the marginal steps.
             if (skip.radiusLog2 > LA_NEVER && dzLog2 + LA_MARGIN_LOG2 <= skip.radiusLog2) {
-                *dz = hdrAdd(hdrMul(skip.a, *dz), hdrMul(skip.b, delta0));
+                *dz = applySkip(skip, *dz, delta0);
                 // The orbit derivative obeys the same linear recurrence with
                 // d = 1, so the very same A and B advance it over the range.
                 if (withDerivative) {
