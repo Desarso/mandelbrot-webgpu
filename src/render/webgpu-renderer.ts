@@ -223,6 +223,8 @@ export class WebGpuRenderer {
     height: number;
   } | null = null;
   private xformBuffer: GPUBuffer | null = null;
+  private history: GPUTexture | null = null;
+  private historyValid = false;
   private abortRequested = false;
   private shadePipeline: GPUComputePipeline | null = null;
   private bindLayout: GPUBindGroupLayout | null = null;
@@ -560,6 +562,17 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         GPUTextureUsage.TEXTURE_BINDING |
         GPUTextureUsage.COPY_SRC,
     });
+    // Only ever holds whole frames. `target` can be caught mid-update -- half
+    // the bands from the new view, half from the old -- and reprojecting that
+    // puts the seam on screen.
+    this.history?.destroy();
+    this.history = this.ctx.device.createTexture({
+      label: "last-complete-frame",
+      size: { width, height },
+      format: "rgba8unorm",
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+    });
+    this.historyValid = false;
     this.targetSize = { width, height };
   }
 
@@ -714,7 +727,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
 
   reproject(request: RenderRequest): boolean {
     const last = this.lastFrame;
-    if (!last || !this.target || !this.blitPipeline) return false;
+    if (!last || !this.history || !this.historyValid || !this.blitPipeline) return false;
     // A resize invalidates the mapping along with the texture behind it.
     if (last.width !== request.width || last.height !== request.height) return false;
 
@@ -738,7 +751,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     const offsetY = 0.5 * (1 - ratio) + dy / request.height;
 
     const encoder = this.ctx.device.createCommandEncoder({ label: "reproject" });
-    this.encodeBlit(encoder, this.target, new Float32Array([ratio, ratio, offsetX, offsetY]));
+    this.encodeBlit(encoder, this.history, new Float32Array([ratio, ratio, offsetX, offsetY]));
     this.ctx.device.queue.submit([encoder.finish()]);
     return true;
   }
@@ -952,8 +965,10 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     this.fieldKey = completed ? fieldKey : "";
 
     // Shading is cheap enough to do in one go, and it has to run even when the
-    // field was reused -- that is the entire point of keeping it.
-    {
+    // field was reused -- that is the entire point of keeping it. An abandoned
+    // frame is the exception: its field is half one view and half another, and
+    // shading that would draw the seam. Show the last whole frame instead.
+    if (completed) {
       const encoder = device.createCommandEncoder({ label: "shade" });
       const pass = encoder.beginComputePass();
       pass.setPipeline(this.shadePipeline!);
@@ -964,25 +979,31 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       );
       pass.end();
       this.encodeBlit(encoder, this.target!, IDENTITY_XFORM);
+      encoder.copyTextureToTexture(
+        { texture: this.target! },
+        { texture: this.history! },
+        { width: request.width, height: request.height }
+      );
       device.queue.submit([encoder.finish()]);
+      this.historyValid = true;
     }
 
     await device.queue.onSubmittedWorkDone();
     this.abortRequested = false;
     const renderMs = performance.now() - started;
 
-    // An abandoned frame leaves the target holding bands from two different
-    // views, which is not a picture of anywhere. Reprojecting it would put
-    // that seam on screen, so drop it until a whole frame lands.
-    this.lastFrame = completed
-      ? {
-          centerX: request.centerX,
-          centerY: request.centerY,
-          unitsPerPixel: request.unitsPerPixel,
-          width: request.width,
-          height: request.height,
-        }
-      : null;
+    // Only a finished frame updates this. An abandoned one leaves both the
+    // history texture and this description alone, so reprojection keeps
+    // working off the last whole frame for the rest of the gesture.
+    if (completed) {
+      this.lastFrame = {
+        centerX: request.centerX,
+        centerY: request.centerY,
+        unitsPerPixel: request.unitsPerPixel,
+        width: request.width,
+        height: request.height,
+      };
+    }
 
     const counters = new Uint32Array(await readBuffer(device, this.statsBuffer, 16));
     const skippedIterations = counters[0];
