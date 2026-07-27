@@ -70,9 +70,15 @@ fn hdrZero() -> Hdr { return Hdr(vec2<f32>(0.0), 0); }
 
 fn hdrNorm(a: Hdr) -> Hdr {
     let mx = max(abs(a.m.x), abs(a.m.y));
-    if (mx == 0.0 || mx != mx) { return hdrZero(); }
+    if (mx == 0.0 || mx != mx || mx > 3.0e38) { return hdrZero(); }
     let shift = i32(floor(log2(mx)));
-    return Hdr(a.m * exp2(f32(-shift)), a.e + shift);
+
+    // Rescale in two halves. A single exp2(-shift) overflows f32 as soon as
+    // the mantissa drops below 2^-128, which happens whenever the reference
+    // orbit passes near zero — every period at a minibrot nucleus. The
+    // resulting Infinity destroyed the delta and the pixel could never escape.
+    let half = exp2(f32(-shift) * 0.5);
+    return Hdr(a.m * half * half, a.e + shift);
 }
 
 fn hdrAdd(a: Hdr, b: Hdr) -> Hdr {
@@ -324,6 +330,10 @@ struct Sample {
     skipped: u32,
     skips: u32,
     rebases: u32,
+    /// log2 |delta| when the loop ended, for diagnostics.
+    dzLog2: f32,
+    /// Final reference index, for diagnostics.
+    refIter: u32,
 };
 
 const HDR_ONE = Hdr(vec2<f32>(1.0, 0.0), 0);
@@ -397,7 +407,8 @@ fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
     var logDeriv = 0.0;
     if (wantDerivative) { logDeriv = hdrLog2(deriv); }
 
-    return Sample(escaped, n, z, z2, logDeriv, skipped, skips, rebases);
+    return Sample(escaped, n, z, z2, logDeriv, skipped, skips, rebases,
+                  hdrLog2(dz), refIter);
 }
 
 // --------------------------------------------------- distance-estimation field
@@ -522,8 +533,9 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
                 textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)), vec4<f32>(
                     f32(centre.n) / f32(max(u.maxIterations, 1u)),
                     select(0.0, 1.0, centre.escaped),
-                    f32(centre.z2) / 512.0,
-                    1.0
+                    // log2|dz| mapped from [-300, 44] into 0..1.
+                    clamp((centre.dzLog2 + 300.0) / 344.0, 0.0, 1.0),
+                    clamp(f32(centre.rebases) / 64.0, 0.0, 1.0)
                 ));
                 return;
             }
