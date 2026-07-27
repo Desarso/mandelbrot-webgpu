@@ -472,3 +472,120 @@
   text-align: center;
   color: #ff9a9a;
 }
+
+/* ---------------------------------------------------------------- tabs */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  margin: 12px 0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: rgba(255, 255, 255, 0.6);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.tab:hover { color: #fff; }
+
+.tabActive {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------- presets */
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+.preset {
+  position: relative;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  font: inherit;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.preset:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.preset span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+.gradientPreview {
+  height: 14px;
+  margin-top: 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ----------------------------------------------------------- locations */
+
+.locations {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.location {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8ecf4;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.location:hover { background: rgba(255, 255, 255, 0.13); }
+
+.locationName {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.locationBlurb {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.35;
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

@@ -28,6 +28,12 @@ const LIMB_PROFILES = [8, 16, 32, 64, 128, 256] as const;
  */
 const ORBIT_BATCH = 512;
 
+/**
+ * Dispatches encoded into one submission. Bounded so a single submission stays
+ * short enough not to trip a device watchdog on a slow GPU.
+ */
+const DISPATCHES_PER_SUBMIT = 24;
+
 export interface RenderRequest {
   centerX: Decimal;
   centerY: Decimal;
@@ -39,6 +45,9 @@ export interface RenderRequest {
   colors: ColorSettings;
   /** Set false to bypass linear approximation, for A/B comparison. */
   useApprox?: boolean;
+  /** True while panning or zooming: reuse the reference orbit rather than
+   * rebuilding it, which is the main source of stutter during a gesture. */
+  interacting?: boolean;
 }
 
 export interface RenderStats {
@@ -152,7 +161,7 @@ export class WebGpuRenderer {
       minFilter: "linear",
     });
     this.uniformBuffer = ctx.device.createBuffer({
-      size: 128,
+      size: 160,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.stopsBuffer = storageBuffer(ctx.device, MAX_STOPS * 4, "palette-stops");
@@ -286,30 +295,40 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     // The shader emits at `startIndex + iter + 1`, so startIndex must be the
     // index of the last sample already written, i.e. sampleCount - 1. Passing
     // the count itself skips one sample per batch and shifts all the rest.
+    // Sample 0 (z = 0) is written by the CPU, so the shader resumes from 1.
+    device.queue.writeBuffer(status, 0, new Uint32Array([1, 0, 0, 0]));
+    device.queue.writeBuffer(
+      params,
+      0,
+      new Uint32Array([ORBIT_BATCH, 0, maxSamples, 0])
+    );
+
     let sampleCount = 1;
     let escaped = false;
 
     while (sampleCount - 1 < request.maxIterations) {
-      const done = sampleCount - 1;
-      const iterations = Math.min(ORBIT_BATCH, request.maxIterations - done);
-      device.queue.writeBuffer(
-        params,
-        0,
-        new Uint32Array([iterations, done, maxSamples, 0])
+      const remaining = request.maxIterations - (sampleCount - 1);
+      const dispatches = Math.min(
+        DISPATCHES_PER_SUBMIT,
+        Math.max(1, Math.ceil(remaining / ORBIT_BATCH))
       );
 
+      // Many dispatches per submission. Each readback is a full pipeline
+      // flush, and one per 512 iterations meant hundreds of stalls on a deep
+      // view — that is what made the page freeze. The shader resumes from the
+      // status buffer, so a whole run can be encoded at once.
       const encoder = device.createCommandEncoder();
       const pass = encoder.beginComputePass();
       pass.setPipeline(pipeline);
       pass.setBindGroup(0, bind);
-      pass.dispatchWorkgroups(1);
+      for (let i = 0; i < dispatches; i++) pass.dispatchWorkgroups(1);
       pass.end();
       device.queue.submit([encoder.finish()]);
 
       // Only the 4-word status comes back; the big state never leaves the GPU.
       const raw = new Uint32Array(await readBuffer(device, status, 16));
       if (raw[0] <= sampleCount) break; // no progress: escaped or done
-      sampleCount = raw[0];
+      sampleCount = Math.min(raw[0], maxSamples);
       if (raw[1] === 1) {
         escaped = true;
         break;
@@ -447,8 +466,13 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       request.maxIterations > this.refIterations ||
       drift.greaterThan(halfSpan.times(0.5));
 
+    // Mid-gesture, keep whatever reference we have. Perturbation stays exact
+    // with a stale reference — it just rebases more — and rebuilding costs tens
+    // to hundreds of milliseconds, which is exactly the zoom stutter.
+    const canRebuild = !request.interacting || !this.refValid;
+
     let orbitMs = 0;
-    if (stale) {
+    if (stale && canRebuild) {
       this.refX = request.centerX;
       this.refY = request.centerY;
       const orbit = await this.generateOrbit(request, limbs);
@@ -478,8 +502,9 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     });
     device.queue.writeBuffer(this.stopsBuffer, 0, stopData);
 
-    // std140-ish layout matching the Uniforms struct.
-    const uniforms = new ArrayBuffer(128);
+    // Layout must match the Uniforms struct in perturbation.wgsl. vec3 members
+    // align to 16 bytes, which is what the gaps below are for.
+    const uniforms = new ArrayBuffer(160);
     const f32 = new Float32Array(uniforms);
     const i32 = new Int32Array(uniforms);
     const u32 = new Uint32Array(uniforms);
@@ -498,7 +523,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     u32[12] = colors.mapping;
     u32[13] = colors.mirror ? 1 : 0;
     u32[14] = colors.smooth ? 1 : 0;
-    // vec3 must start on a 16-byte boundary.
+    // interior: vec3<f32> aligns to 16 bytes -> offset 64.
     const interior = hexToRgb(colors.interior);
     f32[16] = interior[0];
     f32[17] = interior[1];
@@ -506,6 +531,22 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     u32[19] = Math.max(1, Math.min(MAX_STOPS, colors.stops.length));
     u32[20] = request.useApprox === false ? 0 : this.laLevels;
     u32[21] = BASE_STEP;
+    u32[22] = colors.mode;
+    f32[23] = colors.colorDensity;
+    f32[24] = colors.colorPhase;
+    f32[25] = colors.slopeDepth;
+    // lightDir: vec3<f32> aligns to 16 bytes -> offset 112.
+    const azimuth = (colors.lightAngle * Math.PI) / 180;
+    const elevation = (colors.lightElevation * Math.PI) / 180;
+    f32[28] = Math.cos(azimuth) * Math.cos(elevation);
+    f32[29] = Math.sin(azimuth) * Math.cos(elevation);
+    f32[30] = Math.sin(elevation);
+    f32[31] = colors.ambientLight;
+    f32[32] = colors.diffuseStrength;
+    f32[33] = colors.specularStrength;
+    u32[34] = colors.slopeLighting ? 1 : 0;
+    u32[35] = Math.max(1, Math.min(3, colors.supersample));
+    f32[36] = 1 / Math.max(1, colors.gamma);
     device.queue.writeBuffer(this.uniformBuffer, 0, uniforms);
     device.queue.writeBuffer(this.statsBuffer, 0, new Uint32Array(4));
 

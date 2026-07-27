@@ -10,6 +10,13 @@ export interface DrawRequest {
   height: number;
   maxIterations: number;
   colors: ColorSettings;
+  /**
+   * True while the user is panning or zooming. Backends should avoid expensive
+   * rebuilds (reference orbit, approximation table) and reuse what they have:
+   * a slightly stale reference is still mathematically exact, just less
+   * efficient, whereas rebuilding mid-gesture is what makes zoom stutter.
+   */
+  interacting?: boolean;
 }
 
 export interface BackendStats {

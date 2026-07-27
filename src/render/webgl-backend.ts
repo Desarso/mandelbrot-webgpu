@@ -164,7 +164,9 @@ export class WebGlBackend implements RenderBackend {
       this.orbitDirty ||
       count > this.refCapacity ||
       drift.greaterThan(halfSpan.times(0.5));
-    if (!stale) return 0;
+    // Rebuilding mid-gesture is the zoom stutter; a stale reference is still
+    // exact, just less efficient.
+    if (!stale || (request.interacting && !this.orbitDirty)) return 0;
 
     const started = performance.now();
     this.refX = request.centerX;

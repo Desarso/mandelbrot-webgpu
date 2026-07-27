@@ -257,7 +257,9 @@ async function checkOrbit(
   seedData.set(parseFixed(centerY, limbs), limbs);
   device.queue.writeBuffer(seed, 0, seedData);
   device.queue.writeBuffer(state, 0, new Uint32Array(limbs * 2));
-  device.queue.writeBuffer(status, 0, new Uint32Array(4));
+  // status[0] is the resume cursor: the shader continues from the last sample
+  // written, and sample 0 (z = 0) is written here.
+  device.queue.writeBuffer(status, 0, new Uint32Array([1, 0, 0, 0]));
   device.queue.writeBuffer(samples, 0, new Float32Array(6));
 
   const bind = device.createBindGroup({
@@ -282,7 +284,7 @@ async function checkOrbit(
     device.queue.writeBuffer(
       params,
       0,
-      new Uint32Array([Math.min(batch, iterations - done), done, maxSamples, 0])
+      new Uint32Array([Math.min(batch, iterations - done), 0, maxSamples, 0])
     );
     const encoder = device.createCommandEncoder();
     const pass = encoder.beginComputePass();

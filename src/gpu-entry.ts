@@ -14,6 +14,18 @@ const iterations = Number.parseInt(params.get("i") ?? "1200", 10);
 const palette = Number.parseInt(params.get("p") ?? "1", 10);
 /** `&la=0` disables linear approximation, for A/B comparison. */
 const useApprox = params.get("la") !== "0";
+const num = (key: string, fallback: number) => {
+  const v = Number.parseFloat(params.get(key) ?? "");
+  return Number.isFinite(v) ? v : fallback;
+};
+const colorOverrides = {
+  mode: num("mode", DEFAULT_COLORS.mode),
+  colorDensity: num("density", DEFAULT_COLORS.colorDensity),
+  slopeDepth: num("slope", DEFAULT_COLORS.slopeDepth),
+  lightAngle: num("light", DEFAULT_COLORS.lightAngle),
+  supersample: num("ss", DEFAULT_COLORS.supersample),
+  slopeLighting: params.get("lighting") !== "0",
+};
 
 async function main() {
   Decimal.set({ precision: 200 });
@@ -29,7 +41,7 @@ async function main() {
     width: canvas.width,
     height: canvas.height,
     maxIterations: iterations,
-    colors: { ...DEFAULT_COLORS, palette },
+    colors: { ...DEFAULT_COLORS, palette, ...colorOverrides },
     useApprox,
   });
 
@@ -52,7 +64,7 @@ async function main() {
       width: canvas.width,
       height: canvas.height,
       maxIterations: iterations,
-      colors: { ...DEFAULT_COLORS, palette },
+      colors: { ...DEFAULT_COLORS, palette, ...colorOverrides },
       useApprox: false,
     });
     const withoutApprox = await renderer.debugReadPixels(points);

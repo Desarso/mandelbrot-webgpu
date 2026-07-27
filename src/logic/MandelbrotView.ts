@@ -157,6 +157,20 @@ export class MandelbrotView {
     return nucleus;
   }
 
+  /** Jumps to a fixed coordinate, e.g. a preset location. */
+  goTo(centerX: string, centerY: string, span: string) {
+    this.centerX = new Decimal(centerX);
+    this.centerY = new Decimal(centerY);
+    const wanted = new Decimal(span);
+    const floor = new Decimal(this.minSpan());
+    this.spanY = wanted.lessThan(floor)
+      ? floor
+      : wanted.greaterThan(MAX_SPAN)
+        ? new Decimal(MAX_SPAN)
+        : wanted;
+    this.requestRender();
+  }
+
   resetView() {
     this.centerX = new Decimal(DEFAULT_CENTER_X);
     this.centerY = new Decimal(DEFAULT_CENTER_Y);
@@ -246,6 +260,7 @@ export class MandelbrotView {
       height,
       maxIterations: Math.round(this.opts.maxIterations()),
       colors: this.opts.colors(),
+      interacting: this.quality !== 1,
     };
 
     try {

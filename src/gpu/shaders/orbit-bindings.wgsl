@@ -5,7 +5,7 @@
 
 struct Params {
     iterations: u32,      // iterations to advance in this dispatch
-    startIndex: u32,      // orbit sample index this dispatch begins at
+    _unusedStartIndex: u32,  // superseded: the shader resumes from status[0]
     maxSamples: u32,      // capacity of the sample buffer
     _pad: u32,
 };

@@ -28,6 +28,18 @@ struct Uniforms {
     // Linear approximation: levels of precomputed skips. laLevels == 0 disables.
     laLevels: u32,
     laBaseStep: u32,
+    // Distance-estimation colouring.
+    mode: u32,              // 0 iteration bands, 1 distance estimation
+    colorDensity: f32,
+    colorPhase: f32,
+    slopeDepth: f32,
+    lightDir: vec3<f32>,    // normalised, z is elevation out of the screen
+    ambientLight: f32,
+    diffuseStrength: f32,
+    specularStrength: f32,
+    slopeLighting: u32,
+    supersample: u32,
+    invGamma: f32,
     _pad0: u32,
     _pad1: u32,
 };
@@ -211,7 +223,13 @@ fn hdrLog2(v: Hdr) -> f32 {
  * starts at multiples of that. Bigger levels are tried first, so a pixel with a
  * tiny delta jumps thousands of iterations at once.
  */
-fn takeSkip(at: u32, dz: ptr<function, Hdr>, delta0: Hdr) -> u32 {
+fn takeSkip(
+    at: u32,
+    dz: ptr<function, Hdr>,
+    deriv: ptr<function, Hdr>,
+    withDerivative: bool,
+    delta0: Hdr
+) -> u32 {
     if (u.laLevels == 0u) { return 0u; }
     let dzLog2 = hdrLog2(*dz);
 
@@ -239,6 +257,11 @@ fn takeSkip(at: u32, dz: ptr<function, Hdr>, delta0: Hdr) -> u32 {
             // nothing; shallow views simply stop taking the marginal steps.
             if (skip.radiusLog2 > LA_NEVER && dzLog2 + LA_MARGIN_LOG2 <= skip.radiusLog2) {
                 *dz = hdrAdd(hdrMul(skip.a, *dz), hdrMul(skip.b, delta0));
+                // The orbit derivative obeys the same linear recurrence with
+                // d = 1, so the very same A and B advance it over the range.
+                if (withDerivative) {
+                    *deriv = hdrAdd(hdrMul(skip.a, *deriv), skip.b);
+                }
                 return u.laBaseStep << u32(level);
             }
         }
@@ -247,22 +270,32 @@ fn takeSkip(at: u32, dz: ptr<function, Hdr>, delta0: Hdr) -> u32 {
     return 0u;
 }
 
-// --------------------------------------------------------------------- entry
+// ------------------------------------------------------------------ iteration
 
-@compute @workgroup_size(8, 8)
-fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let size = vec2<u32>(u32(u.resolution.x), u32(u.resolution.y));
-    if (gid.x >= size.x || gid.y >= size.y) { return; }
+/**
+ * Result of iterating one point.
+ *
+ * `logDeriv` is log2 of |dz/dc| for the *full* orbit, carried in log space
+ * because the derivative reaches astronomical magnitudes at depth — it is the
+ * denominator of the distance estimate, so only its logarithm is ever needed.
+ */
+struct Sample {
+    escaped: bool,
+    n: u32,
+    z: vec2<f32>,
+    z2: f32,
+    logDeriv: f32,
+    skipped: u32,
+    skips: u32,
+    rebases: u32,
+};
 
-    // Pixel offset from the centre, then from the reference point.
-    let pixel = vec2<f32>(f32(gid.x), u.resolution.y - 1.0 - f32(gid.y)) + 0.5;
-    let fromCentre = pixel - 0.5 * u.resolution;
+const HDR_ONE = Hdr(vec2<f32>(1.0, 0.0), 0);
 
-    let pixelDelta = hdrNorm(Hdr(fromCentre * u.scaleMantissa, u.scaleExponent));
-    let centreOffset = hdrNorm(Hdr(u.offsetMantissa, u.offsetExponent));
-    let delta0 = hdrAdd(pixelDelta, centreOffset);
-
+fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
     var dz = hdrZero();
+    // D_{k+1} = 2*z_k*D_k + 1, the derivative of the whole orbit w.r.t. c.
+    var deriv = hdrZero();
     var z = vec2<f32>(0.0);
     var refIter: u32 = 0u;
     let lastRef = max(u.refLength - 1u, 1u);
@@ -283,13 +316,13 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
         if ((refIter % u.laBaseStep) == 0u &&
             refIter + u.laBaseStep <= lastRef &&
             n + u.laBaseStep <= u.maxIterations) {
-            let span = takeSkip(refIter, &dz, delta0);
+            let span = takeSkip(refIter, &dz, &deriv, wantDerivative, delta0);
             if (span > 0u) {
                 n = n + span;
                 refIter = refIter + span;
                 skipped = skipped + span;
                 skips = skips + 1u;
-                // Re-evaluate z at the new position before deciding anything.
+
                 let jumped = hdrAdd(Hdr(refSample(refIter), 0), dz);
                 z = hdrValue(jumped);
                 z2 = dot(z, z);
@@ -306,6 +339,9 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
         // dz <- 2*X_k*dz + dz^2 + delta0
         let twoX = 2.0 * refSample(refIter);
         dz = hdrAdd(hdrAdd(hdrMulPlain(dz, twoX), hdrMul(dz, dz)), delta0);
+        if (wantDerivative) {
+            deriv = hdrAdd(hdrMulPlain(deriv, 2.0 * z), HDR_ONE);
+        }
         refIter = refIter + 1u;
 
         let zHdr = hdrAdd(Hdr(refSample(refIter), 0), dz);
@@ -315,7 +351,6 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
         z2 = dot(z, z);
         if (z2 > ESCAPE_R2) { escaped = true; break; }
 
-        // Rebase when the perturbation outgrows the orbit, or the orbit ends.
         if (hdrLess(zHdr, dz) || refIter >= lastRef) {
             dz = zHdr;
             refIter = 0u;
@@ -323,50 +358,166 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
     }
 
-    // Per-frame totals. One atomic add per pixel per counter, not per iteration.
+    var logDeriv = 0.0;
+    if (wantDerivative) { logDeriv = hdrLog2(deriv); }
+
+    return Sample(escaped, n, z, z2, logDeriv, skipped, skips, rebases);
+}
+
+// --------------------------------------------------- distance-estimation field
+
+/// log2 of one pixel's width in the complex plane.
+fn logPixelSize() -> f32 {
+    return f32(u.scaleExponent) + log2(max(abs(u.scaleMantissa), 1e-30));
+}
+
+/**
+ * Height field: how many octaves the distance to the set sits below one pixel.
+ *
+ * distance = 0.5 * |z| * ln|z| / |dz/dc|, normalised against the pixel size so
+ * the banding stays the same visual scale at any zoom. Everything is done in
+ * log2: the derivative alone can reach 10^700 at depth.
+ */
+fn heightOf(s: Sample) -> f32 {
+    if (!s.escaped) { return 0.0; }
+    let magnitude = max(sqrt(s.z2), 1.0000001);
+    let logDistance =
+        -1.0 + log2(magnitude) + log2(max(log(magnitude), 1e-30)) - s.logDeriv;
+    return -(logDistance - logPixelSize());
+}
+
+fn delta0For(pixel: vec2<f32>) -> Hdr {
+    let fromCentre = pixel - 0.5 * u.resolution;
+    let pixelDelta = hdrNorm(Hdr(fromCentre * u.scaleMantissa, u.scaleExponent));
+    let centreOffset = hdrNorm(Hdr(u.offsetMantissa, u.offsetExponent));
+    return hdrAdd(pixelDelta, centreOffset);
+}
+
+// --------------------------------------------------------------------- shading
+
+fn iterationColour(s: Sample) -> vec3<f32> {
+    var mu = f32(s.n);
+    if (u.smoothShading == 1u) {
+        mu = mu - log2(0.5 * log(s.z2) / log(ESCAPE_R));
+    }
+    var cycle = u.colorCycle;
+    if (u.mapping == 1u) {
+        mu = sqrt(max(mu, 0.0));
+        cycle = u.colorCycle / 8.0;
+    } else if (u.mapping == 2u) {
+        mu = log2(max(mu, 1.0));
+        cycle = u.colorCycle / 64.0;
+    }
+    return palette(wrapCoordinate(mu / max(cycle, 0.001) + u.colorOffset));
+}
+
+/// sRGB-ish decode, so palette stops are mixed and lit in linear light.
+fn toLinear(c: vec3<f32>) -> vec3<f32> {
+    return pow(max(c, vec3<f32>(0.0)), vec3<f32>(2.2));
+}
+
+/**
+ * Colour for one sample, with the pseudo-3D relief.
+ *
+ * The normal comes from the screen-space gradient of the height field, which
+ * is a normal-map illusion rather than displaced geometry: nothing moves, the
+ * shading just reads as a surface. The bands flow and fold while zooming
+ * because the distance field itself changes, not because the palette scrolls.
+ */
+fn shade(s: Sample, hCentre: f32, hRight: f32, hUp: f32) -> vec3<f32> {
+    if (!s.escaped) { return toLinear(u.interior); }
+
+    let base = toLinear(palette(fract(hCentre * u.colorDensity + u.colorPhase)));
+    if (u.slopeLighting == 0u) { return base; }
+
+    let dx = hRight - hCentre;
+    let dy = hUp - hCentre;
+    let normal = normalize(vec3<f32>(-dx * u.slopeDepth, -dy * u.slopeDepth, 1.0));
+
+    let diffuse = max(dot(normal, u.lightDir), 0.0);
+    var lit = base * (u.ambientLight + u.diffuseStrength * diffuse);
+
+    if (u.specularStrength > 0.0) {
+        // Blinn-Phong against a viewer straight down the z axis.
+        let halfway = normalize(u.lightDir + vec3<f32>(0.0, 0.0, 1.0));
+        let specular = pow(max(dot(normal, halfway), 0.0), 32.0);
+        lit = lit + vec3<f32>(u.specularStrength * specular);
+    }
+    return lit;
+}
+
+// --------------------------------------------------------------------- entry
+
+@compute @workgroup_size(8, 8)
+fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let size = vec2<u32>(u32(u.resolution.x), u32(u.resolution.y));
+    if (gid.x >= size.x || gid.y >= size.y) { return; }
+
+    let distanceMode = u.mode == 1u;
+    let grid = max(u.supersample, 1u);
+    let step = 1.0 / f32(grid);
+
+    var accumulated = vec3<f32>(0.0);
+    var skipped: u32 = 0u;
+    var skips: u32 = 0u;
+    var rebases: u32 = 0u;
+    var plain: u32 = 0u;
+
+    for (var sy: u32 = 0u; sy < grid; sy = sy + 1u) {
+        for (var sx: u32 = 0u; sx < grid; sx = sx + 1u) {
+            let jitter = vec2<f32>(
+                (f32(sx) + 0.5) * step,
+                (f32(sy) + 0.5) * step
+            );
+            let pixel = vec2<f32>(
+                f32(gid.x),
+                u.resolution.y - 1.0 - f32(gid.y)
+            ) + jitter;
+
+            let centre = iterate(delta0For(pixel), distanceMode);
+            skipped = skipped + centre.skipped;
+            skips = skips + centre.skips;
+            rebases = rebases + centre.rebases;
+            plain = plain + (centre.n - centre.skipped);
+
+            if (!distanceMode) {
+                if (centre.escaped) {
+                    accumulated = accumulated + toLinear(iterationColour(centre));
+                } else {
+                    accumulated = accumulated + toLinear(u.interior);
+                }
+                continue;
+            }
+
+            let hCentre = heightOf(centre);
+            var hRight = hCentre;
+            var hUp = hCentre;
+            if (u.slopeLighting == 1u && centre.escaped) {
+                // Neighbouring samples, re-evaluated rather than reused: the
+                // gradient of the height field is what the lighting needs.
+                let right = iterate(delta0For(pixel + vec2<f32>(1.0, 0.0)), true);
+                let up = iterate(delta0For(pixel + vec2<f32>(0.0, 1.0)), true);
+                skipped = skipped + right.skipped + up.skipped;
+                skips = skips + right.skips + up.skips;
+                rebases = rebases + right.rebases + up.rebases;
+                plain = plain + (right.n - right.skipped) + (up.n - up.skipped);
+                if (right.escaped) { hRight = heightOf(right); }
+                if (up.escaped) { hUp = heightOf(up); }
+            }
+            accumulated = accumulated + shade(centre, hCentre, hRight, hUp);
+        }
+    }
+
+    let samples = f32(grid * grid);
+    let linearColour = accumulated / samples;
+    // Encode out of linear light at the very end.
+    let encoded = pow(max(linearColour, vec3<f32>(0.0)), vec3<f32>(u.invGamma));
+
+    textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)),
+                 vec4<f32>(clamp(encoded, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0));
+
     atomicAdd(&stats[0], skipped);
     atomicAdd(&stats[1], skips);
     atomicAdd(&stats[2], rebases);
-    atomicAdd(&stats[3], n - skipped);
-
-    // Debug view: red = iterations used, green = escaped.
-    if (u.palette == 6u) {
-        textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)), vec4<f32>(
-            f32(n) / f32(max(u.maxIterations, 1u)),
-            select(0.0, 1.0, escaped),
-            f32(refIter) / f32(max(u.refLength, 1u)),
-            1.0
-        ));
-        return;
-    }
-
-    // Debug view: how delta0 and dz evolved.
-    if (u.palette == 7u) {
-        textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)), vec4<f32>(
-            (f32(delta0.e) + 128.0) / 255.0,
-            (f32(dz.e) + 128.0) / 255.0,
-            abs(dz.m.x) * 0.5,
-            f32(lastRef) / 2000.0
-        ));
-        return;
-    }
-
-    var colour = u.interior;
-    if (escaped) {
-        var mu = f32(n);
-        if (u.smoothShading == 1u) {
-            mu = mu - log2(0.5 * log(z2) / log(ESCAPE_R));
-        }
-        var cycle = u.colorCycle;
-        if (u.mapping == 1u) {
-            mu = sqrt(max(mu, 0.0));
-            cycle = u.colorCycle / 8.0;
-        } else if (u.mapping == 2u) {
-            mu = log2(max(mu, 1.0));
-            cycle = u.colorCycle / 64.0;
-        }
-        colour = palette(wrapCoordinate(mu / max(cycle, 0.001) + u.colorOffset));
-    }
-
-    textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)), vec4<f32>(colour, 1.0));
+    atomicAdd(&stats[3], plain);
 }

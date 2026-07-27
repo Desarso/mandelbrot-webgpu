@@ -99,15 +99,29 @@ fn escapedNow() -> bool {
     return x * x + y * y > 4.0;
 }
 
+var<workgroup> resumeAt: u32;
+
 @compute @workgroup_size(256)
 fn advanceOrbit(@builtin(local_invocation_id) local: vec3<u32>) {
     let tid = local.x;
+
+    // Resume from the shared status rather than from params, so many dispatches
+    // can be encoded into a single submission. queue.writeBuffer is applied
+    // before any commands in the submission, so a per-dispatch uniform could
+    // not vary within one encoder — self-sequencing sidesteps that entirely and
+    // turns hundreds of CPU round trips into a handful.
+    if (tid == 0u) {
+        escaped = status[1];
+        resumeAt = status[0] - 1u;   // index of the last sample written
+    }
+    // Uniform load: the early exit below is control flow guarding barriers.
+    if (workgroupUniformLoad(&escaped) == 1u) { return; }
+    let startIndex = workgroupUniformLoad(&resumeAt);
 
     for (var i: u32 = tid; i < LIMBS; i = i + WG) {
         scratch[slot(S_X) + i] = state[i];
         scratch[slot(S_Y) + i] = state[LIMBS + i];
     }
-    if (tid == 0u) { escaped = 0u; }
     sync();
 
     for (var iter: u32 = 0u; iter < params.iterations; iter = iter + 1u) {
@@ -134,7 +148,7 @@ fn advanceOrbit(@builtin(local_invocation_id) local: vec3<u32>) {
                 scratch[slot(S_Y) + i] = scratch[slot(S_XY) + i];
             }
 
-            let index = params.startIndex + iter + 1u;
+            let index = startIndex + iter + 1u;
             if (index < params.maxSamples) {
                 emitSample(slot(S_X), index * 6u + 0u);
                 emitSample(slot(S_Y), index * 6u + 3u);
