@@ -14,6 +14,7 @@ const iterations = Number.parseInt(params.get("i") ?? "1200", 10);
 const palette = Number.parseInt(params.get("p") ?? "1", 10);
 /** `&la=0` disables linear approximation, for A/B comparison. */
 const useApprox = params.get("la") !== "0";
+const tileRows = params.has("tile") ? Number(params.get("tile")) : undefined;
 const forceMethod = params.has("m") ? (Number(params.get("m")) as Method) : undefined;
 const num = (key: string, fallback: number) => {
   const v = Number.parseFloat(params.get(key) ?? "");
@@ -45,7 +46,56 @@ async function main() {
     colors: { ...DEFAULT_COLORS, palette, ...colorOverrides },
     useApprox,
     forceMethod,
+    tileRows,
   });
+
+  // `&bench=1`: time each configuration several times in one page load, with
+  // the reference orbit already built. Comparing single renders across page
+  // loads is hopeless -- orbit time alone varied 292ms to 15s on the same
+  // machine -- so anything claiming one approach is faster has to come from
+  // here.
+  if (params.get("bench") === "1") {
+    const base = {
+      centerX: new Decimal(centerX),
+      centerY: new Decimal(centerY),
+      unitsPerPixel: spanDecimal.div(canvas.height),
+      width: canvas.width,
+      height: canvas.height,
+      maxIterations: iterations,
+      colors: { ...DEFAULT_COLORS, palette, ...colorOverrides },
+    };
+    const runs = Number(params.get("runs") ?? "7");
+    const cases: Array<{ label: string; opts: Partial<typeof base> & Record<string, unknown> }> = [];
+    for (const t of (params.get("tiles") ?? "9999,240,120,60").split(",")) {
+      cases.push({ label: `${Math.ceil(canvas.height / Number(t))} band(s)`, opts: { tileRows: Number(t) } });
+    }
+
+    const rows: string[] = [];
+    for (const { label, opts } of cases) {
+      const times: number[] = [];
+      for (let i = 0; i < runs; i++) {
+        const r = await renderer.render({ ...base, ...opts } as never);
+        times.push(r.renderMs);
+      }
+      times.sort((a, b) => a - b);
+      const median = times[times.length >> 1];
+      rows.push(
+        `${label.padEnd(12)} median ${median.toFixed(1)}ms   ` +
+          `min ${times[0].toFixed(1)}  max ${times[times.length - 1].toFixed(1)}`
+      );
+    }
+
+    stats.textContent = [
+      `adapter        ${ctx.capabilities.adapterInfo}`,
+      `span           ${span}   iterations ${iterations}`,
+      `size           ${canvas.width}x${canvas.height}`,
+      `runs           ${runs} per case, orbit warm, median reported`,
+      ``,
+      ...rows,
+    ].join("\n");
+    console.log("[bench]\n" + stats.textContent);
+    return;
+  }
 
   // `&verify=1`: render the same view with and without linear approximation and
   // report how far apart the images are. An approximation that changes the

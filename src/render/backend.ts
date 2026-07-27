@@ -45,5 +45,10 @@ export interface RenderBackend {
    * anything, in which case the caller should draw normally.
    */
   reproject?(request: DrawRequest): boolean;
+  /**
+   * Asks a draw in flight to give up early. The view has moved, so most of
+   * what it is still computing is for somewhere the user is no longer looking.
+   */
+  abort?(): void;
   dispose(): void;
 }

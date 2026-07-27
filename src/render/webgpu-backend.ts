@@ -40,6 +40,10 @@ export class WebGpuBackend implements RenderBackend {
     };
   }
 
+  abort() {
+    this.renderer.abort();
+  }
+
   reproject(request: DrawRequest): boolean {
     return this.renderer.reproject(request);
   }

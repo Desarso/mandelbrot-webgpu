@@ -265,7 +265,9 @@ export class MandelbrotView {
       // A frame is already being computed for a view the user has since moved
       // past, so the screen is showing the wrong place until it lands. Shifting
       // the last finished frame into position costs a single blit and keeps the
-      // gesture tracking the pointer instead of lurching a frame behind.
+      // gesture tracking the pointer instead of lurching a frame behind, and
+      // the stale frame is told to stop rather than finish work for nowhere.
+      this.backend.abort?.();
       this.backend.reproject?.(this.drawRequest(width, height));
       return;
     }

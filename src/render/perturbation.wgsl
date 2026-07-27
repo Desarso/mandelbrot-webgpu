@@ -44,6 +44,11 @@ struct Uniforms {
     method: u32,
     /// View centre as plain f32, used only by the direct method.
     centre: vec2<f32>,
+    /// First screen row this dispatch covers, for tiled rendering.
+    rowOffset: u32,
+    _pad0: u32,
+    _pad1: u32,
+    _pad2: u32,
 };
 
 @group(0) @binding(0) var<storage, read> orbit: array<f32>;   // hi, lo, exp per component
@@ -604,7 +609,8 @@ fn shade(s: Sample, hCentre: f32, hRight: f32, hUp: f32) -> vec3<f32> {
 @compute @workgroup_size(8, 8)
 fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
     let size = vec2<u32>(u32(u.resolution.x), u32(u.resolution.y));
-    if (gid.x >= size.x || gid.y >= size.y) { return; }
+    let row = gid.y + u.rowOffset;
+    if (gid.x >= size.x || row >= size.y) { return; }
 
     let distanceMode = u.mode == 1u;
     let grid = max(u.supersample, 1u);
@@ -624,7 +630,7 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
             );
             let pixel = vec2<f32>(
                 f32(gid.x),
-                u.resolution.y - 1.0 - f32(gid.y)
+                u.resolution.y - 1.0 - f32(row)
             ) + jitter;
 
             let centre = iterateAny(pixel, distanceMode);
@@ -636,7 +642,7 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
             // mode 2 is a diagnostic view: red = iterations used, green =
             // escaped, blue = where in the reference orbit it ended up.
             if (u.mode == 2u) {
-                textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)), vec4<f32>(
+                textureStore(output, vec2<i32>(i32(gid.x), i32(row)), vec4<f32>(
                     f32(centre.n) / f32(max(u.maxIterations, 1u)),
                     select(0.0, 1.0, centre.escaped),
                     // log2|dz| mapped from [-300, 44] into 0..1.
@@ -680,7 +686,7 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Encode out of linear light at the very end.
     let encoded = pow(max(linearColour, vec3<f32>(0.0)), vec3<f32>(u.invGamma));
 
-    textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)),
+    textureStore(output, vec2<i32>(i32(gid.x), i32(row)),
                  vec4<f32>(clamp(encoded, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0));
 
     atomicAdd(&stats[0], skipped);
