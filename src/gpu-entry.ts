@@ -173,7 +173,7 @@ async function main() {
     const px = await renderer.debugReadPixels(pts);
     diagnostic = px
       .map(([r, g, b, a], i) =>
-        `  pixel ${pts[i][0]},${pts[i][1]}  n≈${Math.round((r / 255) * iterations)}  escaped=${g > 128}  log2|dz|≈${((b / 255) * 344 - 300).toFixed(0)}  rebases≈${Math.round((a / 255) * 64)}`
+        `  pixel ${pts[i][0]},${pts[i][1]}  n≈${Math.round((r / 255) * iterations)}  escaped=${g > 128}  log2|dz|≈${((b / 255) * 344 - 300).toFixed(0)}  rebases≈${Math.round((a / 255) * 255)}`
       )
       .join("\n");
   }

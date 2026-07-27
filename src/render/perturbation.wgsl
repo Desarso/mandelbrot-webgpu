@@ -137,6 +137,19 @@ fn refSample(i: u32) -> vec2<f32> {
     return vec2<f32>(x, y);
 }
 
+/// The reference sample as a *normalised* Hdr.
+///
+/// hdrLess compares exponents before mantissas, and hdrAdd returns an operand
+/// verbatim when the exponents differ by more than 40, so anything that reaches
+/// a comparison must carry its magnitude in the exponent rather than the
+/// mantissa. Wrapping a raw sample as Hdr(x, 0) breaks that: deep inside a
+/// minibrot the reference passes within ~1e-24 of zero every period, and the
+/// unnormalised form claimed exponent 0 there — so |z| < |dz| never fired and
+/// the pixel never rebased.
+fn refHdr(i: u32) -> Hdr {
+    return hdrNorm(Hdr(refSample(i), 0));
+}
+
 // -------------------------------------------------------------------- colour
 
 fn cosPalette(t: f32, a: vec3<f32>, b: vec3<f32>, c: vec3<f32>, d: vec3<f32>) -> vec3<f32> {
@@ -369,7 +382,7 @@ fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
                 skipped = skipped + span;
                 skips = skips + 1u;
 
-                let jumped = hdrAdd(Hdr(refSample(refIter), 0), dz);
+                let jumped = hdrAdd(refHdr(refIter), dz);
                 z = hdrValue(jumped);
                 z2 = dot(z, z);
                 if (z2 > ESCAPE_R2) { escaped = true; break; }
@@ -390,7 +403,7 @@ fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
         }
         refIter = refIter + 1u;
 
-        let zHdr = hdrAdd(Hdr(refSample(refIter), 0), dz);
+        let zHdr = hdrAdd(refHdr(refIter), dz);
         z = hdrValue(zHdr);
         n = n + 1u;
 
@@ -535,7 +548,8 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
                     select(0.0, 1.0, centre.escaped),
                     // log2|dz| mapped from [-300, 44] into 0..1.
                     clamp((centre.dzLog2 + 300.0) / 344.0, 0.0, 1.0),
-                    clamp(f32(centre.rebases) / 64.0, 0.0, 1.0)
+                    // Alpha: rebases, saturating at 255.
+                    clamp(f32(centre.rebases) / 255.0, 0.0, 1.0)
                 ));
                 return;
             }
