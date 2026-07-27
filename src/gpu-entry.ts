@@ -97,37 +97,10 @@ async function main() {
     return;
   }
 
-  if (palette === 7) {
-    const pts: [number, number][] = [[360, 240], [560, 240], [700, 240], [20, 240]];
-    const px = await renderer.debugReadPixels(pts);
-    stats.textContent = px
-      .map(([r, g, b, a], i) => {
-        return `pixel ${pts[i][0]},${pts[i][1]}  delta0.e=${r - 128}  dz.e=${g - 128}  |dz.m.x|≈${((b / 255) * 2).toFixed(3)}  lastRef≈${Math.round((a / 255) * 2000)}  (JS says refLength=${result.orbitLength})`;
-      })
-      .join("\n");
-    console.log("[gpu debug]\n" + stats.textContent);
-    return;
-  }
-
-  if (palette === 6) {
-    const pts: [number, number][] = [
-      [360, 240], [410, 240], [460, 240], [560, 240], [700, 240], [20, 240],
-    ];
-    const px = await renderer.debugReadPixels(pts);
-    stats.textContent = px
-      .map(([r, g, b], i) => {
-        const n = Math.round((r / 255) * iterations);
-        return `pixel ${pts[i][0]},${pts[i][1]}  rgb=${r},${g},${b}  n≈${n}  escaped=${g > 128}  refIter≈${Math.round((b / 255) * result.orbitLength)}`;
-      })
-      .join("\n");
-    console.log("[gpu debug]\n" + stats.textContent);
-    return;
-  }
-
   // Compare the reduced orbit the renderer actually reads against an exact
   // BigInt orbit computed here, so a data problem cannot masquerade as a
   // shader-logic problem.
-  const checkCount = Math.min(iterations, 600);
+  const checkCount = Math.min(iterations, 20000);
   const probe = await renderer.debugReadOrbit(checkCount + 1);
   const bits = 32n * 31n;
   const scaleDec = (t: string) => {
@@ -180,9 +153,30 @@ async function main() {
     }
   }
   lines.push(
-    `  compared ${checkCount} samples (batch size 128), worst error ${worst.toExponential(2)}` +
+    `  compared ${checkCount} samples, worst error ${worst.toExponential(2)}` +
       (firstBad < 0 ? " — all ok" : ` — FIRST BAD at ${firstBad}`)
   );
+
+  // How much of the frame actually escaped. An all-black frame where the
+  // oracle says pixels escape is a rendering bug, not a deep view.
+  const coveragePoints: [number, number][] = [];
+  for (let y = 6; y < canvas.height; y += 13) {
+    for (let x = 6; x < canvas.width; x += 11) coveragePoints.push([x, y]);
+  }
+  const coverage = await renderer.debugReadPixels(coveragePoints);
+  const nonBlack = coverage.filter(([r, g, b]) => r + g + b > 6).length;
+
+  // mode=2 renders the diagnostic view; decode a few pixels from it.
+  let diagnostic = "";
+  if (colorOverrides.mode === 2) {
+    const pts: [number, number][] = [[360, 240], [460, 240], [560, 240], [120, 240]];
+    const px = await renderer.debugReadPixels(pts);
+    diagnostic = px
+      .map(([r, g, b], i) =>
+        `  pixel ${pts[i][0]},${pts[i][1]}  n≈${Math.round((r / 255) * iterations)}  escaped=${g > 128}  |z|²≈${((b / 255) * 512).toFixed(1)}`
+      )
+      .join("\n");
+  }
 
   stats.textContent = [
     `adapter        ${ctx.capabilities.adapterInfo}`,
@@ -195,6 +189,8 @@ async function main() {
     `approximation  ${(result.skipRatio * 100).toFixed(1)}% of iterations skipped ` +
       `(${result.approxSteps.toLocaleString()} steps, ${result.skippedIterations.toLocaleString()} iterations)`,
     `rebases        ${result.rebases.toLocaleString()}`,
+    `coverage       ${nonBlack}/${coveragePoints.length} sampled pixels escaped`,
+    ...(diagnostic ? ["diagnostic", diagnostic] : []),
     `orbit check    (gpu reduced samples vs exact BigInt)`,
     ...lines,
   ].join("\n");

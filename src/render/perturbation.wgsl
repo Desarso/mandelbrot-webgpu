@@ -516,6 +516,18 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
             rebases = rebases + centre.rebases;
             plain = plain + (centre.n - centre.skipped);
 
+            // mode 2 is a diagnostic view: red = iterations used, green =
+            // escaped, blue = where in the reference orbit it ended up.
+            if (u.mode == 2u) {
+                textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)), vec4<f32>(
+                    f32(centre.n) / f32(max(u.maxIterations, 1u)),
+                    select(0.0, 1.0, centre.escaped),
+                    f32(centre.z2) / 512.0,
+                    1.0
+                ));
+                return;
+            }
+
             if (!distanceMode) {
                 if (centre.escaped) {
                     accumulated = accumulated + toLinear(iterationColour(centre));
