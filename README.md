@@ -213,6 +213,34 @@ Genuinely not done:
 - Device loss is detected and reported, but not recovered from: the page has to
   be reloaded.
 
+## Pages and translation
+
+`/` is the renderer, `/about.html` explains what the Mandelbrot set is for a
+general reader, and `/tech.html` explains how it is computed. The two were
+deliberately split: the second is about the renderer, the first is about why
+the thing it renders is worth looking at.
+
+Every user-visible string lives in `src/i18n/strings.ts`. `scripts/translate.mjs`
+feeds those through [BulkTranslatorGo](https://github.com/Desarso/BulkTranslator)
+and writes one JSON file per language into `src/i18n/locales/`, which Vite emits
+as lazy chunks — a visitor downloads one translation, not eighty-two. The
+language comes from `navigator.languages`, and can be overridden with `?lang=`
+or the picker in the Advanced tab; a missing key falls back to English.
+
+```bash
+go install github.com/Desarso/BulkTranslator/BulkTranslatorGo@latest
+node scripts/translate.mjs            # all languages
+node scripts/translate.mjs de ja      # just these
+node scripts/translate.mjs --missing  # only keys added since last run
+```
+
+Two things about that endpoint are worth knowing, because both fail silently.
+It returns only the *first sentence* of anything multi-sentence, so the script
+splits on sentence boundaries and rejoins. And it sometimes drops a language
+from a multi-destination request entirely — one batch of eight came back as
+untranslated English — so the script checks each result against the source and
+refuses to write a locale that looks untranslated.
+
 ## Deployment
 
 A two-stage `Dockerfile` builds with pnpm and serves `dist` with nginx. Coolify's

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05060d" />
+    <meta
+      name="description"
+      content="What the Mandelbrot set is and why it is remarkable: one line of arithmetic that produces infinite detail, an edge that never resolves, and copies of itself all the way down."
+    />
+    <link rel="icon" type="image/svg+xml" href="/src/favicon.svg" />
+    <title>What the Mandelbrot set is</title>
+    <style>
+      :root {
+        --bg: #05060d;
+        --panel: #0d1018;
+        --line: rgba(255, 255, 255, 0.1);
+        --text: #e8ecf4;
+        --dim: rgba(232, 236, 244, 0.66);
+        --accent: #7fd4ee;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 17px/1.75 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 680px; margin: 0 auto; padding: 28px 24px 96px; }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 44px;
+      }
+      .back { color: var(--dim); text-decoration: none; font-size: 14px; }
+      .back:hover { color: var(--text); }
+
+      .langPicker select {
+        appearance: none;
+        padding: 6px 28px 6px 10px;
+        border-radius: 9px;
+        border: 1px solid var(--line);
+        background: var(--panel)
+          url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E")
+          no-repeat right 10px center;
+        color: var(--text);
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        max-width: 190px;
+      }
+      /* The list itself is drawn by the OS, which uses the page colours. */
+      .langPicker option { background: var(--panel); color: var(--text); }
+      html[dir="rtl"] .langPicker select { background-position: left 10px center; padding: 6px 10px 6px 28px; }
+
+      .srOnly {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0 0 0 0);
+        white-space: nowrap; border: 0;
+      }
+
+      h1 {
+        font-size: clamp(30px, 6vw, 44px);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        margin: 0 0 18px;
+      }
+      .lede { font-size: 19px; color: var(--dim); margin: 0 0 8px; }
+
+      h2 {
+        font-size: 21px;
+        letter-spacing: -0.01em;
+        margin: 52px 0 14px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+      p { margin: 0 0 18px; color: var(--dim); }
+      p:last-child { margin-bottom: 0; }
+
+      .ctaRow { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 56px; }
+      .cta {
+        padding: 11px 20px;
+        border-radius: 11px;
+        border: 1px solid var(--line);
+        color: var(--text);
+        text-decoration: none;
+        font-size: 15px;
+      }
+      .cta:hover { border-color: rgba(255, 255, 255, 0.3); }
+      .ctaPrimary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #04121a;
+        font-weight: 600;
+      }
+      .ctaPrimary:hover { filter: brightness(1.08); }
+
+      .machineNote {
+        margin-top: 40px;
+        font-size: 13px;
+        color: rgba(232, 236, 244, 0.42);
+      }
+      .machineNote a { color: inherit; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/about-entry.tsx"></script>
+  </body>
+</html>

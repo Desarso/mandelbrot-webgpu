@@ -21,6 +21,7 @@ export default defineConfig({
       // checks the WGSL arithmetic against the BigInt oracle on real hardware.
       input: {
         main: 'index.html',
+        about: 'about.html',
         selftest: 'selftest.html',
         gpu: 'gpu.html',
         tech: 'tech.html',

@@ -1,4 +1,5 @@
 import {
+  createEffect,
   createSignal,
   For,
   Index,
@@ -20,6 +21,8 @@ import {
 import { LOCATIONS } from "./logic/locations";
 import { Slider, Toggle } from "./ui/Slider";
 import styles from "./App.module.css";
+import { AVAILABLE, applyDocumentLanguage, language, languageName, setLanguage, t } from "./i18n";
+import type { StringKey } from "./i18n/strings";
 
 const PALETTES = [
   { id: 0, name: "Spectrum", swatch: styles.spectrum },
@@ -31,6 +34,21 @@ const PALETTES = [
 ];
 
 const TABS = ["Colour", "Light", "Advanced", "Places"] as const;
+
+/** Tab identity stays English; only what is drawn is translated. */
+const TAB_LABELS: Record<(typeof TABS)[number], StringKey> = {
+  Colour: "ui.tab.colour",
+  Light: "ui.tab.light",
+  Advanced: "ui.tab.advanced",
+  Places: "ui.tab.places",
+};
+
+/**
+ * How many palette presets the Colour tab shows. The rest are one tab away:
+ * sixteen swatches is a wall, and the first few are the ones worth reaching
+ * for without looking.
+ */
+const FEATURED_PRESETS = 6;
 
 /**
  * Ceiling on the iteration slider. Deep views legitimately need tens of
@@ -79,6 +97,7 @@ const App: Component = () => {
   const [panelOpen, setPanelOpen] = createSignal(true);
   const [tab, setTab] = createSignal<(typeof TABS)[number]>("Colour");
   const [error, setError] = createSignal<string | null>(null);
+  createEffect(() => applyDocumentLanguage(language()));
   // Falling back to WebGL2 is silent otherwise, and the difference is large:
   // it runs out of precision around 1e-34 where WebGPU keeps going.
   const [webgpuNoticeDismissed, setWebgpuNoticeDismissed] = createSignal(
@@ -171,26 +190,27 @@ const App: Component = () => {
 
       <Show when={!panelOpen() && !error()}>
         <button class={styles.showButton} onClick={() => setPanelOpen(true)}>
-          Controls
+          {t("ui.controls")}
         </button>
       </Show>
 
-      <a
-        class={`${styles.howButton} ${panelOpen() && !error() ? styles.howButtonShifted : ""}`}
-        href="/tech.html"
+      <div
+        class={`${styles.cornerLinks} ${
+          panelOpen() && !error() ? styles.cornerLinksShifted : ""
+        }`}
       >
-        How it works →
-      </a>
+        <a class={styles.howButton} href="/about.html">
+          {t("ui.whatIsThis")}
+        </a>
+        <a class={styles.howButton} href="/tech.html">
+          {t("ui.howItWorks")} →
+        </a>
+      </div>
 
       <Show when={view()?.backend === "webgl" && !webgpuNoticeDismissed()}>
         <div class={styles.notice}>
-          <strong>Running without WebGPU.</strong> This is the WebGL2 fallback,
-          which runs out of precision around 10<sup>−34</sup>; the WebGPU engine
-          has no fixed limit. If your browser supports WebGPU but it is not
-          being used, open <code>chrome://flags</code> and set{" "}
-          <code>Override software rendering list</code> to Enabled, then
-          restart. <code>chrome://gpu</code> shows why it was refused.
-          <br />
+          <p>{t("ui.notice.noWebgpu")}</p>
+          <p>{t("ui.notice.enableFlag")}</p>
           <button
             class={styles.noticeClose}
             onClick={() => {
@@ -198,7 +218,7 @@ const App: Component = () => {
               setWebgpuNoticeDismissed(true);
             }}
           >
-            Dismiss
+            {t("ui.notice.dismiss")}
           </button>
         </div>
       </Show>
@@ -206,7 +226,7 @@ const App: Component = () => {
       <Show when={panelOpen() && !error()}>
         <aside class={styles.panel}>
           <div class={styles.panelHeader}>
-            <span class={styles.title}>Mandelbrot</span>
+            <span class={styles.title}>{t("ui.title")}</span>
             <button
               class={styles.iconButton}
               title="Hide controls (H)"
@@ -220,7 +240,7 @@ const App: Component = () => {
           <section class={styles.group}>
             <div class={styles.field}>
               <label class={styles.fieldLabel} for="iterations">
-                <span>Max iterations</span>
+                <span>{t("ui.maxIterations")}</span>
                 <span class={styles.value}>{maxIterations().toLocaleString()}</span>
               </label>
               <input
@@ -243,7 +263,7 @@ const App: Component = () => {
                   class={`${styles.tab} ${tab() === name ? styles.tabActive : ""}`}
                   onClick={() => setTab(name)}
                 >
-                  {name}
+                  {t(TAB_LABELS[name])}
                 </button>
               )}
             </For>
@@ -251,24 +271,7 @@ const App: Component = () => {
 
           <Show when={tab() === "Colour"}>
             <section class={styles.group}>
-              <div class={styles.segmented}>
-                <button
-                  class={`${styles.segment} ${!distanceMode() ? styles.segmentActive : ""}`}
-                  onClick={() => patch({ mode: 0 })}
-                  title="Classic escape-count bands"
-                >
-                  Iteration
-                </button>
-                <button
-                  class={`${styles.segment} ${distanceMode() ? styles.segmentActive : ""}`}
-                  onClick={() => patch({ mode: 1 })}
-                  title="Analytic distance estimation — the flowing, embossed look"
-                >
-                  Distance
-                </button>
-              </div>
-
-              <div class={styles.field} style={{ "margin-top": "10px" }}>
+              <div class={styles.field}>
                 <div class={styles.palettes}>
                   <For each={PALETTES}>
                     {(entry) => (
@@ -291,7 +294,7 @@ const App: Component = () => {
                 fallback={
                   <>
                     <Slider
-                      label="Band width"
+                      label={t("ui.bandWidth")}
                       value={colors().cycle}
                       min={4}
                       max={400}
@@ -299,7 +302,7 @@ const App: Component = () => {
                       onInput={(cycle) => patch({ cycle })}
                     />
                     <Slider
-                      label="Shift"
+                      label={t("ui.shift")}
                       value={colors().offset}
                       min={0}
                       max={1}
@@ -311,7 +314,7 @@ const App: Component = () => {
                 }
               >
                 <Slider
-                  label="Colour density"
+                  label={t("ui.colourDensity")}
                   value={colors().colorDensity}
                   min={0.01}
                   max={2}
@@ -320,7 +323,7 @@ const App: Component = () => {
                   onInput={(colorDensity) => patch({ colorDensity })}
                 />
                 <Slider
-                  label="Colour phase"
+                  label={t("ui.colourPhase")}
                   value={colors().colorPhase}
                   min={0}
                   max={1}
@@ -333,9 +336,9 @@ const App: Component = () => {
             </section>
 
             <section class={styles.group}>
-              <div class={styles.groupTitle}>Palette presets</div>
+              <div class={styles.groupTitle}>{t("ui.palettePresets")}</div>
               <div class={styles.presets}>
-                <For each={PRESETS}>
+                <For each={PRESETS.slice(0, FEATURED_PRESETS)}>
                   {(preset) => (
                     <button
                       class={styles.preset}
@@ -356,20 +359,45 @@ const App: Component = () => {
 
           <Show when={tab() === "Advanced"}>
             <section class={styles.group}>
-              <div class={styles.groupTitle}>Band shaping</div>
+              <div class={styles.groupTitle}>Colouring method</div>
+              <div class={styles.segmented}>
+                <button
+                  class={`${styles.segment} ${!distanceMode() ? styles.segmentActive : ""}`}
+                  onClick={() => patch({ mode: 0 })}
+                  title="Classic escape-count bands"
+                >
+                  {t("ui.mode.iteration")}
+                </button>
+                <button
+                  class={`${styles.segment} ${distanceMode() ? styles.segmentActive : ""}`}
+                  onClick={() => patch({ mode: 1 })}
+                  title="Analytic distance estimation — the flowing, embossed look"
+                >
+                  {t("ui.mode.distance")}
+                </button>
+              </div>
+              <p class={styles.hint}>
+                Distance estimation measures how far each pixel is from the set
+                rather than counting iterations. It resolves the thin filaments
+                that banding misses, and it is what the Light tab shades.
+              </p>
+            </section>
+
+            <section class={styles.group}>
+              <div class={styles.groupTitle}>{t("ui.bandShaping")}</div>
               <Toggle
-                label="Smooth shading"
+                label={t("ui.smoothShading")}
                 value={colors().smooth}
                 onChange={(smooth) => patch({ smooth })}
               />
               <Toggle
-                label="Mirror bands"
+                label={t("ui.mirrorBands")}
                 value={colors().mirror}
                 onChange={(mirror) => patch({ mirror })}
               />
               <div class={styles.field}>
                 <div class={styles.fieldLabel}>
-                  <span>Iteration mapping</span>
+                  <span>{t("ui.iterationMapping")}</span>
                 </div>
                 <div class={styles.segmented}>
                   <For each={MAPPINGS}>
@@ -387,7 +415,7 @@ const App: Component = () => {
                 </div>
               </div>
               <div class={`${styles.field} ${styles.toggleRow}`}>
-                <span>Inside colour</span>
+                <span>{t("ui.insideColour")}</span>
                 <input
                   class={styles.colorInput}
                   type="color"
@@ -399,7 +427,7 @@ const App: Component = () => {
             </section>
 
             <section class={styles.group}>
-              <div class={styles.groupTitle}>Custom stops</div>
+              <div class={styles.groupTitle}>{t("ui.customStops")}</div>
               <div class={styles.stops}>
                 {/* Index, not For: For is keyed by item value, so editing a
                     stop replaces its DOM node and the open native colour
@@ -438,6 +466,41 @@ const App: Component = () => {
                 class={styles.gradientPreview}
                 style={{ background: gradientOf(colors().stops) }}
               />
+            </section>
+          </Show>
+
+          <Show when={tab() === "Advanced"}>
+            <section class={styles.group}>
+              <div class={styles.groupTitle}>{t("ui.language")}</div>
+              <select
+                class={styles.select}
+                value={language()}
+                onChange={(e) => setLanguage(e.currentTarget.value)}
+              >
+                <For each={AVAILABLE}>
+                  {(tag) => <option value={tag}>{languageName(tag)}</option>}
+                </For>
+              </select>
+            </section>
+
+            <section class={styles.group}>
+              <div class={styles.groupTitle}>More palettes</div>
+              <div class={styles.presets}>
+                <For each={PRESETS.slice(FEATURED_PRESETS)}>
+                  {(preset) => (
+                    <button
+                      class={styles.preset}
+                      title={preset.name}
+                      style={{ background: gradientOf(preset.stops) }}
+                      onClick={() =>
+                        patch({ stops: [...preset.stops], palette: PALETTE_CUSTOM })
+                      }
+                    >
+                      <span>{preset.name}</span>
+                    </button>
+                  )}
+                </For>
+              </div>
             </section>
           </Show>
 
@@ -515,10 +578,10 @@ const App: Component = () => {
             </section>
 
             <section class={styles.group}>
-              <div class={styles.groupTitle}>Quality</div>
+              <div class={styles.groupTitle}>{t("ui.quality")}</div>
               <div class={styles.field}>
                 <div class={styles.fieldLabel}>
-                  <span>Supersampling</span>
+                  <span>{t("ui.supersampling")}</span>
                   <span class={styles.value}>
                     {colors().supersample}×{colors().supersample}
                   </span>
@@ -539,7 +602,7 @@ const App: Component = () => {
                 </div>
               </div>
               <Slider
-                label="Gamma"
+                label={t("ui.gamma")}
                 value={colors().gamma}
                 min={1}
                 max={3.2}
@@ -547,10 +610,7 @@ const App: Component = () => {
                 digits={2}
                 onInput={(gamma) => patch({ gamma })}
               />
-              <p class={styles.hint}>
-                Palette mixing and lighting run in linear light; gamma is applied
-                once at the end.
-              </p>
+              <p class={styles.hint}>{t("ui.hint.gamma")}</p>
             </section>
           </Show>
 
@@ -590,9 +650,9 @@ const App: Component = () => {
           </Show>
 
           <section class={styles.group}>
-            <div class={styles.groupTitle}>View</div>
+            <div class={styles.groupTitle}>{t("ui.view")}</div>
             <div class={styles.readout}>
-              <span>Zoom</span>
+              <span>{t("ui.zoom")}</span>
               <span>{view() ? formatZoom(view()!.zoom) : "—"}</span>
             </div>
             <div class={styles.readout}>
@@ -604,7 +664,7 @@ const App: Component = () => {
               <span>{view()?.centerY ?? "—"}</span>
             </div>
             <div class={styles.readout}>
-              <span>Engine</span>
+              <span>{t("ui.engine")}</span>
               <span>
                 {view()
                   ? `${view()!.backend === "webgpu" ? "WebGPU" : "WebGL2"} · ${view()!.precision}`
@@ -618,7 +678,7 @@ const App: Component = () => {
               </div>
             </Show>
             <div class={styles.readout}>
-              <span>Timing</span>
+              <span>{t("ui.timing")}</span>
               <span>
                 {view()
                   ? `orbit ${view()!.orbitMs.toFixed(0)}ms · draw ${view()!.renderMs.toFixed(0)}ms`
@@ -626,28 +686,21 @@ const App: Component = () => {
               </span>
             </div>
             <Show when={view()?.atDepthLimit}>
-              <p class={styles.hint}>At this backend's depth limit.</p>
+              <p class={styles.hint}>{t("ui.hint.depthLimit")}</p>
             </Show>
             <Show when={view()?.error}>
-              <p class={styles.hint}>
-                Rendering stopped: {view()!.error}. This usually means the GPU
-                driver gave up on a frame that took too long — lower the
-                iteration count and reload.
-              </p>
+              <p class={styles.hint}>{t("ui.error.stopped")}</p>
             </Show>
 
             <div class={styles.buttonRow}>
               <button class={styles.button} onClick={() => renderer()?.resetView()}>
-                Reset
+                {t("ui.reset")}
               </button>
               <button class={styles.button} onClick={copyLink}>
-                {copied() ? "Copied" : "Copy link"}
+                {copied() ? t("ui.copied") : t("ui.copyLink")}
               </button>
             </div>
-            <p class={styles.hint}>
-              Drag to pan, scroll to zoom. <span class={styles.kbd}>H</span> hides
-              the panel. The URL always holds the full state.
-            </p>
+            <p class={styles.hint}>{t("ui.hint.drag")}</p>
           </section>
         </aside>
       </Show>
