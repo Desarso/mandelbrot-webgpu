@@ -30,7 +30,7 @@ const PALETTES = [
   { id: PALETTE_CUSTOM, name: "Custom", swatch: styles.custom },
 ];
 
-const TABS = ["Colour", "Light", "Places"] as const;
+const TABS = ["Colour", "Light", "Advanced", "Places"] as const;
 
 /**
  * Ceiling on the iteration slider. Deep views legitimately need tens of
@@ -307,35 +307,6 @@ const App: Component = () => {
                       digits={2}
                       onInput={(offset) => patch({ offset })}
                     />
-                    <Toggle
-                      label="Smooth shading"
-                      value={colors().smooth}
-                      onChange={(smooth) => patch({ smooth })}
-                    />
-                    <Toggle
-                      label="Mirror bands"
-                      value={colors().mirror}
-                      onChange={(mirror) => patch({ mirror })}
-                    />
-                    <div class={styles.field}>
-                      <div class={styles.fieldLabel}>
-                        <span>Iteration mapping</span>
-                      </div>
-                      <div class={styles.segmented}>
-                        <For each={MAPPINGS}>
-                          {(name, index) => (
-                            <button
-                              class={`${styles.segment} ${
-                                colors().mapping === index() ? styles.segmentActive : ""
-                              }`}
-                              onClick={() => patch({ mapping: index() })}
-                            >
-                              {name}
-                            </button>
-                          )}
-                        </For>
-                      </div>
-                    </div>
                   </>
                 }
               >
@@ -359,16 +330,6 @@ const App: Component = () => {
                 />
               </Show>
 
-              <div class={`${styles.field} ${styles.toggleRow}`}>
-                <span>Inside colour</span>
-                <input
-                  class={styles.colorInput}
-                  type="color"
-                  aria-label="Inside colour"
-                  value={colors().interior}
-                  onInput={(e) => patch({ interior: e.currentTarget.value })}
-                />
-              </div>
             </section>
 
             <section class={styles.group}>
@@ -388,6 +349,52 @@ const App: Component = () => {
                     </button>
                   )}
                 </For>
+              </div>
+            </section>
+
+          </Show>
+
+          <Show when={tab() === "Advanced"}>
+            <section class={styles.group}>
+              <div class={styles.groupTitle}>Band shaping</div>
+              <Toggle
+                label="Smooth shading"
+                value={colors().smooth}
+                onChange={(smooth) => patch({ smooth })}
+              />
+              <Toggle
+                label="Mirror bands"
+                value={colors().mirror}
+                onChange={(mirror) => patch({ mirror })}
+              />
+              <div class={styles.field}>
+                <div class={styles.fieldLabel}>
+                  <span>Iteration mapping</span>
+                </div>
+                <div class={styles.segmented}>
+                  <For each={MAPPINGS}>
+                    {(name, index) => (
+                      <button
+                        class={`${styles.segment} ${
+                          colors().mapping === index() ? styles.segmentActive : ""
+                        }`}
+                        onClick={() => patch({ mapping: index() })}
+                      >
+                        {name}
+                      </button>
+                    )}
+                  </For>
+                </div>
+              </div>
+              <div class={`${styles.field} ${styles.toggleRow}`}>
+                <span>Inside colour</span>
+                <input
+                  class={styles.colorInput}
+                  type="color"
+                  aria-label="Inside colour"
+                  value={colors().interior}
+                  onInput={(e) => patch({ interior: e.currentTarget.value })}
+                />
               </div>
             </section>
 
