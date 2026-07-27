@@ -213,6 +213,16 @@ export class WebGpuRenderer {
   } | null = null;
   private xformBuffer: GPUBuffer | null = null;
   private abortRequested = false;
+  private shadePipeline: GPUComputePipeline | null = null;
+  private bindLayout: GPUBindGroupLayout | null = null;
+  private fieldBuffer: GPUBuffer | null = null;
+  private fieldCapacity = 0;
+  /**
+   * Identifies what is in `fieldBuffer`. Everything that changes the numbers
+   * belongs here; everything that only changes how they look must not, or
+   * recolouring would recompute the frame it is trying to avoid.
+   */
+  private fieldKey = "";
   /** True when the last render stopped early. */
   private aborted = false;
   private laBuffer: GPUBuffer | null = null;
@@ -266,10 +276,46 @@ export class WebGpuRenderer {
     const { device } = this.ctx;
 
     const renderModule = await compileShader(device, perturbationSource, "perturbation");
-    this.renderPipeline = device.createComputePipeline({
+
+    // Explicit rather than "auto": the two entry points touch different
+    // subsets of the bindings, and an auto layout would derive a different
+    // layout for each, so one bind group could not serve both.
+    const storage = (type: GPUBufferBindingType, binding: number) => ({
+      binding,
+      visibility: GPUShaderStage.COMPUTE,
+      buffer: { type },
+    });
+    const bindLayout = device.createBindGroupLayout({
       label: "perturbation",
-      layout: "auto",
-      compute: { module: renderModule, entryPoint: "render" },
+      entries: [
+        storage("read-only-storage", 0),
+        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
+        {
+          binding: 2,
+          visibility: GPUShaderStage.COMPUTE,
+          storageTexture: { access: "write-only", format: "rgba8unorm" },
+        },
+        storage("read-only-storage", 3),
+        storage("read-only-storage", 4),
+        storage("read-only-storage", 5),
+        storage("storage", 6),
+        storage("storage", 7),
+      ],
+    });
+    this.bindLayout = bindLayout;
+    const pipelineLayout = device.createPipelineLayout({
+      bindGroupLayouts: [bindLayout],
+    });
+
+    this.renderPipeline = device.createComputePipeline({
+      label: "perturbation-compute",
+      layout: pipelineLayout,
+      compute: { module: renderModule, entryPoint: "compute" },
+    });
+    this.shadePipeline = device.createComputePipeline({
+      label: "perturbation-shade",
+      layout: pipelineLayout,
+      compute: { module: renderModule, entryPoint: "shadePass" },
     });
 
     const blitModule = await compileShader(
@@ -534,6 +580,24 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
    * The orbit buffer is bound on every render, so it has to exist even when the
    * direct method never reads it.
    */
+  /** Largest sample grid up to `wanted` whose field fits in one binding. */
+  private affordableGrid(wanted: number, width: number, height: number): number {
+    const limit = this.ctx.device.limits.maxStorageBufferBindingSize;
+    for (let grid = wanted; grid > 1; grid--) {
+      if (width * height * grid * grid * 8 <= limit) return grid;
+    }
+    return 1;
+  }
+
+  private ensureFieldCapacity(samples: number) {
+    if (this.fieldCapacity >= samples && this.fieldBuffer) return;
+    this.fieldBuffer?.destroy();
+    // Two floats per sub-sample.
+    this.fieldBuffer = storageBuffer(this.ctx.device, samples * 2, "sample-field");
+    this.fieldCapacity = samples;
+    this.fieldKey = "";
+  }
+
   private ensureOrbitCapacity(samples: number) {
     if (this.orbitCapacity >= samples && this.orbitBuffer) return;
     this.orbitBuffer?.destroy();
@@ -713,6 +777,15 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     });
     device.queue.writeBuffer(this.stopsBuffer, 0, stopData);
 
+    // The field is two floats per sub-sample, so it grows with the square of
+    // the sample grid: 3x3 at 4K would be a gigabyte and the allocation simply
+    // fails. Drop sample counts that will not fit rather than die trying.
+    const grid = this.affordableGrid(
+      Math.max(1, Math.min(3, colors.supersample)),
+      request.width,
+      request.height
+    );
+
     // Layout must match the Uniforms struct in perturbation.wgsl. vec3 members
     // align to 16 bytes, which is what the gaps below are for.
     const uniforms = new ArrayBuffer(176);
@@ -757,7 +830,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     f32[32] = colors.diffuseStrength;
     f32[33] = colors.specularStrength;
     u32[34] = colors.slopeLighting ? 1 : 0;
-    u32[35] = Math.max(1, Math.min(3, colors.supersample));
+    u32[35] = grid;
     f32[36] = 1 / Math.max(1, colors.gamma);
     u32[37] = method;
     f32[38] = request.centerX.toNumber();
@@ -765,8 +838,27 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     device.queue.writeBuffer(this.uniformBuffer, 0, uniforms);
     device.queue.writeBuffer(this.statsBuffer, 0, new Uint32Array(4));
 
+    // What the field holds is a function of the geometry and the iteration,
+    // not of the palette. Rebuilding it is the whole cost of a frame, so it is
+    // only rebuilt when one of these changes.
+    const fieldKey = [
+      request.centerX.toString(),
+      request.centerY.toString(),
+      request.unitsPerPixel.toString(),
+      request.width,
+      request.height,
+      request.maxIterations,
+      colors.mode,
+      grid,
+      method,
+      this.refLength,
+      u32[20],
+    ].join("|");
+    const fieldStale = fieldKey !== this.fieldKey || this.aborted;
+    this.ensureFieldCapacity(request.width * request.height * grid * grid);
+
     const bind = device.createBindGroup({
-      layout: this.renderPipeline.getBindGroupLayout(0),
+      layout: this.bindLayout!,
       entries: [
         { binding: 0, resource: { buffer: this.orbitBuffer! } },
         { binding: 1, resource: { buffer: this.uniformBuffer } },
@@ -775,6 +867,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         { binding: 4, resource: { buffer: this.laBuffer! } },
         { binding: 5, resource: { buffer: this.laIndexBuffer! } },
         { binding: 6, resource: { buffer: this.statsBuffer } },
+        { binding: 7, resource: { buffer: this.fieldBuffer! } },
       ],
     });
 
@@ -787,7 +880,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     const bandRows = request.tileRows ?? Math.max(TILE_ROWS, Math.ceil(request.height / MAX_TILES));
     let completed = true;
 
-    for (let top = 0; top < request.height; top += bandRows) {
+    for (let top = 0; fieldStale && top < request.height; top += bandRows) {
       const rows = Math.min(bandRows, request.height - top);
       u32[40] = top;
       device.queue.writeBuffer(this.uniformBuffer, 0, uniforms);
@@ -799,7 +892,6 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       pass.dispatchWorkgroups(Math.ceil(request.width / 8), Math.ceil(rows / 8));
       pass.end();
 
-      this.encodeBlit(encoder, this.target!, IDENTITY_XFORM);
       device.queue.submit([encoder.finish()]);
 
       if (top + rows >= request.height) break;
@@ -814,6 +906,24 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         break;
       }
     }
+    this.fieldKey = completed ? fieldKey : "";
+
+    // Shading is cheap enough to do in one go, and it has to run even when the
+    // field was reused -- that is the entire point of keeping it.
+    {
+      const encoder = device.createCommandEncoder({ label: "shade" });
+      const pass = encoder.beginComputePass();
+      pass.setPipeline(this.shadePipeline!);
+      pass.setBindGroup(0, bind);
+      pass.dispatchWorkgroups(
+        Math.ceil(request.width / 8),
+        Math.ceil(request.height / 8)
+      );
+      pass.end();
+      this.encodeBlit(encoder, this.target!, IDENTITY_XFORM);
+      device.queue.submit([encoder.finish()]);
+    }
+
     await device.queue.onSubmittedWorkDone();
     this.abortRequested = false;
     const renderMs = performance.now() - started;

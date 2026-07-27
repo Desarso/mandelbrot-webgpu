@@ -61,6 +61,18 @@ struct Uniforms {
 @group(0) @binding(5) var<storage, read> laIndex: array<u32>;
 /** [0] iterations skipped, [1] LA steps taken, [2] rebases, [3] plain steps. */
 @group(0) @binding(6) var<storage, read_write> stats: array<atomic<u32>>;
+/**
+ * One entry per sub-sample, holding everything the colouring needs and
+ * nothing about how it should look:
+ *
+ *   iteration mode  x = iteration count, negative when the point never
+ *                       escaped; y = |z|^2 at bail-out, for smooth shading
+ *   distance mode   x = height field; y = 1 when the point escaped
+ *
+ * Filling this is the expensive half. Changing a palette, a light angle or a
+ * gamma only re-reads it.
+ */
+@group(0) @binding(7) var<storage, read_write> field: array<vec2<f32>>;
 
 const TAU: f32 = 6.283185307179586;
 const ESCAPE_R: f32 = 16.0;
@@ -553,10 +565,10 @@ fn iterateAny(pixel: vec2<f32>, wantDerivative: bool) -> Sample {
 
 // --------------------------------------------------------------------- shading
 
-fn iterationColour(s: Sample) -> vec3<f32> {
-    var mu = f32(s.n);
+fn iterationColour(n: f32, z2: f32) -> vec3<f32> {
+    var mu = n;
     if (u.smoothShading == 1u) {
-        mu = mu - log2(0.5 * log(s.z2) / log(ESCAPE_R));
+        mu = mu - log2(0.5 * log(z2) / log(ESCAPE_R));
     }
     var cycle = u.colorCycle;
     if (u.mapping == 1u) {
@@ -582,9 +594,7 @@ fn toLinear(c: vec3<f32>) -> vec3<f32> {
  * shading just reads as a surface. The bands flow and fold while zooming
  * because the distance field itself changes, not because the palette scrolls.
  */
-fn shade(s: Sample, hCentre: f32, hRight: f32, hUp: f32) -> vec3<f32> {
-    if (!s.escaped) { return toLinear(u.interior); }
-
+fn shade(hCentre: f32, hRight: f32, hUp: f32) -> vec3<f32> {
     let base = toLinear(palette(fract(hCentre * u.colorDensity + u.colorPhase)));
     if (u.slopeLighting == 0u) { return base; }
 
@@ -606,8 +616,18 @@ fn shade(s: Sample, hCentre: f32, hRight: f32, hUp: f32) -> vec3<f32> {
 
 // --------------------------------------------------------------------- entry
 
+/** Sub-samples across one screen row. */
+fn sampleStride() -> u32 {
+    return u32(u.resolution.x) * max(u.supersample, 1u);
+}
+
+fn fieldIndex(col: u32, rowIdx: u32) -> u32 {
+    return rowIdx * sampleStride() + col;
+}
+
+/// Iterates every sub-sample and stores what the colouring will need.
 @compute @workgroup_size(8, 8)
-fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
+fn compute(@builtin(global_invocation_id) gid: vec3<u32>) {
     let size = vec2<u32>(u32(u.resolution.x), u32(u.resolution.y));
     let row = gid.y + u.rowOffset;
     if (gid.x >= size.x || row >= size.y) { return; }
@@ -616,7 +636,6 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
     let grid = max(u.supersample, 1u);
     let step = 1.0 / f32(grid);
 
-    var accumulated = vec3<f32>(0.0);
     var skipped: u32 = 0u;
     var skips: u32 = 0u;
     var rebases: u32 = 0u;
@@ -624,73 +643,101 @@ fn render(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     for (var sy: u32 = 0u; sy < grid; sy = sy + 1u) {
         for (var sx: u32 = 0u; sx < grid; sx = sx + 1u) {
-            let jitter = vec2<f32>(
-                (f32(sx) + 0.5) * step,
-                (f32(sy) + 0.5) * step
-            );
-            let pixel = vec2<f32>(
-                f32(gid.x),
-                u.resolution.y - 1.0 - f32(row)
-            ) + jitter;
+            let jitter = vec2<f32>((f32(sx) + 0.5) * step, (f32(sy) + 0.5) * step);
+            let pixel = vec2<f32>(f32(gid.x), u.resolution.y - 1.0 - f32(row)) + jitter;
 
-            let centre = iterateAny(pixel, distanceMode);
-            skipped = skipped + centre.skipped;
-            skips = skips + centre.skips;
-            rebases = rebases + centre.rebases;
-            plain = plain + (centre.n - centre.skipped);
+            let s = iterateAny(pixel, distanceMode);
+            skipped = skipped + s.skipped;
+            skips = skips + s.skips;
+            rebases = rebases + s.rebases;
+            plain = plain + (s.n - s.skipped);
 
             // mode 2 is a diagnostic view: red = iterations used, green =
-            // escaped, blue = where in the reference orbit it ended up.
+            // escaped, blue = log2 of the final delta, alpha = rebases. It
+            // wants more than the field carries, so it writes straight out.
             if (u.mode == 2u) {
                 textureStore(output, vec2<i32>(i32(gid.x), i32(row)), vec4<f32>(
-                    f32(centre.n) / f32(max(u.maxIterations, 1u)),
-                    select(0.0, 1.0, centre.escaped),
-                    // log2|dz| mapped from [-300, 44] into 0..1.
-                    clamp((centre.dzLog2 + 300.0) / 344.0, 0.0, 1.0),
-                    // Alpha: rebases, saturating at 255.
-                    clamp(f32(centre.rebases) / 255.0, 0.0, 1.0)
+                    f32(s.n) / f32(max(u.maxIterations, 1u)),
+                    select(0.0, 1.0, s.escaped),
+                    clamp((s.dzLog2 + 300.0) / 344.0, 0.0, 1.0),
+                    clamp(f32(s.rebases) / 255.0, 0.0, 1.0)
                 ));
                 return;
             }
 
-            if (!distanceMode) {
-                if (centre.escaped) {
-                    accumulated = accumulated + toLinear(iterationColour(centre));
-                } else {
-                    accumulated = accumulated + toLinear(u.interior);
-                }
-                continue;
+            var entry = vec2<f32>(0.0);
+            if (distanceMode) {
+                entry = vec2<f32>(heightOf(s), select(0.0, 1.0, s.escaped));
+            } else {
+                entry = vec2<f32>(select(-1.0, f32(s.n), s.escaped), s.z2);
             }
-
-            let hCentre = heightOf(centre);
-            var hRight = hCentre;
-            var hUp = hCentre;
-            if (u.slopeLighting == 1u && centre.escaped) {
-                // Neighbouring samples, re-evaluated rather than reused: the
-                // gradient of the height field is what the lighting needs.
-                let right = iterate(delta0For(pixel + vec2<f32>(1.0, 0.0)), true);
-                let up = iterate(delta0For(pixel + vec2<f32>(0.0, 1.0)), true);
-                skipped = skipped + right.skipped + up.skipped;
-                skips = skips + right.skips + up.skips;
-                rebases = rebases + right.rebases + up.rebases;
-                plain = plain + (right.n - right.skipped) + (up.n - up.skipped);
-                if (right.escaped) { hRight = heightOf(right); }
-                if (up.escaped) { hUp = heightOf(up); }
-            }
-            accumulated = accumulated + shade(centre, hCentre, hRight, hUp);
+            field[fieldIndex(gid.x * grid + sx, row * grid + sy)] = entry;
         }
     }
-
-    let samples = f32(grid * grid);
-    let linearColour = accumulated / samples;
-    // Encode out of linear light at the very end.
-    let encoded = pow(max(linearColour, vec3<f32>(0.0)), vec3<f32>(u.invGamma));
-
-    textureStore(output, vec2<i32>(i32(gid.x), i32(row)),
-                 vec4<f32>(clamp(encoded, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0));
 
     atomicAdd(&stats[0], skipped);
     atomicAdd(&stats[1], skips);
     atomicAdd(&stats[2], rebases);
     atomicAdd(&stats[3], plain);
+}
+
+/// Turns the stored field into pixels. No iteration happens here.
+@compute @workgroup_size(8, 8)
+fn shadePass(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let size = vec2<u32>(u32(u.resolution.x), u32(u.resolution.y));
+    if (gid.x >= size.x || gid.y >= size.y) { return; }
+
+    let distanceMode = u.mode == 1u;
+    let grid = max(u.supersample, 1u);
+    let stride = sampleStride();
+    let lastCol = stride - 1u;
+    let lastRow = size.y * grid - 1u;
+
+    var accumulated = vec3<f32>(0.0);
+
+    for (var sy: u32 = 0u; sy < grid; sy = sy + 1u) {
+        for (var sx: u32 = 0u; sx < grid; sx = sx + 1u) {
+            let col = gid.x * grid + sx;
+            let rowIdx = gid.y * grid + sy;
+            let entry = field[fieldIndex(col, rowIdx)];
+
+            if (!distanceMode) {
+                if (entry.x < 0.0) {
+                    accumulated = accumulated + toLinear(u.interior);
+                } else {
+                    accumulated = accumulated + toLinear(iterationColour(entry.x, entry.y));
+                }
+                continue;
+            }
+
+            if (entry.y == 0.0) {
+                accumulated = accumulated + toLinear(u.interior);
+                continue;
+            }
+
+            // Gradient from the neighbouring sub-samples. They are 1/grid of a
+            // pixel apart, so scale back up to keep slopeDepth meaning the same
+            // thing whatever the sample count. Screen rows run downwards, so
+            // the sample "above" is the previous row.
+            var hRight = entry.x;
+            var hUp = entry.x;
+            if (u.slopeLighting == 1u) {
+                let right = field[fieldIndex(min(col + 1u, lastCol), rowIdx)];
+                let up = field[fieldIndex(col, max(rowIdx, 1u) - 1u)];
+                if (right.y != 0.0) { hRight = right.x; }
+                if (up.y != 0.0) { hUp = up.x; }
+            }
+            accumulated = accumulated + shade(
+                entry.x,
+                entry.x + (hRight - entry.x) * f32(grid),
+                entry.x + (hUp - entry.x) * f32(grid)
+            );
+        }
+    }
+
+    let linearColour = accumulated / f32(grid * grid);
+    // Encode out of linear light at the very end.
+    let encoded = pow(max(linearColour, vec3<f32>(0.0)), vec3<f32>(u.invGamma));
+    textureStore(output, vec2<i32>(i32(gid.x), i32(gid.y)),
+                 vec4<f32>(clamp(encoded, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0));
 }

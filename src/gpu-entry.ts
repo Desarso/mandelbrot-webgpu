@@ -71,10 +71,40 @@ async function main() {
     }
 
     const rows: string[] = [];
+
+    // The headline case: the same view with a different palette. Everything
+    // the iteration produced is still valid, so only the shading should run.
+    {
+      // Run each kind consecutively. Interleaving them would invalidate the
+      // stored field before every recolour and measure nothing.
+      const full: number[] = [];
+      for (let i = 0; i < runs; i++) {
+        // A different iteration count is a different picture, so each of these
+        // has to be computed from scratch.
+        full.push((await renderer.render({ ...base, maxIterations: iterations + i } as never)).renderMs);
+      }
+      await renderer.render(base as never);
+      const recolour: number[] = [];
+      for (let i = 0; i < runs; i++) {
+        // Only the band width moves: same numbers, different colours.
+        const tinted = { ...base, colors: { ...base.colors, cycle: 32 + i } };
+        recolour.push((await renderer.render(tinted as never)).renderMs);
+      }
+      full.sort((a, b) => a - b);
+      recolour.sort((a, b) => a - b);
+      rows.push(
+        `recolour     median ${recolour[recolour.length >> 1].toFixed(1)}ms   ` +
+          `vs full frame ${full[full.length >> 1].toFixed(1)}ms`,
+        ``
+      );
+    }
+
     for (const { label, opts } of cases) {
       const times: number[] = [];
       for (let i = 0; i < runs; i++) {
-        const r = await renderer.render({ ...base, ...opts } as never);
+        // Vary the iteration count so every run rebuilds the field; otherwise
+        // this measures the cache rather than the dispatch it is comparing.
+        const r = await renderer.render({ ...base, maxIterations: iterations + i, ...opts } as never);
         times.push(r.renderMs);
       }
       times.sort((a, b) => a - b);
