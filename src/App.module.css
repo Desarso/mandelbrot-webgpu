@@ -463,6 +463,84 @@
   opacity: 1;
 }
 
+/*
+ * Always visible, bottom right, whether or not the control panel is open --
+ * it is the one link off this page and it should not be buried in a panel
+ * the user has just hidden.
+ */
+.howButton {
+  position: absolute;
+  /* Clears the control panel when it is open, so the two never overlap. */
+  right: 16px;
+  bottom: 16px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(14, 16, 22, 0.7);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: #e8ecf4;
+  font: inherit;
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+  z-index: 3;
+}
+
+.howButton:hover {
+  opacity: 1;
+}
+
+.howButtonShifted {
+  right: 296px;
+}
+
+@media (max-width: 640px) {
+  /* No room beside the panel on a narrow screen; go to the other corner. */
+  .howButtonShifted {
+    right: auto;
+    left: 16px;
+  }
+}
+
+.notice {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  max-width: 420px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 170, 0, 0.35);
+  background: rgba(20, 16, 8, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: #e8ecf4;
+  font-size: 12px;
+  line-height: 1.6;
+  z-index: 3;
+}
+
+.notice code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+
+.noticeClose {
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .error {
   position: absolute;
   inset: 0;

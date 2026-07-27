@@ -84,6 +84,10 @@
         color: var(--dim);
         text-decoration: none;
       }
+      ul { padding-left: 20px; color: var(--dim); }
+      li { margin: 8px 0; }
+      li em, li strong { color: var(--text); }
+      td strong { color: var(--text); }
       .back:hover { color: var(--text); }
       footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--dim); font-size: 14px; }
     </style>
@@ -273,56 +277,87 @@ hi = p11 + (mid &gt;&gt; 16u) + midCarry + loCarry;</code></pre>
         gamma encode at the end, and up to 3×3 supersampling.
       </p>
 
-      <h2>8. How any of this is known to be correct</h2>
+      <h2 id="credits">8. Where all of this comes from</h2>
       <p>
-        Fractal renderers fail quietly. A subtly wrong image still looks like a
-        fractal, so the project is built around three layers of checking that
-        do not rely on looking at the picture.
+        Almost nothing here is original. Deep Mandelbrot zooming was worked out
+        over about fifteen years, mostly by people posting derivations on a
+        forum and giving the code away, and this renderer is an implementation
+        of their results. The table is what each idea is and who it is due to.
       </p>
       <table>
-        <tr><th>Layer</th><th>What it proves</th></tr>
+        <tr><th>Idea</th><th>Due to</th></tr>
         <tr>
-          <td><code>pnpm test</code></td>
-          <td>46 checks of the CPU arithmetic against exact <code>BigInt</code>: limb encoding, the emulated 64-bit multiply on boundary values, fixed-point add/sub/multiply, Newton, and the approximation polynomials.</td>
+          <td><strong>Perturbation.</strong> One high-precision reference orbit, every other pixel tracked as a low-precision offset from it. Section 2.</td>
+          <td>K. I. Martin, <em>Superfractalthing Maths</em> (2013) — the paper that made deep zooming practical, and the origin of the &Delta;-iteration used here.</td>
         </tr>
         <tr>
-          <td><code>/selftest.html</code></td>
-          <td>18 checks that run the actual WGSL on real hardware against the same oracle, including reference orbits compared sample-for-sample and batch sizes 1, 7 and 128 checked separately.</td>
+          <td><strong>Glitch detection.</strong> Noticing when a pixel's offset has grown large enough that the reference no longer describes it.</td>
+          <td>Pauldelbrot, on fractalforums (2014). The criterion is a comparison of |z| against the reference's magnitude.</td>
         </tr>
         <tr>
-          <td><code>/gpu.html?…&amp;verify=1</code></td>
-          <td>Renders a view twice, with and without approximation, and reports how many sampled pixels differ. An approximation that changes the picture is not an approximation.</td>
+          <td><strong>Rebasing.</strong> The fix this renderer uses instead: when |z| &lt; |&delta;|, restart the pixel against the beginning of the same orbit. No glitch list, no second reference, no iterative repair.</td>
+          <td>Zhuoran, on fractalforums.org (2021). It replaced a decade of increasingly elaborate glitch-correction machinery with three lines.</td>
+        </tr>
+        <tr>
+          <td><strong>Bilinear approximation.</strong> Collapsing long runs of iterations into one polynomial step, with a validity radius. Section 5.</td>
+          <td>Zhuoran (2021), extended and written up in detail by Claude Heiland-Allen. The second-order form used here follows the same construction.</td>
+        </tr>
+        <tr>
+          <td><strong>Distance estimation.</strong> The derivative of the orbit gives the distance to the set, which is what makes thin filaments visible at all. Section 7.</td>
+          <td>Hart, Sandin and Kauffman (1989) for the general method on distance-estimated fractals; the Mandelbrot form and its practical use popularised by Iñigo Quílez.</td>
+        </tr>
+        <tr>
+          <td><strong>Nucleus finding.</strong> Newton's method on <em>f<sub>p</sub>(c) = 0</em> to land exactly on a minibrot, plus the size estimate that says how far to zoom. Section 6.</td>
+          <td>Classical Douady–Hubbard theory; the size estimate and the practical Newton iteration from Claude Heiland-Allen and Robert Munafo's <em>Mu-Ency</em>.</td>
+        </tr>
+        <tr>
+          <td><strong>Arbitrary precision on a GPU.</strong> Fixed-point limbs, an emulated 64-bit multiply, and a serial orbit run inside a single workgroup. Section 3.</td>
+          <td>FractalShark, by Matt Enright, which is where the GPU-resident approach was taken from. This project is GPLv3 because of it.</td>
+        </tr>
+        <tr>
+          <td><strong>The colouring.</strong> Distance estimate to a height field, cyclic palette, screen-space normal for pseudo-3D relief.</td>
+          <td>Maths Town's <em>The Hardest Trip</em>, which is the look this reproduces. Cosine palettes are Iñigo Quílez's.</td>
         </tr>
       </table>
       <p>
-        These earned their keep. The batch-size check exists because a
-        single-dispatch run could not catch an off-by-one at batch boundaries
-        that skipped one sample and shifted every later index. The A/B verifier
-        exists because the first approximation looked convincing at depth while
-        rendering 782 of 1064 sampled pixels wrong at shallow zoom.
+        Two implementations are the reference points for anyone doing this
+        seriously: <a href="https://mathr.co.uk/kf/kf.html">Kalles Fraktaler</a>,
+        started by Karl Runmo and later maintained by Claude Heiland-Allen, and
+        <a href="https://github.com/mattsaccount364/FractalShark">FractalShark</a>.
+        Both are far more capable than this page's renderer. The forum threads
+        at <a href="https://fractalforums.org/">fractalforums.org</a> are where
+        most of the above was derived in public, usually years before it
+        appeared in any paper.
       </p>
+      <h3>Reading</h3>
+      <ul>
+        <li>K. I. Martin, <em>Superfractalthing Maths</em> (2013) — perturbation and series approximation, from first principles.</li>
+        <li>Claude Heiland-Allen, <a href="https://mathr.co.uk/blog/2021-05-14_deep_zoom_theory_and_practice.html"><em>Deep zoom theory and practice</em></a> (2021) — the clearest single write-up of perturbation, rebasing and bilinear approximation together. <a href="https://mathr.co.uk/blog/">The rest of the blog</a> covers distance estimation, nucleus finding and size estimates.</li>
+        <li>Robert Munafo, <a href="https://mrob.com/pub/muency.html"><em>Mu-Ency</em></a> — the encyclopaedia of Mandelbrot structure: periods, sizes, naming.</li>
+        <li>Iñigo Quílez, <a href="https://iquilezles.org/articles/distancefractals/">distance to fractals</a> and <a href="https://iquilezles.org/articles/palettes/">cosine palettes</a>.</li>
+        <li>John Milnor, <em>Dynamics in One Complex Variable</em> — the underlying theory, for why any of the above is true rather than merely observed.</li>
+      </ul>
 
       <h2>Known limits</h2>
       <p>
         The schoolbook multiplier is O(n²), which is fine to the 256-limb top
-        profile but is where an NTT would belong. Orbits are stored uncompressed.
-        At a minibrot nucleus the reference orbit returns to zero every period,
-        forcing a rebase each time, and after a rebase the delta is order 1 and
-        too large for any approximation step — so those views are correct but
-        slow. Deep views centred exactly on a nucleus currently fail to escape
-        where an exact oracle says they should; the orbit and the approximation
-        both verify clean, so the fault is isolated to the per-pixel iteration.
+        profile but is where an NTT would belong — at eight limbs, which is what
+        almost every view actually uses, it would be far slower. Orbits are
+        stored uncompressed; at 24 bytes a sample that is a few megabytes, and
+        not where the time goes. At a minibrot nucleus the reference orbit
+        returns close to zero every period, forcing a rebase each time, and
+        after a rebase the delta is order 1 and too large for any approximation
+        step — so those views are correct but slower than their surroundings.
       </p>
 
       <footer>
-        Built with Solid, Vite, WebGPU and WGSL. Licensed GPLv3, with
-        attribution to
-        <a href="https://github.com/mattsaccount364/FractalShark">FractalShark</a>.
-        Source at
-        <a href="https://github.com/Desarso/mandelbrot_webgl">Desarso/mandelbrot_webgl</a>.
-        <br />
-        Perturbation theory follows K. I. Martin's <em>Superfractalthing
-        Maths</em>; the rebasing rule is Zhuoran's.
+        Built with Solid, Vite, WebGPU and WGSL. Source at
+        <a href="https://github.com/Desarso/mandelbrot_webgl">Desarso/mandelbrot_webgl</a>,
+        licensed GPLv3 — inherited from
+        <a href="https://github.com/mattsaccount364/FractalShark">FractalShark</a>,
+        whose GPU arbitrary-precision approach this follows. See
+        <a href="#credits">section 8</a>
+        for what is owed to whom.
       </footer>
     </div>
   </body>

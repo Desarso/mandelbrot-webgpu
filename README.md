@@ -143,35 +143,75 @@ Interaction renders at 25% resolution and restores full resolution 160 ms after
 you stop. Only resolution is reduced, never the iteration count — capping
 iterations makes deep views collapse to a solid interior colour.
 
-## Open bug: views centred on a minibrot nucleus
+## Choosing a method by depth
 
-A view centred exactly on a nucleus renders entirely interior, where an exact
-`BigInt` oracle says its pixels escape at ~6000 iterations. What is ruled out:
+Perturbation is the right algorithm at 1e-40 and the wrong one at 1e-2: zoomed
+out the delta is the same size as `z`, so the rebase test fires nearly every
+iteration. Three tiers, picked from units-per-pixel:
 
-- the reference orbit — all 20000 samples match the oracle to 2.4e-15;
-- the approximation — with it disabled the image is unchanged.
+| units/pixel | method | what it does |
+| --- | --- | --- |
+| `> 1e-5` | direct | plain f32 `z <- z² + c`, no reference orbit at all |
+| `> 1e-25` | plain | perturbation with a plain f32 delta |
+| otherwise | hdr | perturbation with an explicit exponent, plus the skip table |
 
-What the diagnostic view (`/gpu.html?…&mode=2`) shows: the delta plateaus at
-2^-104 against a pixel offset of 2^-139. That is an amplification of ~2^35 per
-period, where the minibrot's own size estimate implies ~2^71, so the delta
-never reaches the quadratic regime that would make it escape. The fault is
-somewhere in the per-pixel iteration; it is not yet found.
+Measured at 720x480, render time only: 4e-3 goes 39ms + 37ms of orbit to 15ms;
+1e-11 goes 90ms to 25ms; 2e-21 goes 193ms to 132ms. Past 1e-25 the skip table
+starts carrying the frame and the exponent-carrying delta wins again, which is
+where the handover sits — still thirteen decades above the f32 floor.
 
-At a nucleus the orbit also returns to zero every period, forcing a rebase each
-time, and after a rebase the delta is `O(1)` and too large for any
-approximation step — so even when correct these views are slow.
+## Computing a frame and colouring it are separate
+
+`compute` iterates every sub-sample and stores what the colouring needs
+(iteration count and `|z|²`, or the height field in distance mode).
+`shadePass` reads that and applies the palette, relief lighting and gamma. The
+stored field is keyed on everything that changes the numbers, so changing a
+palette does not recompute anything.
+
+At 1e-25 with 20,000 iterations: a full frame is 247ms, a recolour is 1.0ms.
+
+Distance mode got faster outright as well. The relief lighting needs the height
+of neighbouring samples, and used to get them by iterating each one again —
+three full evaluations per sub-sample. The gradient now reads the stored field:
+20.6ms against roughly 90ms at 1e-8.
+
+## Staying responsive
+
+- **Banded rendering.** A frame is four horizontal bands with a yield between
+  them, so a gesture arriving mid-frame costs one band rather than a screen.
+  Band size adapts to measured cost, targeting 50ms per submission — a command
+  that runs too long is killed by the driver watchdog, which takes the device
+  and the tab with it. Fencing between bands is the obvious implementation and
+  is badly wrong: it drains the pipeline, and eight fenced bands took 569ms
+  against 215ms unsplit.
+- **Reprojection.** A pan or zoom moves the picture far more often than it
+  changes it, so the last completed frame is re-blitted under the new view
+  transform while the real one computes. One full-screen triangle, exact
+  wherever the views overlap at the same scale.
 
 ## Not done
 
-- **NTT multiplication.** The schoolbook multiplier is `O(n²)`; fine through the
-  256-limb top profile (~2450 digits), which is where zoom depth stops being
-  limited by precision and starts being limited by iteration count.
-- **Orbit compression.** Orbits are stored in full: 6 floats per sample, so
-  200k iterations is ~4.8 MB.
-- **Series approximation** for the initial segment, **progressive/tiled
-  rendering**, **frame reprojection** on zoom, and moving orchestration into a
-  **Web Worker**.
-- Browser matrix beyond Chrome on macOS; device-loss recovery.
+Measured and rejected, rather than skipped:
+
+- **NTT multiplication.** Almost every view runs at eight limbs — 6e-42 needs
+  67 decimal digits — and schoolbook is 64 limb products there. NTT wins in the
+  thousands of bits, not the hundreds; it would be far slower everywhere this
+  renderer actually operates.
+- **Orbit compression.** 24 bytes a sample, so 200k iterations is ~4.8 MB.
+  Generating the orbit costs 1.6s at that length; storing it costs nothing
+  worth reclaiming.
+- **Series approximation** of the initial segment. Bilinear approximation is
+  strictly more general — it applies at any point in the orbit rather than only
+  the start — and is already implemented, to second order.
+- **Web Worker split.** The only synchronous main-thread work of consequence is
+  building the skip table, 17-25ms once per orbit. Everything else is GPU work
+  behind an `await`. An OffscreenCanvas rewrite to move 20ms is not worth it.
+
+Genuinely not done:
+
+- Browser matrix beyond Chrome on macOS.
+- Device loss is detected and reported, but not recovered from: the page has to
+  be reloaded.
 
 ## Deployment
 

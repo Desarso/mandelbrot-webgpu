@@ -79,6 +79,11 @@ const App: Component = () => {
   const [panelOpen, setPanelOpen] = createSignal(true);
   const [tab, setTab] = createSignal<(typeof TABS)[number]>("Colour");
   const [error, setError] = createSignal<string | null>(null);
+  // Falling back to WebGL2 is silent otherwise, and the difference is large:
+  // it runs out of precision around 1e-34 where WebGPU keeps going.
+  const [webgpuNoticeDismissed, setWebgpuNoticeDismissed] = createSignal(
+    localStorage.getItem("mandelbrot.webgpu-notice") === "dismissed"
+  );
   const [renderer, setRenderer] = createSignal<MandelbrotView | null>(null);
   const [copied, setCopied] = createSignal(false);
   const [searching, setSearching] = createSignal(false);
@@ -168,6 +173,34 @@ const App: Component = () => {
         <button class={styles.showButton} onClick={() => setPanelOpen(true)}>
           Controls
         </button>
+      </Show>
+
+      <a
+        class={`${styles.howButton} ${panelOpen() && !error() ? styles.howButtonShifted : ""}`}
+        href="/tech.html"
+      >
+        How it works →
+      </a>
+
+      <Show when={view()?.backend === "webgl" && !webgpuNoticeDismissed()}>
+        <div class={styles.notice}>
+          <strong>Running without WebGPU.</strong> This is the WebGL2 fallback,
+          which runs out of precision around 10<sup>−34</sup>; the WebGPU engine
+          has no fixed limit. If your browser supports WebGPU but it is not
+          being used, open <code>chrome://flags</code> and set{" "}
+          <code>Override software rendering list</code> to Enabled, then
+          restart. <code>chrome://gpu</code> shows why it was refused.
+          <br />
+          <button
+            class={styles.noticeClose}
+            onClick={() => {
+              localStorage.setItem("mandelbrot.webgpu-notice", "dismissed");
+              setWebgpuNoticeDismissed(true);
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
       </Show>
 
       <Show when={panelOpen() && !error()}>
@@ -607,8 +640,6 @@ const App: Component = () => {
             <p class={styles.hint}>
               Drag to pan, scroll to zoom. <span class={styles.kbd}>H</span> hides
               the panel. The URL always holds the full state.
-              <br />
-              <a class={styles.link} href="/tech.html">How it works →</a>
             </p>
           </section>
         </aside>
