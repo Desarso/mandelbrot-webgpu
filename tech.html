@@ -94,7 +94,10 @@
   </head>
   <body>
     <div class="wrap">
-      <a class="back" href="/">← back to the renderer</a>
+      <nav class="nav">
+        <a href="/">← back to the renderer</a>
+        <a href="/about.html">What the Mandelbrot set is →</a>
+      </nav>
 
       <header>
         <h1>How this runs in a browser</h1>
@@ -352,7 +355,7 @@ hi = p11 + (mid &gt;&gt; 16u) + midCarry + loCarry;</code></pre>
 
       <footer>
         Built with Solid, Vite, WebGPU and WGSL. Source at
-        <a href="https://github.com/Desarso/mandelbrot_webgl">Desarso/mandelbrot_webgl</a>,
+        <a href="https://github.com/Desarso/mandelbrot-webgpu">Desarso/mandelbrot-webgpu</a>,
         licensed GPLv3 — inherited from
         <a href="https://github.com/mattsaccount364/FractalShark">FractalShark</a>,
         whose GPU arbitrary-precision approach this follows. See

@@ -31,6 +31,8 @@
   "about.back": "tornare al renderer",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Iterazioni massime",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Scegli il conteggio delle iterazioni dal livello di zoom. Lo spostamento del cursore disattiva questa opzione.",
   "ui.tab.colour": "Colore",
   "ui.tab.light": "Light",
   "ui.tab.advanced": "Avanzato",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Il rendering è stato interrotto. Questo di solito significa che il driver grafico ha rinunciato a un frame che ha impiegato troppo tempo. Abbassa il conteggio delle iterazioni e ricarica la pagina.",
   "ui.notice.noWebgpu": "Questo browser non utilizza WebGPU, quindi il renderer è tornato a WebGL2, che perde precisione con zoom molto meno profondi.",
   "ui.notice.enableFlag": "Se il tuo browser supporta WebGPU ma non la utilizza, apri chrome://flags, imposta Sostituisci elenco rendering software su Abilitato e riavvia il browser. La pagina chrome://gpu spiega perché è stata rifiutata.",
+  "ui.notice.mobile": "Su un telefono o tablet il renderer funziona, ma gli zoom profondi sono molto più lenti rispetto a quelli su una GPU desktop e le visualizzazioni molto profonde possono richiedere molti secondi per fotogramma. Ridurre il conteggio delle iterazioni aiuta.",
   "ui.notice.dismiss": "Congedare"
 }

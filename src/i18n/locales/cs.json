@@ -31,6 +31,8 @@
   "about.back": "zpět k rendereru",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maximální počet iterací",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Vyberte počet iterací z úrovně přiblížení. Posunutím posuvníku toto vypnete.",
   "ui.tab.colour": "Barva",
   "ui.tab.light": "Světlo",
   "ui.tab.advanced": "Moderní",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Vykreslování zastaveno. To obvykle znamená, že se grafický ovladač vzdal snímku, který trval příliš dlouho. Snižte počet iterací a znovu načtěte stránku.",
   "ui.notice.noWebgpu": "Tento prohlížeč nepoužívá WebGPU, takže vykreslovací modul klesl zpět na WebGL2, který při mnohem mělčích přiblíženích přestává být přesný.",
   "ui.notice.enableFlag": "Pokud váš prohlížeč podporuje WebGPU, ale nepoužíváte jej, otevřete chrome://flags, nastavte seznam vykreslování softwaru Override na hodnotu Povoleno a restartujte prohlížeč. Stránka chrome://gpu vysvětluje, proč byla zamítnuta.",
+  "ui.notice.mobile": "Na telefonu nebo tabletu vykreslování funguje, ale hluboké přiblížení jsou mnohem pomalejší než na stolním GPU a velmi hluboké zobrazení může trvat několik sekund na snímek. Snížení počtu iterací pomáhá.",
   "ui.notice.dismiss": "Propustit"
 }

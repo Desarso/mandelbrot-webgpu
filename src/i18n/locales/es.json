@@ -31,6 +31,8 @@
   "about.back": "volver al renderizador",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "iteraciones máximas",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Elija el recuento de iteraciones desde el nivel de zoom. Al mover el control deslizante se desactiva esto.",
   "ui.tab.colour": "Color",
   "ui.tab.light": "Light",
   "ui.tab.advanced": "Advanced",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "El renderizado se detuvo. Por lo general, esto significa que el controlador de gráficos abandonó un fotograma que tardó demasiado. Reduzca el recuento de iteraciones y vuelva a cargar la página.",
   "ui.notice.noWebgpu": "Este navegador no utiliza WebGPU, por lo que el renderizador ha recurrido a WebGL2, que pierde precisión con zooms mucho más superficiales.",
   "ui.notice.enableFlag": "Si su navegador admite WebGPU pero no lo utiliza, abra chrome://flags, configure Anular lista de representación de software en Habilitado y reinicie el navegador. La página chrome://gpu explica por qué fue rechazada.",
+  "ui.notice.mobile": "En un teléfono o tableta, el renderizador funciona, pero los zooms profundos son mucho más lentos que en una GPU de escritorio, y las vistas muy profundas pueden tardar muchos segundos por fotograma. Reducir el recuento de iteraciones ayuda.",
   "ui.notice.dismiss": "Despedir"
 }

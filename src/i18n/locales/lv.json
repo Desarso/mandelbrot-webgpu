@@ -31,6 +31,8 @@
   "about.back": "atpakaļ uz renderētāju",
   "ui.title": "Mandelbrots",
   "ui.maxIterations": "Maksimālās iterācijas",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Izvēlieties iterāciju skaitu tālummaiņas līmenī. Pārvietojot slīdni, tas tiek izslēgts.",
   "ui.tab.colour": "Krāsa",
   "ui.tab.light": "Gaisma",
   "ui.tab.advanced": "Papildu",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Renderēšana apturēta. Tas parasti nozīmē, ka grafikas draiveris atteicās no rāmja, kas aizņēma pārāk ilgu laiku. Samaziniet iterāciju skaitu un atkārtoti ielādējiet lapu.",
   "ui.notice.noWebgpu": "Šī pārlūkprogramma neizmanto WebGPU, tāpēc renderētājs ir atgriezies pie WebGL2, kura precizitāte pietrūkst daudz seklākas tālummaiņas gadījumā.",
   "ui.notice.enableFlag": "Ja jūsu pārlūkprogramma atbalsta WebGPU, bet to neizmanto, atveriet chrome://flags, iestatiet Override software rendering list uz Enabled un restartējiet pārlūkprogrammu. Lapā chrome://gpu ir paskaidrots, kāpēc tā tika atteikta.",
+  "ui.notice.mobile": "Tālrunī vai planšetdatorā renderētājs darbojas, taču dziļa tālummaiņa ir daudz lēnāka nekā galddatora GPU, un ļoti dziļi skati var aizņemt vairākas sekundes vienā kadrā. Iterāciju skaita samazināšana palīdz.",
   "ui.notice.dismiss": "Atlaist"
 }

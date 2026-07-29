@@ -31,6 +31,8 @@
   "about.back": "reen al la bildilo",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maksimumaj ripetoj",
+  "ui.auto": "Aŭtomate",
+  "ui.autoIterationsHint": "Elektu la ripetaron de la zomnivelo. Movante la glitilon malŝaltas ĉi tion.",
   "ui.tab.colour": "Koloro",
   "ui.tab.light": "Lumo",
   "ui.tab.advanced": "Altnivela",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Bildo ĉesis. Ĉi tio kutime signifas, ke la grafika pelilo rezignis pri kadro, kiu daŭris tro longe. Malaltigu la ripetadon kaj reŝargu la paĝon.",
   "ui.notice.noWebgpu": "Ĉi tiu retumilo ne uzas WebGPU, do la bildilo revenis al WebGL2, kiu elĉerpigas precizecon ĉe multe pli malprofundaj zomoj.",
   "ui.notice.enableFlag": "Se via retumilo subtenas WebGPU sed ne uzas ĝin, malfermu chrome://flags, agordu Anstataŭigi programaran bildigan liston al Ebligita, kaj rekomencu la retumilon. La paĝo chrome://gpu klarigas kial ĝi estis rifuzita.",
+  "ui.notice.mobile": "Sur telefono aŭ tablojdo la bildilo funkcias, sed profundaj zomoj estas multe pli malrapidaj ol sur labortabla GPU, kaj tre profundaj vidoj povas preni multajn sekundojn por kadro. Malaltigi la ripetarkalkulon helpas.",
   "ui.notice.dismiss": "Forĵeti"
 }

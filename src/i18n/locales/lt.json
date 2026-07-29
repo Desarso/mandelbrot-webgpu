@@ -31,6 +31,8 @@
   "about.back": "atgal į atvaizduotoją",
   "ui.title": "Mandelbrotas",
   "ui.maxIterations": "Maksimalios iteracijos",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Pasirinkite iteracijų skaičių iš mastelio keitimo lygio. Perkeliant slankiklį tai išjungiama.",
   "ui.tab.colour": "Spalva",
   "ui.tab.light": "Šviesa",
   "ui.tab.advanced": "Išplėstinė",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Atvaizdavimas sustabdytas. Paprastai tai reiškia, kad grafikos tvarkyklė atsisakė kadro, kuris užtruko per ilgai. Sumažinkite iteracijų skaičių ir iš naujo įkelkite puslapį.",
   "ui.notice.noWebgpu": "Ši naršyklė nenaudoja WebGPU, todėl atvaizdavimo priemonė grįžo į WebGL2, kurios tikslumas pritrūksta, kai priartinamas daug mažesnis.",
   "ui.notice.enableFlag": "Jei jūsų naršyklė palaiko WebGPU, bet jo nenaudoja, atidarykite chrome://flags, nustatykite Nepaisyti programinės įrangos pateikimo sąrašo į Įgalinta ir iš naujo paleiskite naršyklę. Puslapyje chrome://gpu paaiškinama, kodėl jis buvo atmestas.",
+  "ui.notice.mobile": "Telefone arba planšetiniame kompiuteryje atvaizdavimo priemonė veikia, tačiau gilus mastelio keitimas yra daug lėtesnis nei stalinio kompiuterio GPU, o labai gilūs vaizdai gali užtrukti daug sekundžių per vieną kadrą. Padeda sumažinti iteracijų skaičių.",
   "ui.notice.dismiss": "Atsisakyti"
 }

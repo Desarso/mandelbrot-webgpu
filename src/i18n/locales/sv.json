@@ -31,6 +31,8 @@
   "about.back": "tillbaka till renderaren",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Max iterationer",
+  "ui.auto": "Bil",
+  "ui.autoIterationsHint": "Välj antal iterationer från zoomnivån. Om du flyttar reglaget stängs detta av.",
   "ui.tab.colour": "Färg",
   "ui.tab.light": "Ljus",
   "ui.tab.advanced": "Avancerad",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Renderingen stoppades. Detta innebär vanligtvis att grafikdrivrutinen gav upp en ram som tog för lång tid. Sänk antalet iterationer och ladda om sidan.",
   "ui.notice.noWebgpu": "Den här webbläsaren använder inte WebGPU, så renderaren har fallit tillbaka till WebGL2, som har slut på precision vid mycket grundare zoomningar.",
   "ui.notice.enableFlag": "Om din webbläsare stöder WebGPU men inte använder den öppnar du chrome://flags, ställer in Override software rendering list till Enabled och startar om webbläsaren. Sidan chrome://gpu förklarar varför det nekades.",
+  "ui.notice.mobile": "På en telefon eller surfplatta fungerar renderaren, men djupa zoomningar är mycket långsammare än på en stationär GPU, och mycket djupa vyer kan ta många sekunder en bildruta. Att sänka antalet iterationer hjälper.",
   "ui.notice.dismiss": "Avfärda"
 }

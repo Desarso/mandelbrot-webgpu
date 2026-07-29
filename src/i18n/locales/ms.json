@@ -31,6 +31,8 @@
   "about.back": "kembali kepada penyampai",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Lelaran maksimum",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Pilih kiraan lelaran daripada tahap zum. Menggerakkan peluncur akan mematikan ini.",
   "ui.tab.colour": "warna",
   "ui.tab.light": "Cahaya",
   "ui.tab.advanced": "Maju",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Rendering dihentikan. Ini biasanya bermakna pemacu grafik menyerah pada bingkai yang mengambil masa terlalu lama. Kurangkan kiraan lelaran dan muat semula halaman.",
   "ui.notice.noWebgpu": "Penyemak imbas ini tidak menggunakan WebGPU, jadi pemapar telah kembali ke WebGL2, yang kehabisan ketepatan pada zum yang jauh lebih cetek.",
   "ui.notice.enableFlag": "Jika penyemak imbas anda menyokong WebGPU tetapi tidak menggunakannya, buka chrome://flags, tetapkan Override senarai pemaparan perisian kepada Didayakan dan mulakan semula penyemak imbas. Halaman chrome://gpu menerangkan sebab ia ditolak.",
+  "ui.notice.mobile": "Pada telefon atau tablet pemapar berfungsi, tetapi zum dalam jauh lebih perlahan daripada pada GPU desktop, dan paparan yang sangat dalam mungkin mengambil masa beberapa saat untuk satu bingkai. Menurunkan kiraan lelaran membantu.",
   "ui.notice.dismiss": "Tolak"
 }

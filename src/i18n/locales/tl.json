@@ -31,6 +31,8 @@
   "about.back": "bumalik sa nag-render",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Max na mga pag-ulit",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Piliin ang bilang ng pag-ulit mula sa antas ng pag-zoom. Ino-off ito ng paggalaw sa slider.",
   "ui.tab.colour": "Kulay",
   "ui.tab.light": "Liwanag",
   "ui.tab.advanced": "Advanced",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Huminto ang pag-render. Ito ay karaniwang nangangahulugan na ang driver ng graphics ay sumuko sa isang frame na masyadong mahaba. Ibaba ang bilang ng pag-ulit at i-reload ang pahina.",
   "ui.notice.noWebgpu": "Ang browser na ito ay hindi gumagamit ng WebGPU, kaya ang renderer ay bumalik sa WebGL2, na nauubusan ng katumpakan sa mas mababaw na pag-zoom.",
   "ui.notice.enableFlag": "Kung sinusuportahan ng iyong browser ang WebGPU ngunit hindi ito ginagamit, buksan ang chrome://flags, itakda ang Override software rendering list sa Enabled, at i-restart ang browser. Ipinapaliwanag ng page na chrome://gpu kung bakit ito tinanggihan.",
+  "ui.notice.mobile": "Sa isang telepono o tablet gumagana ang renderer, ngunit ang malalim na pag-zoom ay mas mabagal kaysa sa isang desktop GPU, at ang napakalalim na view ay maaaring tumagal ng maraming segundo sa isang frame. Nakakatulong ang pagpapababa sa bilang ng pag-ulit.",
   "ui.notice.dismiss": "I-dismiss"
 }

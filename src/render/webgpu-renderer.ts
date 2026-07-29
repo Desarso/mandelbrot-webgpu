@@ -926,6 +926,11 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     // band is short enough to abandon, so a stale frame costs one band, not a
     // whole screen.
     this.aborted = false;
+    // Clear the request here, not after the loop. An abort() arriving between
+    // frames used to persist into the next one and kill it at its first band
+    // boundary -- and since an abandoned frame presents nothing, the caller's
+    // retry was abandoned too, and the canvas stayed black for good.
+    this.abortRequested = false;
     const bandRows =
       request.tileRows ?? this.bandHeightFor(request.width, request.height);
     let completed = true;
@@ -950,7 +955,11 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       // worth; a macrotask is enough to let a pending wheel or pointer event
       // run and ask us to stop, while the bands already queued keep going.
       await yieldToEvents();
-      if (this.abortRequested) {
+      // Only give up when there is a finished frame to show instead. Without
+      // one -- the first frame after a load or a resize -- abandoning means
+      // presenting nothing at all, and a blank canvas is worse than a frame
+      // that arrives a moment late.
+      if (this.abortRequested && this.historyValid) {
         completed = false;
         this.aborted = true;
         break;
@@ -989,7 +998,6 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     }
 
     await device.queue.onSubmittedWorkDone();
-    this.abortRequested = false;
     const renderMs = performance.now() - started;
 
     // Only a finished frame updates this. An abandoned one leaves both the

@@ -31,6 +31,8 @@
   "about.back": "terug naar de renderer",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maximale iteraties",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Kies het aantal iteraties op het zoomniveau. Als u de schuifregelaar verplaatst, wordt dit uitgeschakeld.",
   "ui.tab.colour": "Kleur",
   "ui.tab.light": "Licht",
   "ui.tab.advanced": "Geavanceerd",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Het renderen is gestopt. Dit betekent meestal dat de grafische driver een frame opgaf dat te lang duurde. Verlaag het aantal iteraties en laad de pagina opnieuw.",
   "ui.notice.noWebgpu": "Deze browser maakt geen gebruik van WebGPU, dus is de renderer teruggevallen op WebGL2, dat bij veel geringere zoomlenzen onnauwkeurig wordt.",
   "ui.notice.enableFlag": "Als uw browser WebGPU ondersteunt maar deze niet gebruikt, opent u chrome://flags, stelt u Override software rendering list in op Enabled en start u de browser opnieuw. Op de pagina chrome://gpu wordt uitgelegd waarom het werd geweigerd.",
+  "ui.notice.mobile": "Op een telefoon of tablet werkt de renderer, maar diepe zoomlenzen zijn veel langzamer dan op een desktop-GPU, en zeer diepe weergaven kunnen vele seconden per frame duren. Het verlagen van het aantal iteraties helpt.",
   "ui.notice.dismiss": "Afwijzen"
 }

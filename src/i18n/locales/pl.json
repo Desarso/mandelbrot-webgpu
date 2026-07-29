@@ -31,6 +31,8 @@
   "about.back": "z powrotem do renderera",
   "ui.title": "Mandelbrota",
   "ui.maxIterations": "Maksymalna liczba iteracji",
+  "ui.auto": "Automatyczny",
+  "ui.autoIterationsHint": "Wybierz liczbę iteracji z poziomu powiększenia. Przesunięcie suwaka wyłącza tę opcję.",
   "ui.tab.colour": "Kolor",
   "ui.tab.light": "Światło",
   "ui.tab.advanced": "Zaawansowany",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Renderowanie zatrzymane. Zwykle oznacza to, że sterownik karty graficznej zrezygnował z klatki, która trwała zbyt długo. Zmniejsz liczbę iteracji i ponownie załaduj stronę.",
   "ui.notice.noWebgpu": "Ta przeglądarka nie korzysta z WebGPU, więc moduł renderujący powrócił do WebGL2, który traci precyzję przy znacznie mniejszych powiększeniach.",
   "ui.notice.enableFlag": "Jeśli Twoja przeglądarka obsługuje WebGPU, ale go nie używa, otwórz chrome://flags, ustaw Zastąp listę renderowania oprogramowania na Włączone i uruchom ponownie przeglądarkę. Strona chrome://gpu wyjaśnia, dlaczego została odrzucona.",
+  "ui.notice.mobile": "Na telefonie lub tablecie moduł renderujący działa, ale głębokie przybliżenia są znacznie wolniejsze niż na procesorze graficznym do komputerów stacjonarnych, a bardzo głębokie widoki mogą zająć wiele sekund na klatkę. Pomaga zmniejszenie liczby iteracji.",
   "ui.notice.dismiss": "Odrzucać"
 }

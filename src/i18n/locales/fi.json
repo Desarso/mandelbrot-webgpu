@@ -31,6 +31,8 @@
   "about.back": "takaisin renderöijälle",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Max iteraatioita",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Valitse iteraatioiden määrä zoomaustasolta. Liukusäätimen siirtäminen poistaa tämän käytöstä.",
   "ui.tab.colour": "Väri",
   "ui.tab.light": "Kevyt",
   "ui.tab.advanced": "Edistynyt",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Renderöinti pysähtyi. Tämä tarkoittaa yleensä sitä, että näytönohjain luopui kehyksestä, joka kesti liian kauan. Pienennä iteraatioiden määrää ja lataa sivu uudelleen.",
   "ui.notice.noWebgpu": "Tämä selain ei käytä WebGPU:ta, joten renderöijä on palannut WebGL2:een, jonka tarkkuus loppuu paljon matalammissa zoomeissa.",
   "ui.notice.enableFlag": "Jos selaimesi tukee WebGPU:ta, mutta ei käytä sitä, avaa chrome://flags, aseta Override software rendering list -asetukseksi Enabled ja käynnistä selain uudelleen. Sivu chrome://gpu selittää, miksi se hylättiin.",
+  "ui.notice.mobile": "Puhelimessa tai tabletissa renderöijä toimii, mutta syväzoomaukset ovat paljon hitaampia kuin pöytätietokoneen GPU:ssa, ja erittäin syvät näkymät voivat kestää useita sekunteja kuvassa. Iteraatiomäärän pienentäminen auttaa.",
   "ui.notice.dismiss": "Hylkää"
 }

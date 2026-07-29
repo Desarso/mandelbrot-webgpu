@@ -31,6 +31,8 @@
   "about.back": "komawa ga mai bayarwa",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Matsakaicin iterations",
+  "ui.auto": "Mota",
+  "ui.autoIterationsHint": "Zaɓi ƙidayar maimaitawa daga matakin zuƙowa. Matsar da silima yana kashe wannan.",
   "ui.tab.colour": "Launi",
   "ui.tab.light": "Haske",
   "ui.tab.advanced": "Na ci gaba",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "An dakatar da yin aiki. Wannan yawanci yana nufin direban zane ya daina kan firam ɗin da ya ɗauki tsayi da yawa. Rage ƙididdige ƙididdigewa kuma sake shigar da shafin.",
   "ui.notice.noWebgpu": "Wannan burauzar ba ta amfani da WebGPU, don haka mai gabatarwa ya sake komawa zuwa WebGL2, wanda ke tafiya daidai a cikin zuƙowa mai zurfi.",
   "ui.notice.enableFlag": "Idan burauzar ku tana goyan bayan WebGPU amma baya amfani da shi, buɗe chrome://flags, saita Lissafin Mayar da software zuwa An kunna, sa'annan ta sake kunna mai binciken. Shafin chrome://gpu ya bayyana dalilin da ya sa aka ƙi shi.",
+  "ui.notice.mobile": "A waya ko kwamfutar hannu mai gabatarwa yana aiki, amma zuƙowa mai zurfi suna da nisa a hankali fiye da na GPU na tebur, kuma zurfin ra'ayi na iya ɗaukar daƙiƙa da yawa a firam. Rage ƙidayar maimaitawa yana taimakawa.",
   "ui.notice.dismiss": "Korar"
 }

@@ -31,6 +31,8 @@
   "about.back": "späť na renderer",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maximálny počet opakovaní",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Vyberte počet iterácií z úrovne priblíženia. Posunutím posúvača sa to vypne.",
   "ui.tab.colour": "Farba",
   "ui.tab.light": "Svetlo",
   "ui.tab.advanced": "Pokročilé",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Vykresľovanie sa zastavilo. Zvyčajne to znamená, že grafický ovládač sa vzdal rámca, ktorý trval príliš dlho. Znížte počet iterácií a znova načítajte stránku.",
   "ui.notice.noWebgpu": "Tento prehliadač nepoužíva WebGPU, takže vykresľovací modul klesol späť na WebGL2, ktorý pri oveľa menšom priblížení stráca presnosť.",
   "ui.notice.enableFlag": "Ak váš prehliadač podporuje WebGPU, ale nepoužíva ho, otvorte chrome://flags, nastavte zoznam vykresľovania softvéru Override na hodnotu Povolené a reštartujte prehliadač. Stránka chrome://gpu vysvetľuje, prečo bola odmietnutá.",
+  "ui.notice.mobile": "Na telefóne alebo tablete vykresľovací modul funguje, ale hlboké priblíženia sú oveľa pomalšie ako na stolnom GPU a veľmi hlboké zobrazenia môžu trvať niekoľko sekúnd snímky. Zníženie počtu iterácií pomáha.",
   "ui.notice.dismiss": "Odmietnuť"
 }

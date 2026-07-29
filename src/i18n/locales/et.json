@@ -31,6 +31,8 @@
   "about.back": "tagasi renderdaja juurde",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Max iteratsioonid",
+  "ui.auto": "Automaatne",
+  "ui.autoIterationsHint": "Valige suumitasemelt iteratsioonide arv. Liuguri liigutamine lülitab selle välja.",
   "ui.tab.colour": "Värv",
   "ui.tab.light": "Valgus",
   "ui.tab.advanced": "Täpsemalt",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Renderdamine peatus. Tavaliselt tähendab see, et graafikadraiver loobus kaadrist, mis võttis liiga kaua aega. Vähendage iteratsioonide arvu ja laadige leht uuesti.",
   "ui.notice.noWebgpu": "See brauser ei kasuta WebGPU-d, seega on renderdaja naasnud WebGL2-le, mille täpsus saab palju madalamate suumide korral otsa.",
   "ui.notice.enableFlag": "Kui teie brauser toetab WebGPU-d, kuid ei kasuta seda, avage chrome://flags, määrake Tarkvara renderdusloendi alistamine väärtuseks Lubatud ja taaskäivitage brauser. Leht chrome://gpu selgitab, miks sellest keelduti.",
+  "ui.notice.mobile": "Telefonis või tahvelarvutis renderdaja töötab, kuid sügav suumimine on palju aeglasem kui lauaarvuti GPU-l ja väga sügavate vaadete jaoks võib kaadri kohta kuluda mitu sekundit. Iteratsioonide arvu vähendamine aitab.",
   "ui.notice.dismiss": "Loobu"
 }

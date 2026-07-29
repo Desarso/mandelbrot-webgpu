@@ -31,6 +31,8 @@
   "about.back": "다시 렌더러로 돌아가서",
   "ui.title": "만델브로트",
   "ui.maxIterations": "최대 반복",
+  "ui.auto": "자동",
+  "ui.autoIterationsHint": "확대/축소 수준에서 반복 횟수를 선택합니다. 슬라이더를 움직이면 이 기능이 꺼집니다.",
   "ui.tab.colour": "색상",
   "ui.tab.light": "빛",
   "ui.tab.advanced": "고급의",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "렌더링이 중지되었습니다. 이는 일반적으로 그래픽 드라이버가 너무 오래 걸리는 프레임을 포기했음을 의미합니다. 반복 횟수를 줄이고 페이지를 다시 로드하세요.",
   "ui.notice.noWebgpu": "이 브라우저는 WebGPU를 사용하지 않으므로 렌더러는 WebGL2로 대체되었으며 훨씬 더 얕은 확대/축소에서는 정밀도가 부족합니다.",
   "ui.notice.enableFlag": "브라우저가 WebGPU를 지원하지만 사용하지 않는 경우 chrome://flags를 열고 소프트웨어 렌더링 목록 재정의를 사용으로 설정한 다음 브라우저를 다시 시작하세요. chrome://gpu 페이지에는 거부된 이유가 설명되어 있습니다.",
+  "ui.notice.mobile": "휴대폰이나 태블릿에서는 렌더러가 작동하지만 심층 확대/축소는 데스크톱 GPU보다 훨씬 느리고 매우 심층적인 보기에는 프레임당 몇 초가 걸릴 수 있습니다. 반복 횟수를 낮추는 것이 도움이 됩니다.",
   "ui.notice.dismiss": "해고하다"
 }

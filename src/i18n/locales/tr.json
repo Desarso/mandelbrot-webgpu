@@ -31,6 +31,8 @@
   "about.back": "oluşturucuya geri dön",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maksimum yineleme",
+  "ui.auto": "Otomatik",
+  "ui.autoIterationsHint": "Yakınlaştırma düzeyinden yineleme sayısını seçin. Kaydırıcıyı hareket ettirmek bunu kapatır.",
   "ui.tab.colour": "Renk",
   "ui.tab.light": "Işık",
   "ui.tab.advanced": "Gelişmiş",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Oluşturma durduruldu. Bu genellikle grafik sürücüsünün çok uzun süren bir çerçeveden vazgeçtiği anlamına gelir. Yineleme sayısını azaltın ve sayfayı yeniden yükleyin.",
   "ui.notice.noWebgpu": "Bu tarayıcı WebGPU kullanmıyor, bu nedenle oluşturucu WebGL2'ye geri döndü, bu da çok daha sığ yakınlaştırmalarda hassasiyeti kaybediyor.",
   "ui.notice.enableFlag": "Tarayıcınız WebGPU'yu destekliyor ancak kullanmıyorsa chrome://flags'ı açın, Yazılım oluşturma listesini geçersiz kıl seçeneğini Etkin olarak ayarlayın ve tarayıcıyı yeniden başlatın. Chrome://gpu sayfası neden reddedildiğini açıklıyor.",
+  "ui.notice.mobile": "Bir telefonda veya tablette oluşturucu çalışır, ancak derin yakınlaştırmalar masaüstü GPU'ya göre çok daha yavaştır ve çok derin görünümler kare başına birkaç saniye sürebilir. Yineleme sayısını azaltmak yardımcı olur.",
   "ui.notice.dismiss": "Azletmek"
 }

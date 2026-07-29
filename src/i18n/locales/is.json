@@ -31,6 +31,8 @@
   "about.back": "aftur til flutningsaðilans",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Hámarks endurtekningar",
+  "ui.auto": "Sjálfvirk",
+  "ui.autoIterationsHint": "Veldu endurtekningarfjölda úr aðdráttarstigi. Með því að færa sleðann er slökkt á þessu.",
   "ui.tab.colour": "Litur",
   "ui.tab.light": "Ljós",
   "ui.tab.advanced": "Ítarlegri",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Lýsing stöðvuð. Þetta þýðir venjulega að grafíkstjórinn gafst upp á ramma sem tók of langan tíma. Lækkaðu fjölda endurtekningar og endurhlaða síðuna.",
   "ui.notice.noWebgpu": "Þessi vafri notar ekki WebGPU, þannig að rendererinn hefur fallið aftur í WebGL2, sem klárast af nákvæmni við mun grynnri aðdrætti.",
   "ui.notice.enableFlag": "Ef vafrinn þinn styður WebGPU en er ekki að nota hann skaltu opna chrome://flags, stilla Override software rendering list á Virkt og endurræsa vafrann. Síðan chrome://gpu útskýrir hvers vegna henni var hafnað.",
+  "ui.notice.mobile": "Í síma eða spjaldtölvu virkar teiknarinn, en djúpur aðdráttur er mun hægari en á borðtölvu GPU og mjög djúpt útsýni getur tekið margar sekúndur í ramma. Að lækka fjölda endurtekningar hjálpar.",
   "ui.notice.dismiss": "Segja frá"
 }

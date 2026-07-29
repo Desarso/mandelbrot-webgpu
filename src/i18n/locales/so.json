@@ -31,6 +31,8 @@
   "about.back": "dib ugu soo celinta",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Ku celcelinta ugu badan",
+  "ui.auto": "Baabuur",
+  "ui.autoIterationsHint": "Ka dooro tirinta soo noqnoqda ee heerka zoom. Dhaqdhaqaaqa slider-ka ayaa daminaya tan.",
   "ui.tab.colour": "Midabka",
   "ui.tab.light": "Iftiin",
   "ui.tab.advanced": "Sareeye",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Soo bandhigid waa joogsatay Tani waxay caadi ahaan ka dhigan tahay in darawalka garaafyada uu ka tanaasulay jir waqti aad u dheer qaatay. Hoos u dhig tirinta soo noqnoqda oo dib u soo deji bogga.",
   "ui.notice.noWebgpu": "Barowsarkani ma isticmaalayo WebGPU, sidaa darteed soo-bandhigu waxa uu dib ugu dhacay WebGL2, kaas oo si sax ah uga dhammaanaya soo-dhoweynta durugsan.",
   "ui.notice.enableFlag": "Haddii barowsarkaaga uu taageero WebGPU balse aanu isticmaalayn, fur chrome://flags, deji liiska soo-bandhigidda software-ka beddelka si ay u shaqeyso, oo dib u bilow browserka. Bogga chrome://gpu wuxuu sharxayaa sababta loo diiday.",
+  "ui.notice.mobile": "Taleefanka ama tablet-ka waxa uu ku shaqeeyaa, laakiin soo-dhoweynta qoto dheer ayaa aad uga gaabiya marka loo eego GPU-da desktop-ka, aragtiyo aad u qoto dheerna waxa ay qaadan kartaa ilbiriqsiyo badan. Hoos u dhigida tirinta soo noqnoqda ayaa caawinaysa.",
   "ui.notice.dismiss": "Eryi"
 }

@@ -31,6 +31,8 @@
   "about.back": "zurück zum Renderer",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maximale Iterationen",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Wählen Sie die Anzahl der Iterationen aus der Zoomstufe aus. Durch Bewegen des Schiebereglers wird dies deaktiviert.",
   "ui.tab.colour": "Farbe",
   "ui.tab.light": "Licht",
   "ui.tab.advanced": "Fortschrittlich",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Das Rendern wurde gestoppt. Dies bedeutet normalerweise, dass der Grafiktreiber einen Frame aufgegeben hat, der zu lange gedauert hat. Verringern Sie die Anzahl der Iterationen und laden Sie die Seite neu.",
   "ui.notice.noWebgpu": "Dieser Browser verwendet keine WebGPU, daher ist der Renderer auf WebGL2 zurückgegriffen, das bei weitaus geringeren Zooms nicht mehr präzise ist.",
   "ui.notice.enableFlag": "Wenn Ihr Browser WebGPU unterstützt, es aber nicht verwendet, öffnen Sie chrome://flags, setzen Sie „Software-Rendering-Liste überschreiben“ auf „Aktiviert“ und starten Sie den Browser neu. Auf der Seite chrome://gpu wird erläutert, warum dies abgelehnt wurde.",
+  "ui.notice.mobile": "Auf einem Telefon oder Tablet funktioniert der Renderer, aber tiefe Zooms sind viel langsamer als auf einer Desktop-GPU, und sehr tiefe Ansichten können viele Sekunden pro Bild dauern. Es hilft, die Anzahl der Iterationen zu verringern.",
   "ui.notice.dismiss": "Zurückweisen"
 }

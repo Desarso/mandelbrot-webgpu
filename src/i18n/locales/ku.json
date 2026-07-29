@@ -31,6 +31,8 @@
   "about.back": "vegere renderer",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "dubarekirinên herî zêde",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Hejmara dubarekirinê ji asta zoomê hilbijêrin. Veguheztina slider vê yekê qut dike.",
   "ui.tab.colour": "Reng",
   "ui.tab.light": "Sivik",
   "ui.tab.advanced": "Pêşveçû",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Rendering rawestandin. Ev bi gelemperî tê vê wateyê ku ajokera grafîkê dev ji çarçoveyek ku pir dirêj girt berda. Hejmara dubarekirinê kêm bikin û rûpelê ji nû ve bar bikin.",
   "ui.notice.noWebgpu": "Ev gerok WebGPU bikar nayîne, ji ber vê yekê renderer dîsa ketiye WebGL2, ya ku di zoomên pir hindik de ji rastbûnê derdikeve.",
   "ui.notice.enableFlag": "Ger geroka we WebGPU piştgirî dike lê wê bikar nayîne, chrome:/ Rûpelê chrome: // gpu rave dike ka çima hate red kirin.",
+  "ui.notice.mobile": "Li ser têlefonek an tabletê renderer dixebite, lê zoomên kûr ji GPU-ya sermaseyê pir hêdîtir in, û dîmenên pir kûr dibe ku di çarçoveyek pir saniyeyan de bigirin. Kêmkirina jimareya dubarekirinê dibe alîkar.",
   "ui.notice.dismiss": "Berdan"
 }

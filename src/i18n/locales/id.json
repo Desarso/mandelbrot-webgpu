@@ -31,6 +31,8 @@
   "about.back": "kembali ke penyaji",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Iterasi maksimal",
+  "ui.auto": "Mobil",
+  "ui.autoIterationsHint": "Pilih jumlah iterasi dari tingkat zoom. Memindahkan penggeser akan mematikannya.",
   "ui.tab.colour": "Warna",
   "ui.tab.light": "Lampu",
   "ui.tab.advanced": "Canggih",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Rendering terhenti. Ini biasanya berarti driver grafis menyerah pada frame yang memakan waktu terlalu lama. Turunkan jumlah iterasi dan muat ulang halaman.",
   "ui.notice.noWebgpu": "Browser ini tidak menggunakan WebGPU, sehingga perendernya kembali ke WebGL2, yang kehilangan presisi pada zoom yang jauh lebih dangkal.",
   "ui.notice.enableFlag": "Jika browser Anda mendukung WebGPU tetapi tidak menggunakannya, buka chrome://flags, setel Override software rendering list ke Enabled, dan mulai ulang browser. Halaman chrome://gpu menjelaskan mengapa ditolak.",
+  "ui.notice.mobile": "Di ponsel atau tablet, penyaji berfungsi, namun zoom dalam jauh lebih lambat dibandingkan pada GPU desktop, dan tampilan sangat dalam mungkin memerlukan waktu beberapa detik per frame. Menurunkan jumlah iterasi membantu.",
   "ui.notice.dismiss": "Membubarkan"
 }

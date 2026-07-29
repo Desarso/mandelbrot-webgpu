@@ -31,6 +31,8 @@
   "about.back": "ar ais go dtí an rindreálaí",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Atriallta uasta",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Roghnaigh an comhaireamh atriallta ón leibhéal súmáil. Nuair a bhogann tú an sleamhnán castar é seo as.",
   "ui.tab.colour": "Dath",
   "ui.tab.light": "Solas",
   "ui.tab.advanced": "Casta",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Stopadh an rindreáil. Ciallaíonn sé seo go hiondúil gur éirigh an tiománaí grafaicí suas ar fhráma a thóg ró-fhada. Laghdaigh an comhaireamh atriallta agus athlódáil an leathanach.",
   "ui.notice.noWebgpu": "Níl an brabhsálaí seo ag baint úsáide as WebGPU, mar sin tá an rindreálaí tite ar ais go WebGL2, rud a théann as cruinneas ag súmáil i bhfad níos éadomhain.",
   "ui.notice.enableFlag": "Má thacaíonn do bhrabhsálaí le WebGPU ach nach bhfuil sé á úsáid, oscail chrome://flags, socraigh liosta rindreála bogearraí Sáraigh go Cumasaithe, agus atosaigh an brabhsálaí. Míníonn an leathanach chrome://gpu an fáth ar diúltaíodh dó.",
+  "ui.notice.mobile": "Feidhmíonn an rindreálaí ar ghuthán nó ar thaibléad, ach tá súmáil dhomhain i bhfad níos moille ná mar a bhíonn ar GPU deisce, agus d’fhéadfadh go dtógfadh radharcanna an-domhain go leor soicind i ndiaidh a chéile. Cuidíonn sé leis an líon atriallta a ísliú.",
   "ui.notice.dismiss": "Díbhe"
 }

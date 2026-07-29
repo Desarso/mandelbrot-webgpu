@@ -31,6 +31,8 @@
   "about.back": "bali menyang renderer",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Pengulangan maksimal",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Pilih count iterasi saka tingkat zoom. Ngalih panggeser mateni iki.",
   "ui.tab.colour": "warna",
   "ui.tab.light": "cahya",
   "ui.tab.advanced": "Majeng",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Rendering mandheg. Iki biasane tegese driver grafis nyerah ing pigura sing dawa banget. Kurangi jumlah iterasi lan muat ulang kaca.",
   "ui.notice.noWebgpu": "Browser iki ora nggunakake WebGPU, mula renderer bali menyang WebGL2, sing ora presisi kanthi zoom sing luwih cethek.",
   "ui.notice.enableFlag": "Yen browser sampeyan ndhukung WebGPU nanging ora nggunakake, bukak chrome://flags, setel Override dhaptar rendering piranti lunak menyang Aktif, banjur miwiti maneh browser. Kaca chrome: // gpu nerangake kenapa ditolak.",
+  "ui.notice.mobile": "Ing telpon utawa tablet, renderer bisa digunakake, nanging zoom jero luwih alon tinimbang ing GPU desktop, lan tampilan jero banget bisa njupuk sawetara detik. Mudhunake count iterasi mbantu.",
   "ui.notice.dismiss": "Mbucal"
 }

@@ -31,6 +31,8 @@
   "about.back": "yn ôl at y rendr",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Max iteriadau",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Dewiswch y cyfrif iteriad o'r lefel chwyddo. Mae symud y llithrydd yn diffodd hyn.",
   "ui.tab.colour": "Lliw",
   "ui.tab.light": "Ysgafn",
   "ui.tab.advanced": "Uwch",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Rendro stopio. Mae hyn fel arfer yn golygu bod y gyrrwr graffeg wedi rhoi'r gorau iddi ar ffrâm a gymerodd yn rhy hir. Gostyngwch y cyfrif ailadrodd ac ail-lwythwch y dudalen.",
   "ui.notice.noWebgpu": "Nid yw'r porwr hwn yn defnyddio WebGPU, felly mae'r rendrwr wedi disgyn yn ôl i WebGL2, sy'n rhedeg allan o drachywiredd ar chwyddo llawer basach.",
   "ui.notice.enableFlag": "Os yw'ch porwr yn cefnogi WebGPU ond nad yw'n ei ddefnyddio, agorwch chrome://flags, gosodwch restr rendro meddalwedd Override i Galluogi, ac ailgychwynwch y porwr. Mae'r dudalen chrome://gpu yn esbonio pam y cafodd ei wrthod.",
+  "ui.notice.mobile": "Ar ffôn neu dabled mae'r rendrwr yn gweithio, ond mae chwyddo dwfn yn llawer arafach nag ar GPU bwrdd gwaith, a gall golygfeydd dwfn iawn gymryd llawer o eiliadau yn y ffrâm. Mae gostwng y cyfrif ailadrodd yn helpu.",
   "ui.notice.dismiss": "Diystyru"
 }

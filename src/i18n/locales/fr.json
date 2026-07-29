@@ -31,6 +31,8 @@
   "about.back": "retour au moteur de rendu",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Itérations maximales",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Choisissez le nombre d'itérations à partir du niveau de zoom. Déplacer le curseur désactive cette fonction.",
   "ui.tab.colour": "Couleur",
   "ui.tab.light": "Lumière",
   "ui.tab.advanced": "Advanced",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Le rendu s'est arrêté. Cela signifie généralement que le pilote graphique a abandonné une image qui prenait trop de temps. Réduisez le nombre d’itérations et rechargez la page.",
   "ui.notice.noWebgpu": "Ce navigateur n'utilise pas WebGPU, le moteur de rendu est donc revenu à WebGL2, qui manque de précision avec des zooms beaucoup moins profonds.",
   "ui.notice.enableFlag": "Si votre navigateur prend en charge WebGPU mais ne l'utilise pas, ouvrez chrome://flags, définissez Remplacer la liste de rendu du logiciel sur Activé et redémarrez le navigateur. La page chrome://gpu explique pourquoi elle a été refusée.",
+  "ui.notice.mobile": "Sur un téléphone ou une tablette, le moteur de rendu fonctionne, mais les zooms profonds sont beaucoup plus lents que sur un GPU de bureau, et les vues très profondes peuvent prendre plusieurs secondes par image. Réduire le nombre d’itérations est utile.",
   "ui.notice.dismiss": "Rejeter"
 }

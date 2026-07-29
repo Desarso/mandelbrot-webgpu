@@ -31,6 +31,8 @@
   "about.back": "terug na die leweraar",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maksimum herhalings",
+  "ui.auto": "Outo",
+  "ui.autoIterationsHint": "Kies die herhalingtelling vanaf die zoomvlak. Deur die skuifbalk te skuif, skakel dit af.",
   "ui.tab.colour": "Kleur",
   "ui.tab.light": "Lig",
   "ui.tab.advanced": "Gevorderd",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Weervertoning het gestop. Dit beteken gewoonlik dat die grafiese bestuurder opgegee het op 'n raam wat te lank geneem het. Verlaag die herhalingtelling en herlaai die bladsy.",
   "ui.notice.noWebgpu": "Hierdie blaaier gebruik nie WebGPU nie, so die weergawe het teruggeval na WebGL2, wat nie meer akkuraat is by baie vlakker inzooms nie.",
   "ui.notice.enableFlag": "As jou blaaier WebGPU ondersteun, maar dit nie gebruik nie, maak chrome://flags oop, stel Ignoreer sagteware-weergawelys op Geaktiveer en herbegin die blaaier. Die bladsy chrome://gpu verduidelik hoekom dit geweier is.",
+  "ui.notice.mobile": "Op 'n foon of tablet werk die weergawe, maar diep zoems is baie stadiger as op 'n rekenaar GPU, en baie diep aansigte kan baie sekondes 'n raam neem. Die verlaging van die iterasietelling help.",
   "ui.notice.dismiss": "Verwerp"
 }

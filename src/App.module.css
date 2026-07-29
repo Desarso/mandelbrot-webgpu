@@ -704,3 +704,30 @@
   background: #14161a;
   color: #e8ecf4;
 }
+
+/* Small toggle beside the iteration count, rather than a row of its own:
+   it qualifies that number and belongs next to it. */
+.autoChip {
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(232, 236, 244, 0.5);
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  vertical-align: 1px;
+}
+
+.autoChip:hover {
+  color: rgba(232, 236, 244, 0.85);
+}
+
+.autoChipOn {
+  border-color: rgba(127, 212, 238, 0.5);
+  background: rgba(127, 212, 238, 0.16);
+  color: #bfe8f6;
+}

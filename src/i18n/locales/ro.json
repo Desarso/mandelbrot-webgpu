@@ -31,6 +31,8 @@
   "about.back": "înapoi la redator",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Iterații maxime",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Alegeți numărul de iterații de la nivelul de zoom. Mutarea cursorului o dezactivează.",
   "ui.tab.colour": "Culoare",
   "ui.tab.light": "Aprinde",
   "ui.tab.advanced": "Avansat",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Redarea sa oprit. Acest lucru înseamnă de obicei că driverul grafic a renunțat la un cadru care a durat prea mult. Reduceți numărul de iterații și reîncărcați pagina.",
   "ui.notice.noWebgpu": "Acest browser nu folosește WebGPU, așa că redarea a revenit la WebGL2, care rămâne fără precizie la zoomuri mult mai puțin adânci.",
   "ui.notice.enableFlag": "Dacă browserul dvs. acceptă WebGPU, dar nu îl folosește, deschideți chrome://flags, setați Suprascrierea listei de randare a software-ului la Activat și reporniți browserul. Pagina chrome://gpu explică de ce a fost refuzată.",
+  "ui.notice.mobile": "Pe un telefon sau pe tabletă, redarea funcționează, dar zoom-urile profunde sunt mult mai lente decât pe un GPU desktop, iar vizualizările foarte profunde pot dura multe secunde pe cadru. Scăderea numărului de iterații ajută.",
   "ui.notice.dismiss": "Respingeți"
 }

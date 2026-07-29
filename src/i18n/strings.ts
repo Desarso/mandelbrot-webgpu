@@ -74,6 +74,9 @@ export const STRINGS = {
   // --------------------------------------------------------------------- ui
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Max iterations",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint":
+    "Choose the iteration count from the zoom level. Moving the slider turns this off.",
   "ui.tab.colour": "Colour",
   "ui.tab.light": "Light",
   "ui.tab.advanced": "Advanced",
@@ -116,6 +119,8 @@ export const STRINGS = {
     "This browser is not using WebGPU, so the renderer has fallen back to WebGL2, which runs out of precision at far shallower zooms.",
   "ui.notice.enableFlag":
     "If your browser supports WebGPU but is not using it, open chrome://flags, set Override software rendering list to Enabled, and restart the browser. The page chrome://gpu explains why it was refused.",
+  "ui.notice.mobile":
+    "On a phone or tablet the renderer works, but deep zooms are far slower than on a desktop GPU, and very deep views may take many seconds a frame. Lowering the iteration count helps.",
   "ui.notice.dismiss": "Dismiss",
 } as const;
 

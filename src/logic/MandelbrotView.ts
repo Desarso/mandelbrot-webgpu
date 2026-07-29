@@ -7,6 +7,7 @@
 import Decimal from "decimal.js";
 import { Accessor, createEffect, createSignal, onCleanup, Setter } from "solid-js";
 import { ColorSettings, encodeColors } from "./colorSettings";
+import { MAX_ITERATIONS, iterationsForSpan } from "./iterations";
 import { decodeView, encodeView } from "./viewCode";
 import { findNucleus, type Nucleus } from "../orbit/nucleus";
 import type { BackendStats, DrawRequest, RenderBackend } from "../render/backend";
@@ -47,6 +48,8 @@ export interface ViewInfo {
   skipRatio: number;
   rebases: number;
   atDepthLimit: boolean;
+  /** Iterations this depth is likely to need, for the auto-iteration toggle. */
+  suggestedIterations: number;
   /** Set when the backend has stopped working, e.g. a lost GPU device. */
   error?: string;
 }
@@ -100,6 +103,7 @@ export class MandelbrotView {
       skipRatio: 0,
       rebases: 0,
       atDepthLimit: false,
+      suggestedIterations: 0,
     });
     this.view = view;
     this.setView = setView;
@@ -317,6 +321,7 @@ export class MandelbrotView {
       skipRatio: stats.skipRatio,
       rebases: stats.rebases,
       atDepthLimit: this.spanY.lessThanOrEqualTo(this.minSpan() * 1.001),
+      suggestedIterations: iterationsForSpan(this.spanY, MAX_ITERATIONS),
     });
 
     const url = new URL(window.location.href);

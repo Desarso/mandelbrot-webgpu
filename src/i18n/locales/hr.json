@@ -31,6 +31,8 @@
   "about.back": "natrag u renderer",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maks. ponavljanja",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Odaberite broj ponavljanja na razini zumiranja. Pomicanjem klizača ovo se isključuje.",
   "ui.tab.colour": "Boja",
   "ui.tab.light": "Svjetlo",
   "ui.tab.advanced": "Napredno",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Renderiranje zaustavljeno. To obično znači da je upravljački program grafičke kartice odustao od okvira koji je predugo trajao. Smanjite broj ponavljanja i ponovno učitajte stranicu.",
   "ui.notice.noWebgpu": "Ovaj preglednik ne koristi WebGPU, tako da se renderer vratio na WebGL2, kojem ponestaje preciznosti pri mnogo plićem zumiranju.",
   "ui.notice.enableFlag": "Ako vaš preglednik podržava WebGPU, ali ga ne koristi, otvorite chrome://flags, postavite Override software rendering list na Enabled i ponovno pokrenite preglednik. Stranica chrome://gpu objašnjava zašto je odbijen.",
+  "ui.notice.mobile": "Na telefonu ili tabletu renderer radi, ali duboko zumiranje daleko je sporije nego na GPU-u stolnog računala, a za vrlo duboke prikaze može biti potrebno mnogo sekundi po kadru. Smanjenje broja ponavljanja pomaže.",
   "ui.notice.dismiss": "Odbaciti"
 }

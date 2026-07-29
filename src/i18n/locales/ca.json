@@ -31,6 +31,8 @@
   "about.back": "torna al renderitzador",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Màxim d'iteracions",
+  "ui.auto": "Automàtic",
+  "ui.autoIterationsHint": "Trieu el recompte d'iteracions del nivell de zoom. Si mous el control lliscant, això es desactiva.",
   "ui.tab.colour": "Color",
   "ui.tab.light": "Llum",
   "ui.tab.advanced": "Avançat",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "S'ha aturat la renderització. Això normalment significa que el controlador gràfic va renunciar a un fotograma que va trigar massa. Baixeu el nombre d'iteracions i torneu a carregar la pàgina.",
   "ui.notice.noWebgpu": "Aquest navegador no utilitza WebGPU, de manera que el renderitzador ha tornat a WebGL2, que es queda sense precisió amb zooms molt menys profunds.",
   "ui.notice.enableFlag": "Si el vostre navegador és compatible amb WebGPU però no l'utilitza, obriu chrome://flags, configureu Anul·lació de la llista de representació de programari a Habilitat i reinicieu el navegador. La pàgina chrome://gpu explica per què es va rebutjar.",
+  "ui.notice.mobile": "En un telèfon o tauleta, el renderitzador funciona, però els zooms profunds són molt més lents que en una GPU d'escriptori i les vistes molt profundes poden trigar molts segons per fotograma. Reduir el nombre d'iteracions ajuda.",
   "ui.notice.dismiss": "Descartar"
 }

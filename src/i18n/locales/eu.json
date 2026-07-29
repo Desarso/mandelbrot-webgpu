@@ -31,6 +31,8 @@
   "about.back": "itzuli errendatzailera",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Gehienezko iterazioak",
+  "ui.auto": "Autoa",
+  "ui.autoIterationsHint": "Aukeratu iterazio kopurua zoom mailatik. Graduatzailea mugitzeak hau desaktibatzen du.",
   "ui.tab.colour": "Kolorea",
   "ui.tab.light": "Argia",
   "ui.tab.advanced": "Aurreratua",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Errendatzea gelditu da. Horrek esan nahi du, normalean, kontrolatzaile grafikoak denbora gehiegi behar zuen fotograma bati utzi zion. Jaitsi iterazio kopurua eta kargatu orria berriro.",
   "ui.notice.noWebgpu": "Arakatzaile honek ez du WebGPU erabiltzen, beraz, errendatzailea WebGL2ra jaitsi da, zehaztasunik gabe geratzen baita sakonera txikiagoko zoometan.",
   "ui.notice.enableFlag": "Zure arakatzaileak WebGPU onartzen badu, baina ez badu erabiltzen, ireki chrome://flags, ezarri Gainduta gainidatzi softwarearen errendatze-zerrenda eta berrabiarazi arakatzailea. chrome://gpu orrialdeak zergatik ukatu zen azaltzen du.",
+  "ui.notice.mobile": "Telefonoan edo tabletan errendatzaileak funtzionatzen du, baina zoom sakonak mahaigaineko GPU batean baino askoz motelagoak dira, eta ikuspegi oso sakonek segundo asko behar dituzte fotogramako. Iterazio kopurua jaistea laguntzen du.",
   "ui.notice.dismiss": "Baztertu"
 }

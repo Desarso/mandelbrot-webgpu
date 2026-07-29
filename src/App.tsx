@@ -9,6 +9,9 @@ import {
   type Component,
 } from "solid-js";
 import { MandelbrotView, type ViewInfo } from "./logic/MandelbrotView";
+import { MAX_ITERATIONS } from "./logic/iterations";
+
+export { MAX_ITERATIONS };
 import {
   ColorSettings,
   DEFAULT_COLORS,
@@ -54,7 +57,7 @@ const FEATURED_PRESETS = 6;
  * Ceiling on the iteration slider. Deep views legitimately need tens of
  * thousands: the iteration count needed grows with zoom depth.
  */
-export const MAX_ITERATIONS = 200000;
+
 
 /** The slider is logarithmic; linear would make everything below 20k unusable. */
 function sliderToIterations(position: number): number {
@@ -90,6 +93,11 @@ function gradientOf(stops: string[]): string {
 
 const App: Component = () => {
   const [maxIterations, setMaxIterations] = createSignal(initialIterations());
+  // An explicit ?i= is a deliberate choice, so honour it rather than
+  // overriding it on the first frame.
+  const [autoIterations, setAutoIterations] = createSignal(
+    !new URL(window.location.href).searchParams.has("i")
+  );
   const [colors, setColors] = createSignal<ColorSettings>(initialColors());
   const patch = (change: Partial<ColorSettings>) =>
     setColors((current) => ({ ...current, ...change }));
@@ -103,6 +111,19 @@ const App: Component = () => {
   const [webgpuNoticeDismissed, setWebgpuNoticeDismissed] = createSignal(
     localStorage.getItem("mandelbrot.webgpu-notice") === "dismissed"
   );
+  // A coarse primary pointer is the closest thing to a reliable "this is a
+  // phone or tablet" signal that does not involve sniffing the user agent.
+  const isTouchDevice =
+    typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+  const [mobileNoticeDismissed, setMobileNoticeDismissed] = createSignal(
+    localStorage.getItem("mandelbrot.mobile-notice") === "dismissed"
+  );
+  // Only one of the two, and the WebGPU one takes precedence: it explains a
+  // hard limit on depth, where this one only explains slowness.
+  const showMobileNotice = () =>
+    isTouchDevice &&
+    !mobileNoticeDismissed() &&
+    view()?.backend === "webgpu";
   const [renderer, setRenderer] = createSignal<MandelbrotView | null>(null);
   const [copied, setCopied] = createSignal(false);
   const [searching, setSearching] = createSignal(false);
@@ -116,9 +137,21 @@ const App: Component = () => {
   const syncIterations = (value: number) => {
     setMaxIterations(value);
     const url = new URL(window.location.href);
-    url.searchParams.set("i", String(value));
+    // While auto is on the count is a function of the view, so writing it into
+    // the URL would be noise -- and would switch auto off for whoever opens
+    // the link.
+    if (autoIterations()) url.searchParams.delete("i");
+    else url.searchParams.set("i", String(value));
     window.history.replaceState({}, "", decodeURIComponent(url.toString()));
   };
+
+  // Follow the zoom while auto is on. The guard matters: setting the count
+  // re-renders, which republishes the view, which lands back here.
+  createEffect(() => {
+    if (!autoIterations()) return;
+    const suggested = view()?.suggestedIterations ?? 0;
+    if (suggested > 0 && suggested !== maxIterations()) syncIterations(suggested);
+  });
 
   const setStop = (index: number, value: string) => {
     const stops = [...colors().stops];
@@ -207,6 +240,21 @@ const App: Component = () => {
         </a>
       </div>
 
+      <Show when={showMobileNotice()}>
+        <div class={styles.notice}>
+          <p>{t("ui.notice.mobile")}</p>
+          <button
+            class={styles.noticeClose}
+            onClick={() => {
+              localStorage.setItem("mandelbrot.mobile-notice", "dismissed");
+              setMobileNoticeDismissed(true);
+            }}
+          >
+            {t("ui.notice.dismiss")}
+          </button>
+        </div>
+      </Show>
+
       <Show when={view()?.backend === "webgl" && !webgpuNoticeDismissed()}>
         <div class={styles.notice}>
           <p>{t("ui.notice.noWebgpu")}</p>
@@ -241,7 +289,19 @@ const App: Component = () => {
             <div class={styles.field}>
               <label class={styles.fieldLabel} for="iterations">
                 <span>{t("ui.maxIterations")}</span>
-                <span class={styles.value}>{maxIterations().toLocaleString()}</span>
+                <span class={styles.value}>
+                  <button
+                    class={`${styles.autoChip} ${
+                      autoIterations() ? styles.autoChipOn : ""
+                    }`}
+                    title={t("ui.autoIterationsHint")}
+                    aria-pressed={autoIterations()}
+                    onClick={() => setAutoIterations((on) => !on)}
+                  >
+                    {t("ui.auto")}
+                  </button>
+                  {maxIterations().toLocaleString()}
+                </span>
               </label>
               <input
                 id="iterations"
@@ -251,7 +311,12 @@ const App: Component = () => {
                 max="1000"
                 step="1"
                 value={iterationsToSlider(maxIterations())}
-                onInput={(e) => syncIterations(sliderToIterations(+e.currentTarget.value))}
+                onInput={(e) => {
+                  // Reaching for the slider is a clear statement that the
+                  // guess is not wanted, so stop overriding it.
+                  setAutoIterations(false);
+                  syncIterations(sliderToIterations(+e.currentTarget.value));
+                }}
               />
             </div>
           </section>

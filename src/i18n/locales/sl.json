@@ -31,6 +31,8 @@
   "about.back": "nazaj v upodabljalnik",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Največje število ponovitev",
+  "ui.auto": "Avto",
+  "ui.autoIterationsHint": "Na ravni povečave izberite število ponovitev. Če premaknete drsnik, to izklopite.",
   "ui.tab.colour": "barva",
   "ui.tab.light": "Svetloba",
   "ui.tab.advanced": "Napredno",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Upodabljanje je ustavljeno. To običajno pomeni, da je grafični gonilnik opustil okvir, ki je trajal predolgo. Zmanjšajte število ponovitev in ponovno naložite stran.",
   "ui.notice.noWebgpu": "Ta brskalnik ne uporablja WebGPU, zato se je upodabljalnik vrnil na WebGL2, ki mu zmanjka natančnosti pri veliko manjših povečavah.",
   "ui.notice.enableFlag": "Če vaš brskalnik podpira WebGPU, vendar ga ne uporablja, odprite chrome://flags, nastavite Override software rendering list na Enabled in znova zaženite brskalnik. Stran chrome://gpu pojasnjuje, zakaj je bila zavrnjena.",
+  "ui.notice.mobile": "Na telefonu ali tabličnem računalniku upodabljalnik deluje, vendar je globoka povečava veliko počasnejša kot na namiznem GPE-ju, zelo globoki pogledi pa lahko trajajo več sekund na sliko. Zmanjšanje števila ponovitev pomaga.",
   "ui.notice.dismiss": "Odpusti"
 }

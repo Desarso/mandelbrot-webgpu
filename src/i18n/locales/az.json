@@ -31,6 +31,8 @@
   "about.back": "rendererə qayıdın",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maksimum təkrarlamalar",
+  "ui.auto": "Avtomatik",
+  "ui.autoIterationsHint": "Böyütmə səviyyəsindən iterasiya sayını seçin. Slayderin hərəkət etdirilməsi bunu söndürür.",
   "ui.tab.colour": "Rəng",
   "ui.tab.light": "İşıq",
   "ui.tab.advanced": "Qabaqcıl",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Göstərilmə dayandırıldı. Bu, adətən qrafik sürücüsünün çox uzun sürən çərçivədən imtina etməsi deməkdir. İterasiya sayını azaldın və səhifəni yenidən yükləyin.",
   "ui.notice.noWebgpu": "Bu brauzer WebGPU-dan istifadə etmir, ona görə də renderer WebGL2-ə qayıdıb, bu da daha dayaz böyütmələrdə dəqiqliyi tükənir.",
   "ui.notice.enableFlag": "Brauzeriniz WebGPU-nu dəstəkləyirsə, lakin ondan istifadə etmirsə, chrome://flags-ı açın, Proqram təminatının göstərilməsi siyahısını Aktivləşdirin və brauzeri yenidən başladın. chrome://gpu səhifəsi ondan niyə imtina edildiyini izah edir.",
+  "ui.notice.mobile": "Telefon və ya planşetdə renderer işləyir, lakin dərin böyütmələr masaüstü GPU-dan daha yavaşdır və çox dərin baxışlar kadrda bir neçə saniyə çəkə bilər. İterasiya sayını azaltmaq kömək edir.",
   "ui.notice.dismiss": "Rədd et"
 }

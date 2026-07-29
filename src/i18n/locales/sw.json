@@ -31,6 +31,8 @@
   "about.back": "kurudi kwa mtoaji",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Upeo wa marudio",
+  "ui.auto": "Otomatiki",
+  "ui.autoIterationsHint": "Chagua hesabu ya kurudia kutoka kwa kiwango cha kukuza. Kusogeza kitelezi huzima hii.",
   "ui.tab.colour": "Rangi",
   "ui.tab.light": "Mwanga",
   "ui.tab.advanced": "Advanced",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Uwasilishaji umesimamishwa. Kwa kawaida hii inamaanisha kuwa kiendeshi cha michoro kilijitoa kwenye fremu ambayo ilichukua muda mrefu sana. Punguza hesabu ya kurudia na upakie upya ukurasa.",
   "ui.notice.noWebgpu": "Kivinjari hiki hakitumii WebGPU, kwa hivyo kionyeshi kimerudi kwenye WebGL2, ambayo inaishiwa na usahihi katika ukuzaji wa kina kifupi zaidi.",
   "ui.notice.enableFlag": "Ikiwa kivinjari chako kinaauni WebGPU lakini huitumii, fungua chrome://flags, weka Batilisha orodha ya uwasilishaji ya programu iwe Imewashwa, na uanze upya kivinjari. Ukurasa chrome://gpu unaeleza kwa nini ilikataliwa.",
+  "ui.notice.mobile": "Kwenye simu au kompyuta kibao kionyeshi hufanya kazi, lakini ukuzaji wa kina ni wa polepole sana kuliko GPU ya eneo-kazi, na mionekano ya kina inaweza kuchukua sekunde nyingi kwa fremu. Kupunguza hesabu ya kurudia husaidia.",
   "ui.notice.dismiss": "Ondoa"
 }

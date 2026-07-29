@@ -31,6 +31,8 @@
   "about.back": "vissza a renderelőhöz",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Max. iterációk",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Válassza ki az iterációszámot a nagyítási szintről. A csúszka mozgatásával ez kikapcsolható.",
   "ui.tab.colour": "Szín",
   "ui.tab.light": "Fény",
   "ui.tab.advanced": "Fejlett",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "A renderelés leállt. Ez általában azt jelenti, hogy a grafikus illesztőprogram lemondott egy olyan keretről, amely túl sokáig tartott. Csökkentse az iterációk számát, és töltse be újra az oldalt.",
   "ui.notice.noWebgpu": "Ez a böngésző nem használja a WebGPU-t, ezért a megjelenítő visszaesett a WebGL2-re, amely sokkal sekélyebb zoomoknál kifogy a pontosságból.",
   "ui.notice.enableFlag": "Ha böngészője támogatja a WebGPU-t, de nem használja, nyissa meg a chrome://flags fájlt, állítsa a Szoftver-renderelési lista felülbírálása Engedélyezve értékre, és indítsa újra a böngészőt. A chrome://gpu oldal elmagyarázza, miért utasították el.",
+  "ui.notice.mobile": "Telefonon vagy táblagépen a renderer működik, de a mély zoom sokkal lassabb, mint az asztali GPU-n, és a nagyon mély nézetek több másodpercet is igénybe vehetnek egy képkockánként. Az iterációk számának csökkentése segít.",
   "ui.notice.dismiss": "Elvetés"
 }

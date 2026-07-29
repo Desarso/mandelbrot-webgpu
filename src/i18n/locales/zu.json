@@ -31,6 +31,8 @@
   "about.back": "buyela kumnikezeli",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Ukuphindaphinda okuphezulu",
+  "ui.auto": "Okuzenzakalelayo",
+  "ui.autoIterationsHint": "Khetha isibalo sokuphindaphinda kusukela kuleveli yokusondeza. Ukuhambisa isilayidi kuvala lokhu.",
   "ui.tab.colour": "Umbala",
   "ui.tab.light": "Ukukhanya",
   "ui.tab.advanced": "Okuthuthukile",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Ukunikezwa kumisiwe. Lokhu ngokuvamile kusho ukuthi umshayeli wezithombe wayeka uhlaka oluthathe isikhathi eside kakhulu. Yehlisa isibalo sokuphindaphinda bese ulayisha kabusha ikhasi.",
   "ui.notice.noWebgpu": "Lesi siphequluli asisebenzisi i-WebGPU, ngakho-ke isinikezeli sibuyele emuva ku-WebGL2, ephelelwa ukunemba ekusondezeni okungashoni kakhulu.",
   "ui.notice.enableFlag": "Uma isiphequluli sakho sisekela i-WebGPU kodwa singayisebenzisi, vula i-chrome://flags, setha okuthi Khipha uhlu lokunikeza isofthiwe kokuthi Kunikwe amandla, bese uqala kabusha isiphequluli. Ikhasi elithi chrome://gpu lichaza ukuthi kungani lenqatshiwe.",
+  "ui.notice.mobile": "Ocingweni noma kuthebhulethi isinikezeli siyasebenza, kodwa ukusondeza okujulile kuhamba kancane kune-GPU yedeskithophu, futhi ukubuka okujulile kungase kuthathe amasekhondi amaningi ozimele. Ukwehlisa isibalo sokuphindaphinda kuyasiza.",
   "ui.notice.dismiss": "Cashisa"
 }

@@ -31,6 +31,8 @@
   "about.back": "rendererga qaytish",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maksimal takrorlashlar",
+  "ui.auto": "Avtomatik",
+  "ui.autoIterationsHint": "Masshtab darajasidan iteratsiya sonini tanlang. Slayderni siljitish buni o'chiradi.",
   "ui.tab.colour": "Rang",
   "ui.tab.light": "Nur",
   "ui.tab.advanced": "Murakkab",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Renderlash toʻxtatildi. Bu odatda grafik drayveri juda uzoq davom etgan ramkadan voz kechganini anglatadi. Takrorlash sonini kamaytiring va sahifani qayta yuklang.",
   "ui.notice.noWebgpu": "Bu brauzer WebGPU-dan foydalanmayapti, shuning uchun renderer WebGL2-ga qaytdi, bu esa ancha chuqurroq masshtablarda aniqlikdan to‘xtaydi.",
   "ui.notice.enableFlag": "Agar brauzeringiz WebGPU-ni qo‘llab-quvvatlasa-yu, lekin undan foydalanmayotgan bo‘lsa, chrome://flags-ni oching, Dasturiy ta’minotni qayta ishlash ro‘yxatini “Yoqilgan” ga o‘rnating va brauzerni qayta ishga tushiring. chrome://gpu sahifasi nima uchun rad etilganligini tushuntiradi.",
+  "ui.notice.mobile": "Telefon yoki planshetda renderer ishlaydi, lekin chuqur masshtablar ish stoli GPU-ga qaraganda ancha sekinroq bo'ladi va juda chuqur ko'rinishlar kadr uchun bir necha soniya vaqt olishi mumkin. Iteratsiya sonini kamaytirish yordam beradi.",
   "ui.notice.dismiss": "Rad etish"
 }

@@ -31,6 +31,8 @@
   "about.back": "quay lại trình kết xuất",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Số lần lặp tối đa",
+  "ui.auto": "Tự động",
+  "ui.autoIterationsHint": "Chọn số lần lặp từ mức thu phóng. Di chuyển thanh trượt sẽ tắt tính năng này.",
   "ui.tab.colour": "Màu sắc",
   "ui.tab.light": "Ánh sáng",
   "ui.tab.advanced": "Trình độ cao",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Kết xuất đã dừng lại. Điều này thường có nghĩa là trình điều khiển đồ họa đã từ bỏ khung hình mất quá nhiều thời gian. Giảm số lần lặp lại và tải lại trang.",
   "ui.notice.noWebgpu": "Trình duyệt này không sử dụng WebGPU nên trình kết xuất đã chuyển về WebGL2, không còn độ chính xác ở mức thu phóng nông hơn nhiều.",
   "ui.notice.enableFlag": "Nếu trình duyệt của bạn hỗ trợ WebGPU nhưng hiện không sử dụng nó, hãy mở chrome://flags, đặt Ghi đè danh sách kết xuất phần mềm thành Đã bật và khởi động lại trình duyệt. Trang chrome://gpu giải thích lý do tại sao nó bị từ chối.",
+  "ui.notice.mobile": "Trên điện thoại hoặc máy tính bảng, trình kết xuất hoạt động nhưng thu phóng sâu chậm hơn nhiều so với trên GPU máy tính để bàn và các chế độ xem rất sâu có thể mất nhiều giây cho một khung hình. Giảm số lần lặp sẽ giúp ích.",
   "ui.notice.dismiss": "Miễn nhiệm"
 }

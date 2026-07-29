@@ -31,6 +31,8 @@
   "about.back": "返回渲染器",
   "ui.title": "曼德尔布罗特",
   "ui.maxIterations": "最大迭代次数",
+  "ui.auto": "汽车",
+  "ui.autoIterationsHint": "从缩放级别选择迭代计数。移动滑块可将其关闭。",
   "ui.tab.colour": "颜色",
   "ui.tab.light": "光",
   "ui.tab.advanced": "先进的",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "渲染停止。这通常意味着图形驱动程序放弃了花费太长时间的帧。降低迭代次数并重新加载页面。",
   "ui.notice.noWebgpu": "该浏览器不使用 WebGPU，因此渲染器已回退到 WebGL2，后者在更浅的缩放下会失去精度。",
   "ui.notice.enableFlag": "如果您的浏览器支持 WebGPU 但未使用它，请打开 chrome://flags，将“覆盖软件渲染列表”设置为“已启用”，然后重新启动浏览器。chrome://gpu 页面解释了为什么被拒绝。",
+  "ui.notice.mobile": "在手机或平板电脑上，渲染器可以工作，但深度缩放比桌面 GPU 慢得多，而且非常深的视图可能需要一帧很多秒的时间。减少迭代次数会有所帮助。",
   "ui.notice.dismiss": "解雇"
 }

@@ -31,6 +31,8 @@
   "about.back": "tilbake til gjengiveren",
   "ui.title": "Mandelbrot",
   "ui.maxIterations": "Maks iterasjoner",
+  "ui.auto": "Auto",
+  "ui.autoIterationsHint": "Velg antall iterasjoner fra zoomnivået. Flytting av glidebryteren slår dette av.",
   "ui.tab.colour": "Farge",
   "ui.tab.light": "Lys",
   "ui.tab.advanced": "Avansert",
@@ -68,5 +70,6 @@
   "ui.error.stopped": "Gjengivelsen stoppet. Dette betyr vanligvis at grafikkdriveren ga opp en ramme som tok for lang tid. Senk antall iterasjoner og last inn siden på nytt.",
   "ui.notice.noWebgpu": "Denne nettleseren bruker ikke WebGPU, så gjengiveren har falt tilbake til WebGL2, som går tom for presisjon ved langt grunnere zoom.",
   "ui.notice.enableFlag": "Hvis nettleseren din støtter WebGPU, men ikke bruker den, åpner du chrome://flags, setter Override software rendering list til Aktivert og starter nettleseren på nytt. Siden chrome://gpu forklarer hvorfor den ble avslått.",
+  "ui.notice.mobile": "På en telefon eller et nettbrett fungerer gjengivelsen, men dyp zoom er langt tregere enn på en stasjonær GPU, og veldig dype visninger kan ta mange sekunder en ramme. Å senke antall iterasjoner hjelper.",
   "ui.notice.dismiss": "Avskjedige"
 }
