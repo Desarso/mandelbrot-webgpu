@@ -67,6 +67,10 @@ export class MandelbrotView {
   private drawing = false;
   private queued = false;
   private dragging = false;
+  /** Every finger or button currently down, by pointer id. */
+  private pointers = new Map<number, { x: number; y: number }>();
+  /** Midpoint and separation of the last two-finger sample, when pinching. */
+  private lastPinch: { x: number; y: number; distance: number } | null = null;
   private lastPointer = { x: 0, y: 0 };
   private quality = 1;
   private settleTimer: number | undefined;
@@ -356,6 +360,13 @@ export class MandelbrotView {
     canvas.addEventListener("pointerup", this.onPointerUp);
     canvas.addEventListener("pointercancel", this.onPointerUp);
 
+    // Safari raises its own non-standard pinch events and will zoom the page
+    // with them even where touch-action has already suppressed the gesture.
+    // The canvas does its own zooming, so refuse them.
+    for (const name of ["gesturestart", "gesturechange", "gestureend"]) {
+      canvas.addEventListener(name, this.preventGesture, { passive: false });
+    }
+
     onCleanup(() => {
       observer.disconnect();
       window.removeEventListener("resize", this.resize);
@@ -365,6 +376,9 @@ export class MandelbrotView {
       canvas.removeEventListener("pointermove", this.onPointerMove);
       canvas.removeEventListener("pointerup", this.onPointerUp);
       canvas.removeEventListener("pointercancel", this.onPointerUp);
+      for (const name of ["gesturestart", "gesturechange", "gestureend"]) {
+        canvas.removeEventListener(name, this.preventGesture);
+      }
       clearTimeout(this.settleTimer);
       if (this.rafHandle) cancelAnimationFrame(this.rafHandle);
       if (this.timerHandle) clearTimeout(this.timerHandle);
@@ -372,16 +386,72 @@ export class MandelbrotView {
     });
   }
 
+  /** Midpoint and separation of the two active pointers, in client space. */
+  private pinchState(): { x: number; y: number; distance: number } | null {
+    if (this.pointers.size < 2) return null;
+    const [a, b] = [...this.pointers.values()];
+    return {
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2,
+      distance: Math.hypot(a.x - b.x, a.y - b.y),
+    };
+  }
+
+  private preventGesture = (event: Event) => event.preventDefault();
+
   private onPointerDown = (event: PointerEvent) => {
-    this.dragging = true;
+    this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    // A second finger converts the gesture from a pan into a pinch. Both
+    // baselines are reset here so the transition contributes no movement of
+    // its own.
     this.lastPointer = { x: event.clientX, y: event.clientY };
-    this.canvas.setPointerCapture(event.pointerId);
+    this.lastPinch = this.pinchState();
+    this.dragging = true;
     this.canvas.style.cursor = "grabbing";
+
+    // Capture last, and defensively: it throws when the id does not match a
+    // live pointer, and doing it first meant one throw left the gesture
+    // half-initialised -- pointer recorded, pinch baseline never set -- so
+    // every subsequent move saw two fingers and no baseline to measure
+    // against, and pinch quietly did nothing.
+    try {
+      this.canvas.setPointerCapture(event.pointerId);
+    } catch {
+      // Capture is an optimisation: it keeps events coming when a finger
+      // leaves the canvas. The gesture works without it.
+    }
+
     this.beginInteraction();
   };
 
   private onPointerMove = (event: PointerEvent) => {
-    if (!this.dragging) return;
+    if (!this.pointers.has(event.pointerId)) return;
+    this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    const pinch = this.pinchState();
+    if (pinch && this.lastPinch) {
+      // Two fingers: scale by how much they separated, about their midpoint,
+      // and pan by however far that midpoint travelled. Doing both in one step
+      // is what makes the point under the fingers stay under the fingers.
+      const previous = this.lastPinch;
+      this.lastPinch = pinch;
+
+      if (previous.distance > 0 && pinch.distance > 0) {
+        this.zoomAbout(
+          pinch.x,
+          pinch.y,
+          previous.distance / pinch.distance,
+          pinch.x - previous.x,
+          pinch.y - previous.y
+        );
+      }
+      this.beginInteraction();
+      this.requestRender();
+      return;
+    }
+
+    if (!this.dragging || this.pointers.size !== 1) return;
     const units = this.unitsPerCssPixel();
     const dx = event.clientX - this.lastPointer.x;
     const dy = event.clientY - this.lastPointer.y;
@@ -395,24 +465,46 @@ export class MandelbrotView {
   };
 
   private onPointerUp = (event: PointerEvent) => {
-    this.dragging = false;
+    this.pointers.delete(event.pointerId);
     if (this.canvas.hasPointerCapture(event.pointerId)) {
       this.canvas.releasePointerCapture(event.pointerId);
     }
+
+    // Lifting one finger of a pinch leaves the other one panning. Its baseline
+    // is stale by however far the pinch moved, so re-seed it from where that
+    // finger actually is; otherwise the view jumps by the accumulated
+    // difference the moment it moves again.
+    const remaining = [...this.pointers.entries()][0];
+    if (remaining) {
+      this.lastPointer = { x: remaining[1].x, y: remaining[1].y };
+      this.lastPinch = this.pinchState();
+      return;
+    }
+
+    this.dragging = false;
+    this.lastPinch = null;
     this.canvas.style.cursor = "grab";
     this.endInteraction();
   };
 
-  private onWheel = (event: WheelEvent) => {
-    event.preventDefault();
-
+  /**
+   * Scales the view by `factor` while holding the complex point under
+   * (`clientX`, `clientY`) fixed, then pans by a screen-space offset.
+   *
+   * Shared by the wheel and by pinch, because "zoom toward the cursor" and
+   * "zoom between two fingers" are the same operation with a different anchor.
+   */
+  private zoomAbout(
+    clientX: number,
+    clientY: number,
+    factor: number,
+    panX = 0,
+    panY = 0
+  ) {
     const rect = this.canvas.getBoundingClientRect();
     const units = this.unitsPerCssPixel();
-    const offsetX = event.clientX - rect.left - this.canvas.clientWidth / 2;
-    const offsetY = this.canvas.clientHeight / 2 - (event.clientY - rect.top);
-
-    const step = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
-    const factor = Math.min(4, Math.max(0.25, Math.pow(1.0015, step)));
+    const offsetX = clientX - rect.left - this.canvas.clientWidth / 2;
+    const offsetY = this.canvas.clientHeight / 2 - (clientY - rect.top);
 
     let nextSpan = this.spanY.times(factor);
     const floor = this.minSpan();
@@ -425,6 +517,18 @@ export class MandelbrotView {
     this.centerY = this.centerY.plus(delta.times(offsetY));
     this.spanY = nextSpan;
 
+    if (panX !== 0 || panY !== 0) {
+      // The pan happens at the new scale, which is where the fingers now are.
+      this.centerX = this.centerX.minus(nextUnits.times(panX));
+      this.centerY = this.centerY.plus(nextUnits.times(panY));
+    }
+  }
+
+  private onWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    const step = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+    const factor = Math.min(4, Math.max(0.25, Math.pow(1.0015, step)));
+    this.zoomAbout(event.clientX, event.clientY, factor);
     this.beginInteraction();
     this.requestRender();
   };
