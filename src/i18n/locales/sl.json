@@ -1,6 +1,6 @@
 {
   "about.title": "Kaj je Mandelbrotov niz",
-  "about.lede": "Je najbolj zapleten predmet v matematiki in je narejen z eno vrstico aritmetike, ki bi ji otrok lahko sledil. Ta stran govori o tem, zakaj je to čudno.",
+  "about.lede": "Ena vrstica aritmetike, ponovljena. Kar pride ven, ima podrobnosti v vseh merilih, brez konca, in nič v pravilu ne namiguje, da bi moralo biti. Ta stran govori o tem, zakaj je to čudno.",
   "about.rule.heading": "Eno pravilo, ki se ponavlja",
   "about.rule.p1": "Izberite točko na ravni ravnini. Kvadratirajte, dodajte točko, s katero ste začeli, in imate novo točko. To na kvadrat, znova dodajte izvirnik in nadaljujte za vedno.",
   "about.rule.p2": "Lahko se zgodi dvoje. Točke lahko odtavajo in se nikoli več ne vrnejo ter drvijo v neskončnost. Lahko pa ostanejo blizu doma, ne glede na to, kako dolgo se ukvarjate s kvadraturo. Mandelbrotov niz je preprosto zbirka izhodišč, ki ostanejo.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematika, ki stoji za tem, je še starejša in sega nazaj do Pierra Fatouja in Gastona Julie okoli leta 1918, ki sta preučevala te ponovitve desetletja, preden je obstajal kakršen koli stroj, ki bi lahko izrisal rezultate. Razmišljali so o obliki, ki je nihče od njih ne bo nikoli videl.",
   "about.discovery.p3": "Kdor koli, kjer koli, ki izračuna isto pravilo, dobi isti predmet do zadnje nitke. V tem smislu ni nastala leta 1980. Tam so ga našli.",
   "about.scale.heading": "Kako daleč gre to navzdol",
-  "about.scale.p1": "Slike tukaj dosegajo povečave okoli 10⁴¹. Če bi celoten niz narisali v tem merilu na meter širokem zaslonu, bi moral biti zaslon sto bilijonkrat širši od opazljivega vesolja, da bi ga lahko vseboval.",
+  "about.scale.p1": "Eno od tukaj navedenih mest je s povečavo približno 10⁴¹. Če bi celoten niz narisali v tem merilu na meter širokem zaslonu, bi moral biti zaslon sto bilijonkrat širši od opazljivega vesolja, da bi ga lahko vseboval. Aritmetika spodaj vsebuje približno 2.400 decimalnih mest, tako da upodabljalnik ne zmanjka do približno 10²4⁰⁰ – številke, ki je brez fizične primerjave.",
   "about.scale.p2": "Nobena od teh podrobnosti ni nikjer shranjena. Izračuna se na zahtevo, iz istega pravila ene vrstice, vsakič, ko pogledate. Ni osnovne slike, ki bi jo povečali - obstaja samo aritmetika, ki traja večno.",
   "about.explore.heading": "Pojdi in poglej",
   "about.explore.p1": "Povlecite za premikanje, pomaknite se za povečavo. Zavihek Mesta vsebuje nabor destinacij, ki si jih je vredno ogledati, vključno z globokim otokom, ki sedi z dvainštiridesetimi decimalnimi mesti navzdol. Vse, kar najdete, je v naslovni vrstici, tako da lahko vsak pogled delite kot povezavo.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ta brskalnik ne uporablja WebGPU, zato se je upodabljalnik vrnil na WebGL2, ki mu zmanjka natančnosti pri veliko manjših povečavah.",
   "ui.notice.enableFlag": "Če vaš brskalnik podpira WebGPU, vendar ga ne uporablja, odprite chrome://flags, nastavite Override software rendering list na Enabled in znova zaženite brskalnik. Stran chrome://gpu pojasnjuje, zakaj je bila zavrnjena.",
   "ui.notice.mobile": "Na telefonu ali tabličnem računalniku upodabljalnik deluje, vendar je globoka povečava veliko počasnejša kot na namiznem GPE-ju, zelo globoki pogledi pa lahko trajajo več sekund na sliko. Zmanjšanje števila ponovitev pomaga.",
+  "ui.notice.depthLimit": "To je tako globoko, kot sega trenutni motor. Nadomestni različici WebGL2 tukaj zmanjka natančnosti;",
   "ui.notice.dismiss": "Odpusti"
 }

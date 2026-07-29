@@ -1,6 +1,6 @@
 {
   "about.title": "Ce este setul Mandelbrot",
-  "about.lede": "Este cel mai complicat obiect din matematică și este produs de o linie de aritmetică pe care un copil ar putea să o urmeze. Această pagină este despre motivul pentru care este ciudat.",
+  "about.lede": "Un rând de aritmetică, repetat. Ceea ce iese are detalii la fiecare scară, fără sfârșit, și nimic din regulă nu sugerează că ar trebui. Această pagină este despre motivul pentru care este ciudat.",
   "about.rule.heading": "O singură regulă, repetată",
   "about.rule.p1": "Alegeți un punct pe un plan plat. Pătrați, adăugați punctul cu care ați început și aveți un nou punct. Pătrați asta, adăugați din nou originalul și continuați pentru totdeauna.",
   "about.rule.p2": "Se pot întâmpla două lucruri. Punctele se pot rătăci și nu se mai întorc niciodată, fugind spre infinit. Sau pot rămâne aproape de casă, indiferent cât de mult ai pătrat. Setul Mandelbrot este pur și simplu o colecție de puncte de plecare care rămân.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematica din spatele ei este încă mai veche, revenind la Pierre Fatou și Gaston Julia în jurul anului 1918, care au studiat aceste iterații cu decenii înainte să existe vreo mașină care ar putea extrage rezultatele. Raționau despre o formă pe care niciunul dintre ei nu ar vedea-o vreodată.",
   "about.discovery.p3": "Oricine, oriunde, calculând aceeași regulă, obține același obiect până la ultimul filament. În acest sens, nu a fost creat în 1980. A fost găsit acolo.",
   "about.scale.heading": "Cât de departe merge asta",
-  "about.scale.p1": "Imaginile de aici ating măriri de aproximativ 10⁴¹. Dacă întregul set ar fi desenat la acea scară pe un ecran de un metru lățime, ecranul ar trebui să fie de sute de trilioane de ori mai lat decât universul observabil pentru a-l susține.",
+  "about.scale.p1": "Unul dintre locurile enumerate aici se află la o mărire de aproximativ 10⁴¹. Dacă întregul set ar fi desenat la acea scară pe un ecran de un metru lățime, ecranul ar trebui să fie de sute de trilioane de ori mai lat decât universul observabil pentru a-l susține. Aritmetica de dedesubt conține aproximativ 2.400 de cifre zecimale, astfel încât redarea nu se epuizează până la aproximativ 10²⁴⁰⁰ - un număr fără nicio comparație fizică de făcut.",
   "about.scale.p2": "Niciunul din aceste detalii nu este stocat nicăieri. Se calculează la cerere, din aceeași regulă de o singură linie, de fiecare dată când te uiți. Nu există nicio imagine subiacentă care să fie mărită - există doar aritmetică și continuă pentru totdeauna.",
   "about.explore.heading": "Du-te și uită-te",
   "about.explore.p1": "Trageți pentru a muta, derulați pentru a mări. Fila Locații are un set de destinații care merită văzute, inclusiv o insulă adâncă care se află la patruzeci și două de zecimale. Tot ce găsiți este în bara de adrese, astfel încât orice vizualizare poate fi partajată ca link.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Acest browser nu folosește WebGPU, așa că redarea a revenit la WebGL2, care rămâne fără precizie la zoomuri mult mai puțin adânci.",
   "ui.notice.enableFlag": "Dacă browserul dvs. acceptă WebGPU, dar nu îl folosește, deschideți chrome://flags, setați Suprascrierea listei de randare a software-ului la Activat și reporniți browserul. Pagina chrome://gpu explică de ce a fost refuzată.",
   "ui.notice.mobile": "Pe un telefon sau pe tabletă, redarea funcționează, dar zoom-urile profunde sunt mult mai lente decât pe un GPU desktop, iar vizualizările foarte profunde pot dura multe secunde pe cadru. Scăderea numărului de iterații ajută.",
+  "ui.notice.depthLimit": "Este la fel de adânc pe cât merge motorul actual. Soluția de rezervă WebGL2 rămâne fără precizie aici;",
   "ui.notice.dismiss": "Respingeți"
 }

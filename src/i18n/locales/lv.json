@@ -1,6 +1,6 @@
 {
   "about.title": "Kas ir Mandelbrota komplekts",
-  "about.lede": "Tas ir vissarežģītākais objekts matemātikā, un to veido viena aritmētikas līnija, kurai bērns varētu sekot. Šī lapa ir par to, kāpēc tas ir dīvaini.",
+  "about.lede": "Viena aritmētikas rindiņa, atkārtota. Tam, kas iznāk, ir detalizēta informācija visos mērogos, bez gala, un nekas noteikumā neliecina, ka tam vajadzētu būt. Šī lapa ir par to, kāpēc tas ir dīvaini.",
   "about.rule.heading": "Viens noteikums, atkārtots",
   "about.rule.p1": "Izvēlieties punktu uz līdzenas plaknes. Kvadrātveida, pievienojiet punktu, ar kuru sākāt, un jums ir jauns punkts. Kvadrājiet to, pievienojiet oriģinālu vēlreiz un turpiniet mūžīgi.",
   "about.rule.p2": "Var notikt divas lietas. Punkti var izklīst un nekad neatgriezties, skrienot līdz bezgalībai. Vai arī viņi var palikt netālu no mājām neatkarīgi no tā, cik ilgi jūs turat kvadrātā. Mandelbrota komplekts ir vienkārši sākuma punktu kopums, kas paliek.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matemātika, kas ir aiz tā, ir vēl senāka, sākot ar Pjēru Fatū un Gastonu Džūliju ap 1918. gadu, kuri pētīja šīs iterācijas gadu desmitiem pirms bija kāda mašīna, kas varētu iegūt rezultātus. Viņi sprieda par formu, ko neviens no viņiem nekad neredzētu.",
   "about.discovery.p3": "Ikviens un jebkurā vietā, aprēķina vienu un to pašu noteikumu, iegūst vienu un to pašu objektu līdz pēdējam kvēldiegam. Šajā ziņā tas netika izveidots 1980. gadā. Tur tas tika atrasts.",
   "about.scale.heading": "Cik tālu tas iet",
-  "about.scale.p1": "Šeit redzamo attēlu palielinājums ir aptuveni 10⁴¹. Ja viss komplekts tiktu uzzīmēts tādā mērogā uz metru plata ekrāna, ekrānam vajadzētu būt simtiem triljonu reižu platākam par novērojamo Visumu, lai to noturētu.",
+  "about.scale.p1": "Viena no šeit uzskaitītajām vietām atrodas ar palielinājumu aptuveni 10⁴¹. Ja viss komplekts tiktu uzzīmēts tādā mērogā uz metru plata ekrāna, ekrānam vajadzētu būt simtiem triljonu reižu platākam par novērojamo Visumu, lai to noturētu. Apakšējā aritmētika satur aptuveni 2400 ciparu aiz komata, tāpēc renderētājs nebeidzas līdz aptuveni 10²⁴⁰⁰ — šim skaitlim nav atlicis veikt fizisku salīdzinājumu.",
   "about.scale.p2": "Neviena no šīm detaļām nekur netiek glabāta. Tas tiek aprēķināts pēc pieprasījuma, izmantojot vienu un to pašu vienas rindas kārtulu, katru reizi, kad skatāties. Pamatā esošais attēls netiek palielināts — ir tikai aritmētika, un tā turpinās mūžīgi.",
   "about.explore.heading": "Ej un paskaties",
   "about.explore.p1": "Velciet, lai pārvietotu, ritiniet, lai tuvinātu. Cilnē Vietas ir apskates vērts galamērķu kopa, tostarp dziļa sala, kas atrodas četrdesmit divas zīmes aiz komata. Viss, ko atrodat, atrodas adreses joslā, tāpēc jebkuru skatu var kopīgot kā saiti.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Šī pārlūkprogramma neizmanto WebGPU, tāpēc renderētājs ir atgriezies pie WebGL2, kura precizitāte pietrūkst daudz seklākas tālummaiņas gadījumā.",
   "ui.notice.enableFlag": "Ja jūsu pārlūkprogramma atbalsta WebGPU, bet to neizmanto, atveriet chrome://flags, iestatiet Override software rendering list uz Enabled un restartējiet pārlūkprogrammu. Lapā chrome://gpu ir paskaidrots, kāpēc tā tika atteikta.",
   "ui.notice.mobile": "Tālrunī vai planšetdatorā renderētājs darbojas, taču dziļa tālummaiņa ir daudz lēnāka nekā galddatora GPU, un ļoti dziļi skati var aizņemt vairākas sekundes vienā kadrā. Iterāciju skaita samazināšana palīdz.",
+  "ui.notice.depthLimit": "Tas ir tik dziļi, cik dziļi darbojas pašreizējais dzinējs. WebGL2 rezerves precizitāte šeit ir beigusies;",
   "ui.notice.dismiss": "Atlaist"
 }

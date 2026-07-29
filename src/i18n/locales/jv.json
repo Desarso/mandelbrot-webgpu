@@ -1,6 +1,6 @@
 {
   "about.title": "Apa Mandelbrot pesawat punika",
-  "about.lede": "Iki minangka obyek sing paling rumit ing matematika, lan diprodhuksi dening siji baris aritmetika sing bisa ditindakake bocah. Kaca iki babagan kenapa aneh.",
+  "about.lede": "Siji baris aritmetika, bola-bali. Apa sing metu duwe rincian ing saben skala, tanpa pungkasan, lan ora ana aturan sing nuduhake manawa. Kaca iki babagan kenapa aneh.",
   "about.rule.heading": "Siji aturan, bola-bali",
   "about.rule.p1": "Pilih titik ing bidang datar. Square iku, nambah titik sampeyan miwiti karo, lan sampeyan duwe titik anyar. Square sing, nambah asli maneh, lan terus ing salawas-lawase.",
   "about.rule.p2": "Rong perkara bisa kelakon. Titik-titik kasebut bisa ngumbara lan ora bakal bali maneh, mlayu nganti tanpa wates. Utawa bisa uga tetep cedhak omah ora preduli suwene sampeyan tetep kuadrat. Mandelbrot set mung koleksi titik wiwitan sing tetep.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matématika ing mburi isih luwih tuwa, bali menyang Pierre Fatou lan Gaston Julia watara taun 1918, sing nyinaoni iterasi kasebut pirang-pirang dekade sadurunge ana mesin sing bisa nggambar asil. Dheweke mikir babagan wujud sing ora bakal dideleng.",
   "about.discovery.p3": "Sapa wae, ing ngendi wae, ngetung aturan sing padha entuk obyek sing padha nganti filamen pungkasan. Ing pangertèn iki ora digawe ing 1980. Iku ditemokake ing kono.",
   "about.scale.heading": "Carane adoh mudhun iki",
-  "about.scale.p1": "Gambar ing kene tekan perbesaran sekitar 10⁴¹. Yen kabeh set kasebut digambar ing skala kasebut ing layar sing ambane meter, layar kasebut kudu atusan triliun kaping luwih amba tinimbang jagad sing bisa diamati.",
+  "about.scale.p1": "Salah sawijining papan sing kadhaptar ing kene dumunung ing perbesaran kira-kira 10⁴¹. Yen kabeh set kasebut digambar ing skala kasebut ing layar sing ambane meter, layar kasebut kudu atusan triliun kaping luwih amba tinimbang jagad sing bisa diamati. Aritmetika ing ngisor iki ngemot kira-kira 2.400 digit desimal, mula renderer ora entek nganti kira-kira 10²⁴⁰⁰ — nomer sing ora ana bandhingan fisik.",
   "about.scale.p2": "Ora ana rincian sing disimpen ing ngendi wae. Iki diitung kanthi dikarepake, saka aturan siji-baris sing padha, saben sampeyan ndeleng. Ora ana gambar dhasar sing digedhekake - mung ana aritmetika, lan terus-terusan.",
   "about.explore.heading": "Lunga lan delengen",
   "about.explore.p1": "Seret kanggo mindhah, gulung kanggo nggedhekake. Tab Panggonan nduweni sakumpulan tujuan sing kudu dideleng, kalebu pulo jero sing ana patang puluh loro desimal. Kabeh sing sampeyan temokake ana ing bilah alamat, supaya tampilan apa wae bisa dituduhake minangka link.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Browser iki ora nggunakake WebGPU, mula renderer bali menyang WebGL2, sing ora presisi kanthi zoom sing luwih cethek.",
   "ui.notice.enableFlag": "Yen browser sampeyan ndhukung WebGPU nanging ora nggunakake, bukak chrome://flags, setel Override dhaptar rendering piranti lunak menyang Aktif, banjur miwiti maneh browser. Kaca chrome: // gpu nerangake kenapa ditolak.",
   "ui.notice.mobile": "Ing telpon utawa tablet, renderer bisa digunakake, nanging zoom jero luwih alon tinimbang ing GPU desktop, lan tampilan jero banget bisa njupuk sawetara detik. Mudhunake count iterasi mbantu.",
+  "ui.notice.depthLimit": "Iki minangka jero minangka mesin saiki dadi. Backback WebGL2 ora presisi ing kene;",
   "ui.notice.dismiss": "Mbucal"
 }

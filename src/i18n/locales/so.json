@@ -1,6 +1,6 @@
 {
   "about.title": "Waa maxay set Mandelbrot",
-  "about.lede": "Waa shayga ugu dhibka badan xagga xisaabta, waxaana soo saaray hal xariiq oo xisaabeed oo ilmuhu raaci karo. Boggan waxa uu ku saabsan yahay sababta ay taasi la yaab leh.",
+  "about.lede": "Hal xariiq oo xisaabeed, soo noqnoqda. Waxa soo baxaa waxay leeyihiin tafaasiil miisaan kasta, oo aan dhammaad lahayn, mana jiraan wax qaanuunka ku jira oo tilmaamaya inay tahay. Boggan waxa uu ku saabsan yahay sababta ay taasi la yaab leh.",
   "about.rule.heading": "Hal xeer, soo noqnoqda",
   "about.rule.p1": "Dooro hal dhibic diyaarad fidsan. Isku soo rog, ku dar qodobka aad ku bilowday, oo waxaad leedahay dhibic cusub. Laba jibbaaran, ku dar asalka mar kale, oo sii wad waligaa.",
   "about.rule.p2": "Laba shay ayaa dhici kara. Dhibcuhu waa laga yaabaa inay warwareegaan oo aanay dib u soo noqon, iyaga oo u ordaya ilaa xad la'aan. Ama waxaa laga yaabaa in ay guriga agtiisa joogaan si kasta oo aad u sii koolkoolinayso. Habka Mandelbrot waa si fudud ururinta dhibcaha bilawga ah ee sii jiraya.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Xisaabta ka dambeysa waa ka sii da 'weyn, dib ugu noqoshada Pierre Fatou iyo Gaston Julia agagaarka 1918, kuwaas oo bartay cel-celintan tobanaan sano ka hor inta aan la helin mashiin kasta oo soo saari kara natiijooyinka. Waxay ku sababeeyeen qaab aan midkoodna waligii arki doonin.",
   "about.discovery.p3": "Qof kasta, meel kasta, xisaabinta isla qaanuunka wuxuu helayaa shay isku mid ah ilaa fiilaha u dambeeya. Dareenkaas lama abuurin 1980kii. Halkaas ayaa laga helay.",
   "about.scale.heading": "Ilaa intee ayay tani hoos u dhacaysaa",
-  "about.scale.p1": "Sawirada halkan waxa ay gaadhaan weynaynta ku dhawaad ​​10⁴¹. Haddii set oo dhan lagu sawiro miisaankaas shaashad mitir ballac ah, shaashadu waxay noqonaysaa inay boqollaal trillion oo jeer ka ballaadhan tahay caalamka la arki karo si loo qabto.",
+  "about.scale.p1": "Mid ka mid ah meelaha halkan ku taxan waxa ay ku fadhidaa waynaynta qiyaastii 10⁴¹. Haddii set oo dhan lagu sawiro miisaankaas shaashad mitir ballac ah, shaashadu waxay noqonaysaa inay boqollaal trillion oo jeer ka ballaadhan tahay caalamka la arki karo si loo qabto. Xisaabta hoose waxa ay wadataa ku dhawaad ​​2,400 jajab tobanle, markaa soo-bandhigu ma dhammaanayo ilaa ku dhawaad ​​10²⁴⁰⁰ - tiro aan isbarbardhig jireed u hadhin in la sameeyo.",
   "about.scale.p2": "Midna faahfaahintaas meelna laguma kaydiyo. Waxaa lagu xisaabiyaa baahida, laga bilaabo isla xeerka hal-line, mar kasta oo aad eegto. Ma jiro sawir hoose oo la weyneeyey - waxaa jira xisaab kaliya, oo waligeed way socotaa.",
   "about.explore.heading": "Tag oo fiiri",
   "about.explore.p1": "Jiid si aad u dhaqaaqdo, u rog si aad u dhaweyso. Goobta Places waxay leedahay meelo loo tago oo mudan in la arko, oo ay ku jirto jasiirad qoto dheer oo ku fadhida afartan iyo laba jajab tobanle. Wax kasta oo aad hesho waxay ku yaalliin barta ciwaanka, markaa aragti kasta waxa loo wadaagi karaa isku xidh ahaan.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Barrawsarkan ma isticmaalayo WebGPU, sidaa darteed soo-bandhigu waxa uu dib ugu dhacay WebGL2, kaas oo si sax ah uga dhamaanayo soo-jiidashada fog.",
   "ui.notice.enableFlag": "Haddii barowsarkaaga uu taageero WebGPU balse aanu isticmaalayn, fur chrome://flags, deji liiska soo-bandhigidda software-ka beddelka si ay u shaqeyso, oo dib u bilow browserka. Bogga chrome://gpu wuxuu sharxayaa sababta loo diiday.",
   "ui.notice.mobile": "Taleefanka ama tablet-ka waxa uu ku shaqeeyaa, laakiin soo-dhoweynta qoto dheer ayaa aad uga gaabiya marka loo eego GPU-da desktop-ka, waxaana laga yaabaa in aragtiyaha qoto dheer ay qaataan ilbiriqsiyo badan. Hoos u dhigida tirinta soo noqnoqda ayaa caawinaysa.",
+  "ui.notice.depthLimit": "Tani waa sida qoto dheer sida matoorka hadda socda. Dib-u-dhaca WebGL2 wuxuu ka socdaa saxnaanta halkan;",
   "ui.notice.dismiss": "Eryi"
 }

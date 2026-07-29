@@ -1,6 +1,6 @@
 {
   "about.title": "Apa itu himpunan Mandelbrot",
-  "about.lede": "Ini adalah objek paling rumit dalam matematika, dan dihasilkan oleh satu baris aritmatika yang dapat diikuti oleh seorang anak. Halaman ini membahas mengapa hal itu aneh.",
+  "about.lede": "Satu baris aritmatika, diulang. Apa yang dihasilkan memiliki detail pada setiap skala, tanpa akhir, dan tidak ada aturan yang mengisyaratkan bahwa hal itu harus dilakukan. Halaman ini membahas mengapa hal itu aneh.",
   "about.rule.heading": "Satu aturan, diulangi",
   "about.rule.p1": "Pilih satu titik pada bidang datar. Kuadratkan, tambahkan poin yang Anda mulai, dan Anda akan mendapatkan poin baru. Selesaikan itu, tambahkan yang asli lagi, dan lanjutkan selamanya.",
   "about.rule.p2": "Ada dua hal yang bisa terjadi. Titik-titik tersebut mungkin hilang dan tidak pernah kembali lagi, melaju hingga tak terhingga. Atau mereka mungkin tetap berada di dekat rumah tidak peduli berapa lama Anda terus mengkuadratkannya. Himpunan Mandelbrot hanyalah kumpulan titik awal yang tetap.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematika di baliknya masih lebih tua, dimulai dari Pierre Fatou dan Gaston Julia sekitar tahun 1918, yang mempelajari iterasi ini beberapa dekade sebelum ada mesin yang dapat memperoleh hasilnya. Mereka memikirkan tentang bentuk yang tidak akan pernah dilihat oleh siapa pun.",
   "about.discovery.p3": "Siapa pun, di mana pun, yang menghitung aturan yang sama akan mendapatkan objek yang sama hingga filamen terakhir. Dalam hal ini, ia tidak diciptakan pada tahun 1980. Itu ditemukan di sana.",
   "about.scale.heading": "Seberapa jauh hal ini terjadi",
-  "about.scale.p1": "Gambar di sini mencapai perbesaran sekitar 10⁴¹. Jika keseluruhan rangkaian digambar pada skala tersebut pada layar selebar satu meter, layar tersebut harus berukuran ratusan triliun kali lebih lebar dari alam semesta teramati untuk dapat menampungnya.",
+  "about.scale.p1": "Salah satu tempat yang tercantum di sini berada pada perbesaran sekitar 10⁴¹. Jika keseluruhan rangkaian digambar pada skala tersebut pada layar selebar satu meter, maka layar tersebut harus berukuran ratusan triliun kali lebih lebar dari alam semesta teramati untuk dapat menampungnya. Aritmatika di bawahnya berisi sekitar 2.400 digit desimal, sehingga penyaji tidak akan kehabisan hingga sekitar 10²⁴⁰⁰ — angka yang tidak dapat dibandingkan lagi secara fisik.",
   "about.scale.p2": "Tak satu pun dari detail itu disimpan di mana pun. Ini dihitung berdasarkan permintaan, dari aturan satu baris yang sama, setiap kali Anda melihatnya. Tidak ada gambaran mendasar yang diperbesar — ​​yang ada hanyalah aritmatika, dan ini berlangsung selamanya.",
   "about.explore.heading": "Pergi dan lihat",
   "about.explore.p1": "Seret untuk berpindah, gulir untuk memperbesar. Tab Tempat memiliki serangkaian tujuan yang menarik untuk dilihat, termasuk pulau dalam yang letaknya empat puluh dua desimal. Semua yang Anda temukan ada di bilah alamat, sehingga tampilan apa pun dapat dibagikan sebagai tautan.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Browser ini tidak menggunakan WebGPU, sehingga perendernya kembali ke WebGL2, yang kehilangan presisi pada zoom yang jauh lebih dangkal.",
   "ui.notice.enableFlag": "Jika browser Anda mendukung WebGPU tetapi tidak menggunakannya, buka chrome://flags, setel Override software rendering list ke Enabled, dan mulai ulang browser. Halaman chrome://gpu menjelaskan mengapa ditolak.",
   "ui.notice.mobile": "Di ponsel atau tablet, penyaji berfungsi, namun zoom dalam jauh lebih lambat dibandingkan pada GPU desktop, dan tampilan sangat dalam mungkin memerlukan waktu beberapa detik per frame. Menurunkan jumlah iterasi membantu.",
+  "ui.notice.depthLimit": "Ini sedalam mesin saat ini. Penggantian WebGL2 tidak tepat di sini;",
   "ui.notice.dismiss": "Membubarkan"
 }

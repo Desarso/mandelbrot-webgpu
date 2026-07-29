@@ -1,6 +1,6 @@
 {
   "about.title": "Co je Mandelbrotova sada",
-  "about.lede": "Je to nejsložitější objekt v matematice a je tvořen jednou řadou aritmetiky, kterou by dítě mohlo sledovat. Tato stránka je o tom, proč je to divné.",
+  "about.lede": "Jeden řádek aritmetiky, opakování. To, co vychází, má detaily v každém měřítku, bez konce a nic v pravidle nenaznačuje, že by mělo. Tato stránka je o tom, proč je to divné.",
   "about.rule.heading": "Jedno pravidlo, opakované",
   "about.rule.p1": "Vyberte bod na ploché rovině. Umocněte to, přidejte bod, se kterým jste začali, a máte nový bod. Čtvercujte, přidejte znovu originál a pokračujte navždy.",
   "about.rule.p2": "Mohou se stát dvě věci. Body se mohou zatoulat a už se nikdy nevrátí a uhánět do nekonečna. Nebo mohou zůstat poblíž domova bez ohledu na to, jak dlouho budete kvadraturovat. Sada Mandelbrot je jednoduše soubor výchozích bodů, které zůstávají.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematika za tím je ještě starší, sahá až k Pierru Fatouovi a Gastonu Juliovi kolem roku 1918, kteří studovali tyto iterace desítky let předtím, než existoval nějaký stroj, který by dokázal kreslit výsledky. Uvažovali o tvaru, který nikdo z nich nikdy neuvidí.",
   "about.discovery.p3": "Kdokoli a kdekoli, kdo počítá stejné pravidlo, dostane stejný objekt až do posledního vlákna. V tomto smyslu nevznikla v roce 1980. Tam se to našlo.",
   "about.scale.heading": "Jak daleko to sahá",
-  "about.scale.p1": "Snímky zde dosahují zvětšení kolem 10⁴¹. Pokud by byla celá sada nakreslena v tomto měřítku na obrazovce o šířce metru, obrazovka by musela být stovky bilionůkrát širší než pozorovatelný vesmír, aby ji udržela.",
+  "about.scale.p1": "Jedno ze zde uvedených míst se nachází při zvětšení asi 10⁴¹. Pokud by byla celá sada nakreslena v tomto měřítku na obrazovce o šířce metru, obrazovka by musela být stovky bilionůkrát širší než pozorovatelný vesmír, aby ji udržela. Aritmetika vespod obsahuje přibližně 2 400 desetinných míst, takže vykreslovací modul nedojde dříve, než je zhruba 10²⁴⁰⁰ – číslo, které již nelze provést fyzicky.",
   "about.scale.p2": "Žádný z těchto detailů není nikde uložen. Vypočítává se na vyžádání, ze stejného jednořádkového pravidla, pokaždé, když se podíváte. Neexistuje žádný základní obrázek, který by se zvětšoval – existuje pouze aritmetika a jde to navždy.",
   "about.explore.heading": "Jdi a podívej se",
   "about.explore.p1": "Přetažením se přesunete, rolováním přiblížíte. Karta Místa obsahuje řadu cílů, které stojí za to vidět, včetně hlubokého ostrova, na kterém je 42 desetinných míst. Vše, co najdete, je v adresním řádku, takže jakýkoli pohled lze sdílet jako odkaz.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Tento prohlížeč nepoužívá WebGPU, takže vykreslovací modul klesl zpět na WebGL2, který při mnohem mělčích přiblíženích přestává být přesný.",
   "ui.notice.enableFlag": "Pokud váš prohlížeč podporuje WebGPU, ale nepoužíváte jej, otevřete chrome://flags, nastavte seznam vykreslování softwaru Override na hodnotu Povoleno a restartujte prohlížeč. Stránka chrome://gpu vysvětluje, proč byla zamítnuta.",
   "ui.notice.mobile": "Na telefonu nebo tabletu vykreslování funguje, ale hluboké přiblížení jsou mnohem pomalejší než na stolním GPU a velmi hluboké zobrazení může trvat několik sekund na snímek. Snížení počtu iterací pomáhá.",
+  "ui.notice.depthLimit": "To je tak hluboko, jak jde současný motor. Záložní WebGL2 zde není přesný;",
   "ui.notice.dismiss": "Propustit"
 }

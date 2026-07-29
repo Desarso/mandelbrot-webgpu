@@ -1,6 +1,6 @@
 {
   "about.title": "Mandelbrot to'plami nima",
-  "about.lede": "Bu matematikadagi eng murakkab ob'ekt bo'lib, u bola amal qilishi mumkin bo'lgan arifmetikaning bir qatori orqali ishlab chiqariladi. Ushbu sahifa nima uchun g'alati ekanligi haqida.",
+  "about.lede": "Arifmetikaning bir qatori, takrorlanadi. Chiqadigan narsa har bir miqyosda, cheksiz tafsilotlarga ega va qoidadagi hech narsa shunday bo'lishi kerakligiga ishora qilmaydi. Ushbu sahifa nima uchun g'alati ekanligi haqida.",
   "about.rule.heading": "Bitta qoida, takrorlanadi",
   "about.rule.p1": "Yassi tekislikdagi nuqtani tanlang. Uni kvadratga aylantiring, boshlagan nuqtani qo'shing va sizda yangi nuqta bor. Uni kvadratga aylantiring, asl nusxasini yana qo'shing va abadiy davom eting.",
   "about.rule.p2": "Ikki narsa sodir bo'lishi mumkin. Ballar sarson bo'lishi mumkin va hech qachon qaytib kelmaydi, cheksizlikka yuguradi. Yoki siz qancha vaqt kvadratchalashishingizdan qat'i nazar, ular uy yaqinida qolishlari mumkin. Mandelbrot to'plami shunchaki qoladigan boshlang'ich nuqtalar to'plamidir.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Uning ortidagi matematika 1918-yilda Per Fatu va Gaston Yuliyaga borib taqaladi, ular natijalarni chiqaradigan har qanday mashina paydo bo'lishidan o'nlab yillar oldin bu iteratsiyalarni o'rgangan. Ular hech kim ko'rmaydigan shakl haqida o'ylashardi.",
   "about.discovery.p3": "Har qanday odam, istalgan joyda, xuddi shu qoidani hisoblagan holda, xuddi shu ob'ektni oxirgi filamentgacha oladi. Shu ma'noda u 1980 yilda yaratilmagan. U erda topilgan.",
   "about.scale.heading": "Bu qanchalik pastga tushadi",
-  "about.scale.p1": "Bu yerdagi tasvirlar 10⁴¹ atrofida kattalashtirishga erishadi. Agar butun to'plam bir metr kenglikdagi ekranda shu miqyosda chizilgan bo'lsa, uni ushlab turish uchun ekran kuzatilishi mumkin bo'lgan koinotdan yuzlab trillionlab marta kengroq bo'lishi kerak edi.",
+  "about.scale.p1": "Bu erda sanab o'tilgan joylardan biri taxminan 10⁴¹ kattalashtirishda joylashgan. Agar butun to'plam bir metr kenglikdagi ekranda shu miqyosda chizilgan bo'lsa, uni ushlab turish uchun ekran kuzatilishi mumkin bo'lgan koinotdan yuzlab trillionlab marta kengroq bo'lishi kerak edi. Pastki arifmetika taxminan 2400 o'nlik raqamni o'z ichiga oladi, shuning uchun renderer taxminan 10²⁴⁰⁰gacha tugamaydi - bu raqamni jismoniy taqqoslash qolmagan.",
   "about.scale.p2": "Bu tafsilotlarning hech biri hech qayerda saqlanmaydi. U har safar qaraganingizda bir xil bir qatorli qoida asosida talab bo'yicha hisoblanadi. Kattalashtirilgan tasvir yo'q - faqat arifmetika bor va u abadiy davom etadi.",
   "about.explore.heading": "Boring va qarang",
   "about.explore.p1": "Ko‘chirish uchun torting, kattalashtirish uchun aylantiring. Joylar yorlig'ida ko'rishga arziydigan yo'nalishlar to'plami, jumladan, qirq ikki kasrdan past bo'lgan chuqur orol mavjud. Siz topgan hamma narsa manzil satrida joylashgan, shuning uchun har qanday ko'rinish havola sifatida baham ko'rilishi mumkin.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Bu brauzer WebGPU-dan foydalanmayapti, shuning uchun renderer WebGL2-ga qaytdi, bu esa ancha chuqurroq masshtablarda aniqlikdan to‘xtaydi.",
   "ui.notice.enableFlag": "Agar brauzeringiz WebGPU-ni qo‘llab-quvvatlasa-yu, lekin undan foydalanmayotgan bo‘lsa, chrome://flags-ni oching, Dasturiy ta’minotni qayta ishlash ro‘yxatini “Yoqilgan” ga o‘rnating va brauzerni qayta ishga tushiring. chrome://gpu sahifasi nima uchun rad etilganligini tushuntiradi.",
   "ui.notice.mobile": "Telefon yoki planshetda renderer ishlaydi, lekin chuqur masshtablar ish stoli GPU-ga qaraganda ancha sekinroq bo'ladi va juda chuqur ko'rinishlar kadr uchun bir necha soniya vaqt olishi mumkin. Iteratsiya sonini kamaytirish yordam beradi.",
+  "ui.notice.depthLimit": "Bu hozirgi dvigatel qanchalik chuqur. WebGL2 zaxirasi bu erda aniqlikdan mahrum;",
   "ui.notice.dismiss": "Rad etish"
 }

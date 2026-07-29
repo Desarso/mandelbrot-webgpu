@@ -1,6 +1,6 @@
 {
   "about.title": "Mandelbrot dəsti nədir",
-  "about.lede": "Bu, riyaziyyatda ən mürəkkəb obyektdir və uşağın əməl edə biləcəyi bir arifmetika xətti ilə hazırlanır. Bu səhifə bunun niyə qəribə olmasından bəhs edir.",
+  "about.lede": "Bir arifmetik sətir, təkrarlanır. Ortaya çıxan hər miqyasda, sonu olmayan bir təfərrüata malikdir və qaydada heç bir şey bunun lazım olduğuna işarə etmir. Bu səhifə bunun niyə qəribə olmasından bəhs edir.",
   "about.rule.heading": "Təkrarlanan bir qayda",
   "about.rule.p1": "Düz bir müstəvidə bir nöqtə seçin. Kvadratına salın, başladığınız nöqtəni əlavə edin və yeni bir nöqtəniz var. Bunu kvadrat edin, orijinalı yenidən əlavə edin və əbədi olaraq davam edin.",
   "about.rule.p2": "İki şey ola bilər. Nöqtələr uzaqlaşa bilər və heç vaxt geri qayıtmaya bilər, sonsuzluğa qaçır. Yoxsa nə qədər uzun sürsəniz də, onlar evin yaxınlığında qala bilərlər. Mandelbrot dəsti sadəcə olaraq qalan başlanğıc nöqtələrinin toplusudur.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Bunun arxasındakı riyaziyyat hələ də köhnədir, təxminən 1918-ci ildə Pierre Fatou və Gaston Julia-ya qayıdır, onlar nəticə çıxara bilən hər hansı bir maşın mövcud olmamışdan onilliklər əvvəl bu iterasiyaları tədqiq etmişlər. Onlar heç birinin görməyəcəyi bir forma haqqında düşünürdülər.",
   "about.discovery.p3": "İstənilən yerdə, eyni qaydanı hesablayan hər kəs eyni obyekti sonuncu filamentə qədər alır. Bu mənada o, 1980-ci ildə yaradılmayıb. Orada tapıldı.",
   "about.scale.heading": "Bu nə qədər aşağı düşür",
-  "about.scale.p1": "Buradakı şəkillər təxminən 10⁴¹ böyüdülməsinə çatır. Bütün komplekt bu miqyasda bir metr enində ekrana çəkilsəydi, onu tutmaq üçün ekran müşahidə edilə bilən kainatdan yüzlərlə trilyon dəfə geniş olmalıdır.",
+  "about.scale.p1": "Burada sadalanan yerlərdən biri təqribən 10⁴¹ böyüdücü ilə oturur. Bütün komplekt bu miqyasda bir metr enində ekrana çəkilsəydi, onu tutmaq üçün ekran müşahidə edilə bilən kainatdan yüzlərlə trilyon dəfə geniş olmalıdır. Aşağıdakı hesab təxminən 2,400 onluq rəqəmi daşıyır, buna görə də renderer təxminən 10²⁴⁰⁰-ə qədər tükənmir - fiziki müqayisəsi olmayan bir rəqəm.",
   "about.scale.p2": "Bu detalların heç biri heç bir yerdə saxlanmır. Hər dəfə baxdığınız zaman eyni bir xətt qaydasından tələb əsasında hesablanır. Böyüdülən heç bir əsas təsvir yoxdur - yalnız hesab var və o, əbədi olaraq davam edir.",
   "about.explore.heading": "Gedin baxın",
   "about.explore.p1": "Hərəkət etmək üçün sürüşdürün, böyütmək üçün sürüşdürün. Yerlər sekmesinde qırx iki onluq yerdən ibarət dərin bir ada da daxil olmaqla, görməli yerlər dəsti var. Tapdığınız hər şey ünvan sətrindədir, ona görə də istənilən görünüş keçid kimi paylaşıla bilər.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Bu brauzer WebGPU-dan istifadə etmir, ona görə də renderer WebGL2-ə qayıdıb, bu da daha dayaz böyütmələrdə dəqiqliyi tükənir.",
   "ui.notice.enableFlag": "Brauzeriniz WebGPU-nu dəstəkləyirsə, lakin ondan istifadə etmirsə, chrome://flags-ı açın, Proqram təminatının göstərilməsi siyahısını Aktivləşdirin və brauzeri yenidən başladın. chrome://gpu səhifəsi ondan niyə imtina edildiyini izah edir.",
   "ui.notice.mobile": "Telefon və ya planşetdə renderer işləyir, lakin dərin böyütmələr masaüstü GPU-dan daha yavaşdır və çox dərin baxışlar kadrda bir neçə saniyə çəkə bilər. İterasiya sayını azaltmaq kömək edir.",
+  "ui.notice.depthLimit": "Bu, indiki mühərrikin getdiyi qədər dərindir. WebGL2 bərpası burada dəqiqlikdən məhrumdur;",
   "ui.notice.dismiss": "Rədd et"
 }

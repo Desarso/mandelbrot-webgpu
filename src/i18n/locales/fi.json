@@ -1,6 +1,6 @@
 {
   "about.title": "Mikä Mandelbrot-setti on",
-  "about.lede": "Se on matematiikan monimutkaisin esine, ja sen tuottaa yksi aritmeettinen rivi, jota lapsi voisi seurata. Tämä sivu kertoo, miksi se on outoa.",
+  "about.lede": "Yksi aritmeettinen rivi, toistettu. Se, mikä tulee ulos, sisältää yksityiskohtia joka mittakaavassa, ilman loppua, eikä mikään säännössä vihjaa, että sen pitäisi olla. Tämä sivu kertoo, miksi se on outoa.",
   "about.rule.heading": "Yksi sääntö, toistettu",
   "about.rule.p1": "Valitse piste tasaisesta tasosta. Neliöi se, lisää piste, josta aloitit, ja sinulla on uusi piste. Neliöi se, lisää alkuperäinen uudelleen ja jatka ikuisesti.",
   "about.rule.p2": "Kaksi asiaa voi tapahtua. Pisteet voivat vaeltaa pois eivätkä koskaan palaa, kiipeämällä äärettömyyteen. Tai he voivat pysyä lähellä kotia riippumatta siitä, kuinka kauan jatkat neliöintiä. Mandelbrot-sarja on yksinkertaisesti kokoelma lähtöpisteitä, jotka pysyvät.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Sen takana oleva matematiikka on vielä vanhempaa, ja se ulottuu Pierre Fatouhun ja Gaston Juliaan noin 1918, jotka tutkivat näitä iteraatioita vuosikymmeniä ennen kuin oli olemassa konetta, joka voisi tehdä tulokset. He pohdiskelivat muotoa, jota kukaan heistä ei koskaan näkisi.",
   "about.discovery.p3": "Kuka tahansa, missä tahansa, saman säännön laskeminen saa saman objektin viimeiseen filamenttiin asti. Siinä mielessä sitä ei luotu vuonna 1980. Se löytyi sieltä.",
   "about.scale.heading": "Kuinka pitkälle tämä menee",
-  "about.scale.p1": "Kuvien suurennus on noin 10⁴¹. Jos koko sarja piirrettäisiin samassa mittakaavassa metrin leveälle näytölle, näytön täytyisi olla satoja biljoonia kertoja leveämpi kuin havaittava maailmankaikkeus, jotta se pysyisi paikallaan.",
+  "about.scale.p1": "Yksi tässä luetelluista paikoista on suurennettuna noin 10⁴¹. Jos koko sarja piirrettäisiin samassa mittakaavassa metrin leveälle näytölle, näytön täytyisi olla satoja biljoonia kertoja leveämpi kuin havaittava maailmankaikkeus, jotta se pysyisi paikallaan. Alapuolella oleva aritmetiikka sisältää noin 2 400 desimaalin numeroa, joten renderöijä loppuu vasta noin 10²⁴⁰⁰ - luvussa, jota ei ole enää fyysistä vertailua jäljellä.",
   "about.scale.p2": "Mitään näistä yksityiskohdista ei ole tallennettu missään. Se lasketaan pyynnöstä, samasta yksirivisesta säännöstä, joka kerta, kun katsot. Mitään taustakuvaa ei suurenneta – on vain aritmetiikkaa, ja se jatkuu ikuisesti.",
   "about.explore.heading": "Mene ja katso",
   "about.explore.p1": "Siirrä vetämällä, zoomaa vierittämällä. Paikat-välilehdellä on joukko näkemisen arvoisia kohteita, mukaan lukien syvä saari, joka sijaitsee 42 desimaalin tarkkuudella. Kaikki löytämäsi on osoitepalkissa, joten mikä tahansa näkymä voidaan jakaa linkkinä.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Tämä selain ei käytä WebGPU:ta, joten renderöijä on palannut WebGL2:een, jonka tarkkuus loppuu paljon matalammissa zoomeissa.",
   "ui.notice.enableFlag": "Jos selaimesi tukee WebGPU:ta, mutta ei käytä sitä, avaa chrome://flags, aseta Override software rendering list -asetukseksi Enabled ja käynnistä selain uudelleen. Sivu chrome://gpu selittää, miksi se hylättiin.",
   "ui.notice.mobile": "Puhelimessa tai tabletissa renderöijä toimii, mutta syväzoomaukset ovat paljon hitaampia kuin pöytätietokoneen GPU:ssa, ja erittäin syvät näkymät voivat kestää useita sekunteja kuvassa. Iteraatiomäärän pienentäminen auttaa.",
+  "ui.notice.depthLimit": "Tämä on yhtä syvä kuin nykyinen moottori. WebGL2:n vaihtotarkkuus loppuu tässä;",
   "ui.notice.dismiss": "Hylkää"
 }

@@ -1,6 +1,6 @@
 {
   "about.title": "Hva er Mandelbrot-settet",
-  "about.lede": "Det er det mest kompliserte objektet i matematikk, og det er produsert av en linje med aritmetikk som et barn kan følge. Denne siden handler om hvorfor det er rart.",
+  "about.lede": "En linje med aritmetikk, gjentatt. Det som kommer ut har detaljer i alle skalaer, uten ende, og ingenting i regelen antyder at det skal. Denne siden handler om hvorfor det er rart.",
   "about.rule.heading": "En regel, gjentatt",
   "about.rule.p1": "Velg et punkt på et flatt plan. Kvadra den, legg til punktet du startet med, og du har et nytt punkt. Plasser det, legg til originalen igjen, og fortsett for alltid.",
   "about.rule.p2": "To ting kan skje. Poengene kan forsvinne og aldri komme tilbake, og rase bort til det uendelige. Eller de kan være i nærheten av hjemmet uansett hvor lenge du fortsetter å kvadre. Mandelbrot-settet er rett og slett samlingen av startpunkter som blir værende.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematikken bak er fortsatt eldre, og går tilbake til Pierre Fatou og Gaston Julia rundt 1918, som studerte disse iterasjonene tiår før det fantes noen maskin som kunne tegne resultatene. De resonnerte om en form ingen av dem noen gang ville se.",
   "about.discovery.p3": "Alle, hvor som helst, som beregner den samme regelen, får samme objekt ned til siste filament. Slik sett ble den ikke opprettet i 1980. Den ble funnet der.",
   "about.scale.heading": "Hvor langt ned går dette",
-  "about.scale.p1": "Bildene her når forstørrelser på rundt 10⁴¹. Hvis hele settet ble tegnet i den skalaen på en skjerm som er en meter bred, ville skjermen måtte være hundrevis av billioner ganger bredere enn det observerbare universet for å holde den.",
+  "about.scale.p1": "Et av stedene oppført her har en forstørrelse på omtrent 10⁴¹. Hvis hele settet ble tegnet i den skalaen på en skjerm som er en meter bred, ville skjermen måtte være hundrevis av billioner ganger bredere enn det observerbare universet for å holde den. Regnestykket under har rundt 2400 desimaler, så gjengivelsen går ikke tom før omtrent 10²⁴⁰⁰ - et tall uten fysisk sammenligning igjen å gjøre.",
   "about.scale.p2": "Ingen av disse detaljene er lagret noe sted. Det beregnes på forespørsel, fra den samme enlinjeregelen, hver gang du ser. Det er ikke noe underliggende bilde som forstørres - det er bare aritmetikk, og det fortsetter for alltid.",
   "about.explore.heading": "Gå og se",
   "about.explore.p1": "Dra for å flytte, rull for å zoome. Steder-fanen har et sett med destinasjoner som er verdt å se, inkludert en dyp øy som ligger førtito desimaler nede. Alt du finner er i adressefeltet, så enhver visning kan deles som en lenke.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Denne nettleseren bruker ikke WebGPU, så gjengiveren har falt tilbake til WebGL2, som går tom for presisjon ved langt grunnere zoom.",
   "ui.notice.enableFlag": "Hvis nettleseren din støtter WebGPU, men ikke bruker den, åpner du chrome://flags, setter Override software rendering list til Aktivert og starter nettleseren på nytt. Siden chrome://gpu forklarer hvorfor den ble avslått.",
   "ui.notice.mobile": "På en telefon eller et nettbrett fungerer gjengivelsen, men dyp zoom er langt tregere enn på en stasjonær GPU, og veldig dype visninger kan ta mange sekunder en ramme. Å senke antall iterasjoner hjelper.",
+  "ui.notice.depthLimit": "Dette er så dypt som den nåværende motoren går. WebGL2-reserven går tom for presisjon her;",
   "ui.notice.dismiss": "Avskjedige"
 }

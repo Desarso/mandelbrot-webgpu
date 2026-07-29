@@ -1,6 +1,6 @@
 {
   "about.title": "Apakah set Mandelbrot itu",
-  "about.lede": "Ia adalah objek yang paling rumit dalam matematik, dan ia dihasilkan oleh satu baris aritmetik yang boleh diikuti oleh kanak-kanak. Halaman ini adalah tentang mengapa itu pelik.",
+  "about.lede": "Satu baris aritmetik, berulang. Apa yang keluar mempunyai perincian pada setiap skala, tanpa penghujung, dan tiada dalam peraturan yang menunjukkan bahawa ia sepatutnya. Halaman ini adalah tentang mengapa itu pelik.",
   "about.rule.heading": "Satu peraturan, diulang",
   "about.rule.p1": "Pilih satu titik pada satah rata. Squarekannya, tambahkan titik yang anda mulakan, dan anda mempunyai titik baharu. Square itu, tambahkan yang asal sekali lagi, dan teruskan selama-lamanya.",
   "about.rule.p2": "Dua perkara boleh berlaku. Mata mungkin bersiar-siar dan tidak akan kembali, berlumba pergi ke infiniti. Atau mereka mungkin tinggal berhampiran rumah tidak kira berapa lama anda terus mengkuadratkan. Set Mandelbrot hanyalah koleksi titik permulaan yang kekal.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematik di belakangnya masih lebih lama, kembali kepada Pierre Fatou dan Gaston Julia sekitar tahun 1918, yang mengkaji lelaran ini beberapa dekad sebelum ada mesin yang boleh melukis hasilnya. Mereka berfikir tentang bentuk yang tidak akan dilihat oleh mereka.",
   "about.discovery.p3": "Sesiapa sahaja, di mana-mana sahaja, mengira peraturan yang sama mendapat objek yang sama hingga ke filamen terakhir. Dalam erti kata itu ia tidak dicipta pada tahun 1980. Ia ditemui di sana.",
   "about.scale.heading": "Sejauh mana perkara ini berlaku",
-  "about.scale.p1": "Imej di sini mencapai pembesaran sekitar 10⁴¹. Jika keseluruhan set dilukis pada skala itu pada skrin selebar satu meter, skrin mestilah beratus trilion kali lebih lebar daripada alam semesta yang boleh diperhatikan untuk memegangnya.",
+  "about.scale.p1": "Salah satu tempat yang disenaraikan di sini terletak pada pembesaran kira-kira 10⁴¹. Jika keseluruhan set dilukis pada skala itu pada skrin selebar satu meter, skrin mestilah beratus trilion kali lebih lebar daripada alam semesta yang boleh diperhatikan untuk memegangnya. Aritmetik di bawah membawa kira-kira 2,400 digit perpuluhan, jadi pemapar tidak kehabisan sehingga kira-kira 10²⁴⁰⁰ — nombor yang tiada lagi perbandingan fizikal untuk dibuat.",
   "about.scale.p2": "Tiada butiran itu disimpan di mana-mana. Ia dikira atas permintaan, daripada peraturan satu baris yang sama, setiap kali anda melihat. Tiada imej asas yang dibesarkan - yang ada hanya aritmetik, dan ia berterusan selama-lamanya.",
   "about.explore.heading": "Pergi dan lihat",
   "about.explore.p1": "Seret untuk bergerak, tatal untuk zum. Tab Tempat mempunyai set destinasi yang patut dilihat, termasuk pulau dalam yang terletak empat puluh dua tempat perpuluhan di bawah. Semua yang anda temui ada dalam bar alamat, jadi sebarang paparan boleh dikongsi sebagai pautan.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Penyemak imbas ini tidak menggunakan WebGPU, jadi pemapar telah kembali ke WebGL2, yang kehabisan ketepatan pada zum yang jauh lebih cetek.",
   "ui.notice.enableFlag": "Jika penyemak imbas anda menyokong WebGPU tetapi tidak menggunakannya, buka chrome://flags, tetapkan Override senarai pemaparan perisian kepada Didayakan dan mulakan semula penyemak imbas. Halaman chrome://gpu menerangkan sebab ia ditolak.",
   "ui.notice.mobile": "Pada telefon atau tablet pemapar berfungsi, tetapi zum dalam jauh lebih perlahan daripada pada GPU desktop, dan paparan yang sangat dalam mungkin mengambil masa beberapa saat untuk satu bingkai. Menurunkan kiraan lelaran membantu.",
+  "ui.notice.depthLimit": "Ini adalah sedalam seperti enjin semasa pergi. Saling balik WebGL2 kehabisan ketepatan di sini;",
   "ui.notice.dismiss": "Tolak"
 }

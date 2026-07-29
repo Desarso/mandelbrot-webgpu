@@ -9,19 +9,25 @@
  * flat blob and hides the structure entirely, whereas too high only costs
  * time.
  *
- * The curve below is fitted to the hand-chosen locations in `locations.ts`,
- * which are views someone looked at and picked an iteration count for:
+ * The curve is fitted to measurements, not guessed. `/gpu.html?…&sweep=1`
+ * renders one view at a range of iteration counts and reports how many sampled
+ * pixels are still unresolved at each; the count stops mattering once raising
+ * it stops converting them. At the default centre, 7004 sampled pixels:
  *
- *   span     depth   chosen   curve
- *   2.8       0.0      500      420
- *   0.02      2.1     1000     1160
- *   1e-6      6.4     4000     2900
- *   3e-11    11.0     6000     4800
- *   6e-42    41.7    20000    19800
+ *   span     depth   still interior at 200 / 800 / 3200 / 12800   settles at
+ *   1e-5      5.45   3543      667       598        589              ~1600
+ *   1e-12    12.45   7004     7004       329        274              ~6400
+ *   1e-25    25.45   7004     7004      7004       7004(*)          ~20000
  *
- * It runs deliberately below the hand-picked values in the middle of the range
- * and meets them at the ends. Auto is a starting point, not a replacement for
- * turning the slider up when a particular view wants more.
+ *   (*) at 1e-25 nothing at all escapes below ~16000: the whole frame is one
+ *       flat interior colour. Undershooting does not produce a rough image,
+ *       it produces no image.
+ *
+ * Those three fit 99 * depth^1.64 almost exactly. What the fit cannot capture
+ * is that the requirement depends on the location as much as the depth: the
+ * period-1215 minibrot at 6e-42 settles at 14000, where this curve predicts
+ * three times that. Finding a nucleus sets the count from its period instead,
+ * which is the principled answer for those views.
  */
 
 import Decimal from "decimal.js";
@@ -37,9 +43,10 @@ export const MAX_ITERATIONS = 200000;
 /** Widest span the view supports, i.e. depth 0. */
 const HOME_SPAN = 2.8;
 
-const BASE = 420;
-const SCALE = 350;
-const EXPONENT = 1.08;
+/** Enough for the widest views, where the curve itself is near zero. */
+const FLOOR = 500;
+const SCALE = 99;
+const EXPONENT = 1.64;
 
 /**
  * Decimal orders of magnitude of zoom past the home view. `span` is a Decimal
@@ -60,7 +67,7 @@ export function zoomDepth(span: Decimal): number {
  * is rather than as a measurement.
  */
 export function iterationsForSpan(span: Decimal, limit = Infinity): number {
-  const raw = BASE + SCALE * Math.pow(zoomDepth(span), EXPONENT);
+  const raw = Math.max(FLOOR, SCALE * Math.pow(zoomDepth(span), EXPONENT));
   const magnitude = Math.pow(10, Math.max(0, Math.floor(Math.log10(raw)) - 1));
   const rounded = Math.round(raw / magnitude) * magnitude;
   return Math.min(limit, Math.max(100, rounded));

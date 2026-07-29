@@ -127,6 +127,54 @@ async function main() {
     return;
   }
 
+  // `&sweep=1`: render the same view at a range of iteration counts and report
+  // how many sampled pixels are still unresolved at each. This is how the auto
+  // iteration curve is calibrated -- guessing produces counts that are either
+  // visibly wrong or needlessly slow.
+  if (params.get("sweep") === "1") {
+    const base = {
+      centerX: new Decimal(centerX),
+      centerY: new Decimal(centerY),
+      unitsPerPixel: spanDecimal.div(canvas.height),
+      width: canvas.width,
+      height: canvas.height,
+      colors: { ...DEFAULT_COLORS, palette, ...colorOverrides },
+    };
+    const points: [number, number][] = [];
+    for (let y = 4; y < canvas.height; y += 7) {
+      for (let x = 4; x < canvas.width; x += 7) points.push([x, y]);
+    }
+    const counts = (params.get("steps") ?? "100,200,400,800,1600,3200,6400,12800")
+      .split(",")
+      .map(Number);
+
+    const rows: string[] = [];
+    let previousInterior = -1;
+    for (const n of counts) {
+      const r = await renderer.render({ ...base, maxIterations: n } as never);
+      const px = await renderer.debugReadPixels(points);
+      // Interior pixels are the ones that used the whole budget. When raising
+      // the budget stops converting them, the count is enough.
+      const interior = px.filter(([a, b, c]) => a + b + c <= 6).length;
+      const delta = previousInterior < 0 ? 0 : previousInterior - interior;
+      previousInterior = interior;
+      rows.push(
+        `${String(n).padStart(6)}  interior ${String(interior).padStart(5)}/${points.length}` +
+          `  resolved ${String(delta).padStart(5)}  ${r.renderMs.toFixed(0)}ms`
+      );
+    }
+
+    stats.textContent = [
+      `span           ${span}   (zoom ${new Decimal("2.8").div(spanDecimal).toExponential(2)}x)`,
+      `sampled        ${points.length} pixels`,
+      ``,
+      `  iters  still interior          newly resolved   time`,
+      ...rows,
+    ].join("\n");
+    console.log("[sweep]\n" + stats.textContent);
+    return;
+  }
+
   // `&verify=1`: render the same view with and without linear approximation and
   // report how far apart the images are. An approximation that changes the
   // picture is not an approximation, it is a bug.

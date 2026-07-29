@@ -1,6 +1,6 @@
 {
   "about.title": "Hvað er Mandelbrot settið",
-  "about.lede": "Það er flóknasta hluturinn í stærðfræði og hann er framleiddur með einni reikningslínu sem barn gæti farið eftir. Þessi síða er um hvers vegna það er skrítið.",
+  "about.lede": "Ein lína af reikningi, endurtekin. Það sem kemur út hefur smáatriði á öllum skala, án enda, og ekkert í reglunni gefur til kynna að það ætti að gera það. Þessi síða er um hvers vegna það er skrítið.",
   "about.rule.heading": "Ein regla, endurtekin",
   "about.rule.p1": "Veldu punkt á sléttu plani. Kveraðu það, bættu við punktinum sem þú byrjaðir á og þú færð nýjan punkt. Settu það í rétta átt, bættu upprunalega við aftur og haltu áfram að eilífu.",
   "about.rule.p2": "Tvennt getur gerst. Stigin geta ráfað af stað og aldrei komið aftur, hlaupið í burtu út í hið óendanlega. Eða þeir geta verið nálægt heimili, sama hversu lengi þú heldur áfram að torgast. Mandelbrot settið er einfaldlega safn upphafsstaða sem haldast.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Stærðfræðin á bak við það er enn eldri, og nær aftur til Pierre Fatou og Gaston Julia um 1918, sem rannsökuðu þessar endurtekningar áratugum áður en nokkur vél var til sem gæti dregið niðurstöðurnar. Þeir voru að rökræða um form sem enginn þeirra myndi nokkurn tíma sjá.",
   "about.discovery.p3": "Hver sem er, hvar sem er, sem reiknar sömu reglu, fær sama hlutinn niður í síðasta þráðinn. Í þeim skilningi var það ekki búið til árið 1980. Þar fannst það.",
   "about.scale.heading": "Hversu langt niður þetta nær",
-  "about.scale.p1": "Myndirnar hér ná stækkunum upp á um 10⁴¹. Ef allt settið væri teiknað á þann mælikvarða á skjá sem er metra breiður, þyrfti skjárinn að vera hundruðir trilljóna sinnum breiðari en sjáanlegt alheimur til að halda honum.",
+  "about.scale.p1": "Einn af þeim stöðum sem taldir eru upp hér eru um það bil 10⁴¹ stækkun. Ef allt settið væri teiknað á þann mælikvarða á skjá sem er metra breiður, þyrfti skjárinn að vera hundruðir trilljóna sinnum breiðari en sjáanlegt alheimur til að halda honum. Reikningurinn fyrir neðan ber um 2.400 aukastafi, þannig að teiknarinn klárast ekki fyrr en um það bil 10²⁴⁰⁰ — tala sem er ekki eftir neinn líkamlegan samanburð.",
   "about.scale.p2": "Ekkert af þeim smáatriðum er geymt neins staðar. Það er reiknað út á eftirspurn, út frá sömu einni línu reglu, í hvert skipti sem þú skoðar. Það er engin undirliggjandi mynd sem er stækkuð - það er aðeins reikningur og hún heldur áfram að eilífu.",
   "about.explore.heading": "Farðu og skoðaðu",
   "about.explore.p1": "Dragðu til að færa, skrunaðu til að þysja. Staðir flipinn hefur sett af áfangastöðum sem vert er að skoða, þar á meðal djúpa eyju sem situr fjörutíu og tveir aukastafir niður. Allt sem þú finnur er í veffangastikunni, svo hægt er að deila hvaða útsýni sem er sem tengli.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Þessi vafri notar ekki WebGPU, þannig að rendererinn hefur fallið aftur í WebGL2, sem klárast af nákvæmni við mun grynnri aðdrætti.",
   "ui.notice.enableFlag": "Ef vafrinn þinn styður WebGPU en er ekki að nota hann skaltu opna chrome://flags, stilla Override software rendering list á Virkt og endurræsa vafrann. Síðan chrome://gpu útskýrir hvers vegna henni var hafnað.",
   "ui.notice.mobile": "Í síma eða spjaldtölvu virkar teiknarinn, en djúpur aðdráttur er mun hægari en á borðtölvu GPU og mjög djúpt útsýni getur tekið margar sekúndur í ramma. Að lækka fjölda endurtekningar hjálpar.",
+  "ui.notice.depthLimit": "Þetta er eins djúpt og núverandi vél fer. The WebGL2 fallback rennur út af nákvæmni hér;",
   "ui.notice.dismiss": "Segja frá"
 }

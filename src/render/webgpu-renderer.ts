@@ -224,6 +224,7 @@ export class WebGpuRenderer {
   } | null = null;
   private xformBuffer: GPUBuffer | null = null;
   private history: GPUTexture | null = null;
+  private historySize = { width: 0, height: 0 };
   private historyValid = false;
   private abortRequested = false;
   private shadePipeline: GPUComputePipeline | null = null;
@@ -562,9 +563,28 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         GPUTextureUsage.TEXTURE_BINDING |
         GPUTextureUsage.COPY_SRC,
     });
-    // Only ever holds whole frames. `target` can be caught mid-update -- half
-    // the bands from the new view, half from the old -- and reprojecting that
-    // puts the seam on screen.
+    this.targetSize = { width, height };
+  }
+
+  /**
+   * Keeps the history texture at its own size, independent of the render
+   * target.
+   *
+   * It used to live in ensureTarget, which meant the interactive resolution
+   * switch destroyed it at the start of every gesture and again at the end.
+   * Reprojection went dead exactly at those two moments, so each zoom began
+   * and ended with a visible jump -- the bounce. The transform is in
+   * normalised texture coordinates and does not care about pixel dimensions,
+   * so there is no reason to throw the frame away.
+   */
+  private ensureHistory(width: number, height: number) {
+    if (
+      this.history &&
+      this.historySize.width === width &&
+      this.historySize.height === height
+    ) {
+      return;
+    }
     this.history?.destroy();
     this.history = this.ctx.device.createTexture({
       label: "last-complete-frame",
@@ -572,8 +592,8 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       format: "rgba8unorm",
       usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
     });
+    this.historySize = { width, height };
     this.historyValid = false;
-    this.targetSize = { width, height };
   }
 
   /** Reads the reduced orbit samples back, for comparison against an oracle. */
@@ -728,8 +748,11 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
   reproject(request: RenderRequest): boolean {
     const last = this.lastFrame;
     if (!last || !this.history || !this.historyValid || !this.blitPipeline) return false;
-    // A resize invalidates the mapping along with the texture behind it.
-    if (last.width !== request.width || last.height !== request.height) return false;
+    // Resolution may differ -- interaction renders smaller -- but a changed
+    // aspect ratio would stretch the picture, so that one does disqualify it.
+    const wasAspect = last.width / last.height;
+    const nowAspect = request.width / request.height;
+    if (Math.abs(wasAspect - nowAspect) > 0.01) return false;
 
     const ratio = request.unitsPerPixel.div(last.unitsPerPixel).toNumber();
     // Past a few doublings there is more stretched pixel than picture, and
@@ -988,6 +1011,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       );
       pass.end();
       this.encodeBlit(encoder, this.target!, IDENTITY_XFORM);
+      this.ensureHistory(request.width, request.height);
       encoder.copyTextureToTexture(
         { texture: this.target! },
         { texture: this.history! },

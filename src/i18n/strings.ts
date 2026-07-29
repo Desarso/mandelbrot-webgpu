@@ -16,7 +16,7 @@ export const STRINGS = {
   // ------------------------------------------------------------------ about
   "about.title": "What the Mandelbrot set is",
   "about.lede":
-    "It is the most complicated object in mathematics, and it is produced by one line of arithmetic that a child could follow. This page is about why that is strange.",
+    "One line of arithmetic, repeated. What comes out has detail at every scale, without end, and nothing in the rule hints that it should. This page is about why that is strange.",
 
   "about.rule.heading": "One rule, repeated",
   "about.rule.p1":
@@ -60,7 +60,7 @@ export const STRINGS = {
 
   "about.scale.heading": "How far down this goes",
   "about.scale.p1":
-    "The images here reach magnifications of around 10⁴¹. If the whole set were drawn at that scale on a screen a metre wide, the screen would have to be hundreds of trillions of times wider than the observable universe to hold it.",
+    "One of the places listed here sits at a magnification of about 10⁴¹. If the whole set were drawn at that scale on a screen a metre wide, the screen would have to be hundreds of trillions of times wider than the observable universe to hold it. The arithmetic underneath carries around 2,400 decimal digits, so the renderer does not run out until roughly 10²⁴⁰⁰ — a number with no physical comparison left to make.",
   "about.scale.p2":
     "None of that detail is stored anywhere. It is computed on demand, from the same one-line rule, every time you look. There is no underlying image being magnified — there is only arithmetic, and it goes on forever.",
 
@@ -124,6 +124,8 @@ export const STRINGS = {
     "If your browser supports WebGPU but is not using it, open chrome://flags, set Override software rendering list to Enabled, and restart the browser. The page chrome://gpu explains why it was refused.",
   "ui.notice.mobile":
     "On a phone or tablet the renderer works, but deep zooms are far slower than on a desktop GPU, and very deep views may take many seconds a frame. Lowering the iteration count helps.",
+  "ui.notice.depthLimit":
+    "This is as deep as the current engine goes. The WebGL2 fallback runs out of precision here; a browser with WebGPU enabled goes very much further.",
   "ui.notice.dismiss": "Dismiss",
 } as const;
 

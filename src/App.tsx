@@ -168,8 +168,29 @@ const App: Component = () => {
   // re-renders, which republishes the view, which lands back here.
   createEffect(() => {
     if (!autoIterations()) return;
-    const suggested = view()?.suggestedIterations ?? 0;
+    const info = view();
+    if (!info) return;
+    // Not mid-gesture. Raising the count invalidates the reference orbit, so
+    // adjusting on every frame of a zoom rebuilt it on every frame of a zoom --
+    // hundreds of milliseconds each, which is what made auto feel like it was
+    // climbing far too eagerly. Wait for the view to settle.
+    if (info.preview) return;
+    const suggested = info.suggestedIterations;
     if (suggested > 0 && suggested !== maxIterations()) syncIterations(suggested);
+  });
+
+  // Auto is the default, so it is *not* in the URL -- an explicit ?i= is what
+  // records the choice to override it. Clearing the parameter has to happen on
+  // the toggle itself and not only when the count changes: switching auto on
+  // for a view it already agrees with left the stale ?i= in place, and the
+  // next reload came back in manual mode.
+  createEffect(() => {
+    const url = new URL(window.location.href);
+    const has = url.searchParams.has("i");
+    if (autoIterations() === !has) return;
+    if (autoIterations()) url.searchParams.delete("i");
+    else url.searchParams.set("i", String(maxIterations()));
+    window.history.replaceState({}, "", decodeURIComponent(url.toString()));
   });
 
   const setStop = (index: number, value: string) => {
@@ -269,7 +290,13 @@ const App: Component = () => {
         </div>
       </Show>
 
-      <Show when={showMobileNotice()}>
+      <Show when={view()?.atDepthLimit}>
+        <div class={styles.notice}>
+          <p>{t("ui.notice.depthLimit")}</p>
+        </div>
+      </Show>
+
+      <Show when={showMobileNotice() && !view()?.atDepthLimit}>
         <div class={styles.notice}>
           <p>{t("ui.notice.mobile")}</p>
           <button
@@ -284,7 +311,13 @@ const App: Component = () => {
         </div>
       </Show>
 
-      <Show when={view()?.backend === "webgl" && !webgpuNoticeDismissed()}>
+      <Show
+        when={
+          view()?.backend === "webgl" &&
+          !webgpuNoticeDismissed() &&
+          !view()?.atDepthLimit
+        }
+      >
         <div class={styles.notice}>
           <p>{t("ui.notice.noWebgpu")}</p>
           <p>{t("ui.notice.enableFlag")}</p>

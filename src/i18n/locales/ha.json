@@ -1,6 +1,6 @@
 {
   "about.title": "Menene saitin Mandelbrot",
-  "about.lede": "Shi ne abu mafi rikitarwa a lissafin lissafi, kuma ana samar da shi ta hanyar layi ɗaya na lissafin da yaro zai iya bi. Wannan shafin yana magana ne game da dalilin da ya sa hakan ke da ban mamaki.",
+  "about.lede": "Layi ɗaya na lissafi, maimaituwa. Abin da ke fitowa yana da cikakkun bayanai a kowane ma'auni, ba tare da ƙare ba, kuma babu wani abu a cikin ƙa'idar da ke nuna cewa ya kamata. Wannan shafin yana magana ne game da dalilin da ya sa hakan ke da ban mamaki.",
   "about.rule.heading": "Ka'ida ɗaya, maimaita",
   "about.rule.p1": "Zaɓi wuri a kan jirgin sama mai faɗi. Sanya shi, ƙara batun da kuka fara da shi, kuma kuna da sabon batu. Ƙaddamar da cewa, ƙara ainihin kuma, kuma ci gaba da tafiya har abada.",
   "about.rule.p2": "Abubuwa biyu na iya faruwa. Makiyoyin na iya yawo kuma ba za su dawo ba, suna tsere zuwa iyaka. Ko kuma za su iya zama a kusa da gida komai tsawon lokacin da kuka ci gaba da squaring. Saitin Mandelbrot shine kawai tarin wuraren farawa waɗanda ke tsayawa.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Lissafin da ke bayansa ya tsufa har yanzu, yana komawa Pierre Fatou da Gaston Julia a kusa da 1918, waɗanda suka yi nazarin waɗannan abubuwan shekaru da yawa kafin a sami wata na'ura da za ta iya zana sakamakon. Sun kasance suna tunani game da siffar da babu ɗayansu da zai iya gani.",
   "about.discovery.p3": "Kowa, a ko'ina, yin lissafin ƙa'ida ɗaya yana samun abu iri ɗaya har zuwa filament na ƙarshe. Ta haka ba a samar da shi a 1980 ba. An same shi a can.",
   "about.scale.heading": "Yaya nisa wannan ya tafi",
-  "about.scale.p1": "Hotunan a nan sun kai girman kusan 10⁴¹. Idan an zana dukkan saitin a wannan ma'auni akan allo mai faɗin mita, allon zai zama mafi girman sau ɗaruruwan tiriliyan fiye da sararin da ake gani don riƙe shi.",
+  "about.scale.p1": "Ɗaya daga cikin wuraren da aka jera a nan yana zaune a girman kusan 10⁴¹. Idan an zana dukkan saitin a wannan ma'auni akan allo mai faɗin mita, allon zai zama mafi girman sau ɗaruruwan tiriliyan fiye da sararin da ake gani don riƙe shi. Lissafin da ke ƙasa yana ɗaukar lambobi kusan 2,400 na decimal, don haka mai yin ba zai ƙare ba sai kusan 10²⁴⁰⁰ - lambar da babu kwatancen jiki da ya rage don yin.",
   "about.scale.p2": "Babu ɗayan waɗannan bayanan da aka adana a ko'ina. Ana lissafta shi akan buƙata, daga ƙa'idar layi ɗaya, duk lokacin da kuka duba. Babu wani hoto mai tushe da ake ɗaukaka - akwai lissafi kawai, kuma yana ci gaba har abada.",
   "about.explore.heading": "Ku je ku duba",
   "about.explore.p1": "Ja don motsawa, gungura zuwa zuƙowa. Shafin Wuraren yana da jeri na wuraren da ya kamata a gani, gami da tsibiri mai zurfi wanda ke da wurare arba'in da biyu a ƙasa. Duk abin da kuka samu yana cikin mashin adireshi, don haka ana iya raba kowane ra'ayi azaman hanyar haɗi.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Wannan burauzar ba ta amfani da WebGPU, don haka mai gabatarwa ya sake komawa zuwa WebGL2, wanda ke tafiya daidai a cikin zuƙowa mai zurfi.",
   "ui.notice.enableFlag": "Idan burauzar ku tana goyan bayan WebGPU amma baya amfani da shi, buɗe chrome://flags, saita Lissafin Mayar da software zuwa An kunna, sa'annan ta sake kunna mai binciken. Shafin chrome://gpu ya bayyana dalilin da ya sa aka ƙi shi.",
   "ui.notice.mobile": "A waya ko kwamfutar hannu mai gabatarwa yana aiki, amma zuƙowa mai zurfi suna da nisa a hankali fiye da na GPU na tebur, kuma zurfin ra'ayi na iya ɗaukar daƙiƙa da yawa a firam. Rage ƙidayar maimaitawa yana taimakawa.",
+  "ui.notice.depthLimit": "Wannan yana da zurfi kamar yadda injin na yanzu ke tafiya. Faɗuwar WebGL2 ta ƙare daidai a nan;",
   "ui.notice.dismiss": "Korar"
 }

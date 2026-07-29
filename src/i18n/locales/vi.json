@@ -1,6 +1,6 @@
 {
   "about.title": "Tập hợp Mandelbrot là gì",
-  "about.lede": "Nó là đối tượng phức tạp nhất trong toán học và nó được tạo ra bởi một dòng số học mà một đứa trẻ có thể làm theo. Trang này nói về lý do tại sao điều đó lại kỳ lạ.",
+  "about.lede": "Một dòng số học, lặp đi lặp lại. Những gì đưa ra đều có chi tiết ở mọi quy mô, không có hồi kết và không có gì trong quy tắc gợi ý rằng nó nên như vậy. Trang này nói về lý do tại sao điều đó lại kỳ lạ.",
   "about.rule.heading": "Một quy tắc, được lặp đi lặp lại",
   "about.rule.p1": "Chọn một điểm trên mặt phẳng. Bình phương nó, thêm điểm bạn đã bắt đầu và bạn có một điểm mới. Bình phương số đó, thêm bản gốc một lần nữa và tiếp tục như vậy mãi mãi.",
   "about.rule.p2": "Hai điều có thể xảy ra. Các điểm có thể trôi đi và không bao giờ quay trở lại, chạy đua đến vô tận. Hoặc họ có thể ở gần nhà cho dù bạn có tiếp tục bình phương bao lâu. Tập hợp Mandelbrot đơn giản là tập hợp các điểm khởi đầu còn sót lại.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Toán học đằng sau nó vẫn còn lâu đời hơn, bắt nguồn từ Pierre Fatou và Gaston Julia vào khoảng năm 1918, những người đã nghiên cứu những phép lặp này hàng thập kỷ trước khi có bất kỳ chiếc máy nào có thể đưa ra kết quả. Họ đang lý luận về một hình dạng mà không ai trong số họ từng nhìn thấy.",
   "about.discovery.p3": "Bất cứ ai, ở bất cứ đâu, tính toán cùng một quy tắc sẽ đưa ra cùng một đối tượng cho đến sợi cuối cùng. Theo nghĩa đó, nó không được tạo ra vào năm 1980. Nó đã được tìm thấy ở đó.",
   "about.scale.heading": "Điều này đi xa đến mức nào",
-  "about.scale.p1": "Hình ảnh ở đây đạt độ phóng đại khoảng 10⁴¹. Nếu toàn bộ tập hợp được vẽ ở tỷ lệ đó trên một màn hình rộng một mét, màn hình sẽ phải rộng hơn hàng trăm nghìn tỷ lần so với vũ trụ quan sát được để giữ nó.",
+  "about.scale.p1": "Một trong những địa điểm được liệt kê ở đây có độ phóng đại khoảng 10⁴¹. Nếu toàn bộ tập hợp được vẽ ở tỷ lệ đó trên một màn hình rộng một mét, màn hình sẽ phải rộng hơn hàng trăm nghìn tỷ lần so với vũ trụ quan sát được để giữ nó. Số học bên dưới chứa khoảng 2.400 chữ số thập phân, do đó, trình kết xuất chỉ chạy hết cho đến khoảng 10²⁴⁰⁰ — một con số không còn phép so sánh vật lý nào để thực hiện.",
   "about.scale.p2": "Không có chi tiết nào được lưu trữ ở bất cứ đâu. Nó được tính toán theo yêu cầu, từ cùng một quy tắc một dòng, mỗi khi bạn xem. Không có hình ảnh cơ bản nào được phóng to - chỉ có số học và nó tiếp tục mãi mãi.",
   "about.explore.heading": "Đi và nhìn",
   "about.explore.p1": "Kéo để di chuyển, cuộn để thu phóng. Tab Địa điểm có một tập hợp các điểm đến đáng xem, bao gồm một hòn đảo sâu nằm ở vị trí 42 chữ số thập phân. Mọi thứ bạn tìm thấy đều có trong thanh địa chỉ, vì vậy mọi chế độ xem đều có thể được chia sẻ dưới dạng liên kết.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Trình duyệt này không sử dụng WebGPU nên trình kết xuất đã chuyển về WebGL2, không còn độ chính xác ở mức thu phóng nông hơn nhiều.",
   "ui.notice.enableFlag": "Nếu trình duyệt của bạn hỗ trợ WebGPU nhưng hiện không sử dụng nó, hãy mở chrome://flags, đặt Ghi đè danh sách kết xuất phần mềm thành Đã bật và khởi động lại trình duyệt. Trang chrome://gpu giải thích lý do tại sao nó bị từ chối.",
   "ui.notice.mobile": "Trên điện thoại hoặc máy tính bảng, trình kết xuất hoạt động nhưng thu phóng sâu chậm hơn nhiều so với trên GPU máy tính để bàn và các chế độ xem rất sâu có thể mất nhiều giây cho một khung hình. Giảm số lần lặp sẽ giúp ích.",
+  "ui.notice.depthLimit": "Điều này sâu như động cơ hiện tại. Ở đây dự phòng WebGL2 không còn chính xác nữa;",
   "ui.notice.dismiss": "Miễn nhiệm"
 }

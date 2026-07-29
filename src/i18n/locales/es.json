@@ -1,6 +1,6 @@
 {
   "about.title": "¿Qué es el conjunto de Mandelbrot?",
-  "about.lede": "Es el objeto más complicado de las matemáticas y se produce mediante una línea de aritmética que un niño podría seguir. Esta página trata sobre por qué esto es extraño.",
+  "about.lede": "Una línea de aritmética, repetida. Lo que sale tiene detalles en todas las escalas, sin fin, y nada en la regla sugiere que así sea. Esta página trata sobre por qué esto es extraño.",
   "about.rule.heading": "Una regla, repetida",
   "about.rule.p1": "Elija un punto en un plano. Cuadralo, suma el punto con el que empezaste y tendrás un nuevo punto. Cuadre eso, agregue el original nuevamente y continúe para siempre.",
   "about.rule.p2": "Pueden pasar dos cosas. Los puntos pueden alejarse y nunca regresar, corriendo hacia el infinito. O pueden quedarse cerca de casa sin importar cuánto tiempo sigas cuadrando. El conjunto de Mandelbrot es simplemente el conjunto de puntos de partida que permanecen.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Las matemáticas detrás de esto son aún más antiguas, y se remontan a Pierre Fatou y Gaston Julia alrededor de 1918, quienes estudiaron estas iteraciones décadas antes de que existiera una máquina que pudiera extraer los resultados. Estaban razonando sobre una forma que ninguno de ellos vería jamás.",
   "about.discovery.p3": "Cualquiera, en cualquier lugar, que calcule la misma regla obtiene el mismo objeto hasta el último filamento. En ese sentido no fue creado en 1980. Fue encontrado allí.",
   "about.scale.heading": "¿Qué tan bajo llega esto?",
-  "about.scale.p1": "Las imágenes aquí alcanzan aumentos de alrededor de 10⁴¹. Si todo el conjunto se dibujara a esa escala en una pantalla de un metro de ancho, la pantalla tendría que ser cientos de billones de veces más ancha que el universo observable para contenerlo.",
+  "about.scale.p1": "Uno de los lugares enumerados aquí tiene un aumento de aproximadamente 10⁴¹. Si todo el conjunto se dibujara a esa escala en una pantalla de un metro de ancho, la pantalla tendría que ser cientos de billones de veces más ancha que el universo observable para contenerlo. La aritmética debajo contiene alrededor de 2400 dígitos decimales, por lo que el renderizador no se agota hasta aproximadamente 10²⁴⁰⁰, un número sin comparación física que hacer.",
   "about.scale.p2": "Ninguno de esos detalles se almacena en ninguna parte. Se calcula según demanda, a partir de la misma regla unifilar, cada vez que miras. No hay ninguna imagen subyacente que se magnifique; sólo hay aritmética y continúa para siempre.",
   "about.explore.heading": "ve y mira",
   "about.explore.p1": "Arrastre para moverse, desplácese para hacer zoom. La pestaña Lugares tiene un conjunto de destinos que vale la pena ver, incluida una isla profunda que se encuentra a cuarenta y dos decimales de profundidad. Todo lo que encuentra está en la barra de direcciones, por lo que cualquier vista se puede compartir como un enlace.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Este navegador no utiliza WebGPU, por lo que el renderizador ha recurrido a WebGL2, que pierde precisión con zooms mucho más superficiales.",
   "ui.notice.enableFlag": "Si su navegador admite WebGPU pero no lo utiliza, abra chrome://flags, configure Anular lista de representación de software en Habilitado y reinicie el navegador. La página chrome://gpu explica por qué fue rechazada.",
   "ui.notice.mobile": "En un teléfono o tableta, el renderizador funciona, pero los zooms profundos son mucho más lentos que en una GPU de escritorio, y las vistas muy profundas pueden tardar muchos segundos por fotograma. Reducir el recuento de iteraciones ayuda.",
+  "ui.notice.depthLimit": "Esto es lo más profundo que llega el motor actual. El respaldo de WebGL2 se queda sin precisión aquí;",
   "ui.notice.dismiss": "Despedir"
 }

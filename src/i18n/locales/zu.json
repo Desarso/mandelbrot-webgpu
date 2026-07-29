@@ -1,6 +1,6 @@
 {
   "about.title": "Yini isethi yeMandelbrot",
-  "about.lede": "Kuyinto eyinkimbinkimbi kakhulu kwizibalo, futhi ikhiqizwa umugqa owodwa wezibalo ingane engayilandela. Leli khasi likhuluma ngokuthi kungani lokho kuyinqaba.",
+  "about.lede": "Umugqa owodwa we-arithmetic, ophindaphindiwe. Okuphumayo kunemininingwane kuzo zonke izikali, ngaphandle kokuphela, futhi akukho emthethweni okubonisa ukuthi kufanele. Leli khasi likhuluma ngokuthi kungani lokho kuyinqaba.",
   "about.rule.heading": "Umthetho owodwa, ophindaphindiwe",
   "about.rule.p1": "Khetha iphoyinti endizeni eyisicaba. Sikwele, engeza iphuzu oqale ngalo, futhi usunephuzu elisha. Sikwele lokho, engeza okwangempela futhi, futhi uqhubeke unomphela.",
   "about.rule.p2": "Zimbili izinto ezingenzeka. Amaphuzu angase azulazule futhi angaphinde abuye, agijimele okungapheli. Noma bangase bahlale eduze nasekhaya kungakhathaliseki ukuthi uqhubeka isikhathi eside kangakanani. Isethi ye-Mandelbrot imane iyiqoqo lamaphuzu okuqala ahlala.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Izibalo ezingemuva kwayo zindala namanje, zibuyela ku-Pierre Fatou no-Gaston Julia cishe ngo-1918, owafunda lokhu kuphindaphinda amashumi eminyaka ngaphambi kokuba kube khona umshini ongakhipha imiphumela. Babecabanga ngesimo okungekho noyedwa kubo owayeyoke asibone.",
   "about.discovery.p3": "Noma ubani, noma yikuphi, osebenzisa umthetho ofanayo uthola into efanayo kuze kufike emculweni wokugcina. Ngalowo mqondo awuzange udalwe ngo-1980. Kwatholakala khona.",
   "about.scale.heading": "Kude kangakanani lokhu",
-  "about.scale.p1": "Izithombe lapha zifinyelela ekukhulisweni okungaba ngu-10⁴¹. Uma isethi yonke ibidwetshwe kuleso sikali esikrinini esiyimitha ububanzi, isikrini bekuyodingeka sibe ububanzi ngokuphindwe izikhathi ezingamakhulu ezinkulungwane zezigidigidi kunomkhathi obonakalayo ukuze sisibambe.",
+  "about.scale.p1": "Enye yezindawo ezibalwe lapha ihlezi endaweni yokukhulisa cishe u-10⁴¹. Uma isethi yonke ibidwetshwe kuleso sikali esikrinini esiyimitha ububanzi, isikrini bekuyodingeka sibe ububanzi ngokuphindwe izikhathi ezingamakhulu ezinkulungwane zezigidigidi kunomkhathi obonakalayo ukuze sisibambe. I-arithmetic ngaphansi iphethe cishe amadijithi edesimali angu-2,400, ngakho-ke isinikezeli asiphelelwa kuze kube cishe u-10²⁴⁰⁰ — inombolo engenakho ukuqhathanisa ngokomzimba okusele okumele kwenziwe.",
   "about.scale.p2": "Ayikho kuleyo mininingwane egcinwe noma kuphi. Ibalwa ngokufunwa, kusukela emthethweni ofanayo womugqa owodwa, njalo uma ubheka. Asikho isithombe esiyisisekelo esikhuliswayo - kukhona i-arithmetic kuphela, futhi iqhubeka unomphela.",
   "about.explore.heading": "Hamba uyobheka",
   "about.explore.p1": "Hudula ukuze uhambise, skrola ukuze usondeze. Ithebhu Yezindawo inesethi yezindawo okufanele zibonwe, okuhlanganisa isiqhingi esijulile esihlala izindawo zamadesimali ezingamashumi amane nambili phansi. Yonke into oyitholayo ikubha yekheli, ngakho-ke noma yikuphi ukubuka kungabiwa njengesixhumanisi.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Lesi siphequluli asisebenzisi i-WebGPU, ngakho-ke isinikezeli sibuyele emuva ku-WebGL2, ephelelwa ukunemba ekusondezeni okungashoni kakhulu.",
   "ui.notice.enableFlag": "Uma isiphequluli sakho sisekela i-WebGPU kodwa singayisebenzisi, vula i-chrome://flags, setha okuthi Khipha uhlu lokunikeza isofthiwe kokuthi Kunikwe amandla, bese uqala kabusha isiphequluli. Ikhasi elithi chrome://gpu lichaza ukuthi kungani lenqatshiwe.",
   "ui.notice.mobile": "Ocingweni noma kuthebhulethi isinikezeli siyasebenza, kodwa ukusondeza okujulile kuhamba kancane kune-GPU yedeskithophu, futhi ukubuka okujulile kungase kuthathe amasekhondi amaningi ozimele. Ukwehlisa isibalo sokuphindaphinda kuyasiza.",
+  "ui.notice.depthLimit": "Lokhu kujule njengoba injini yamanje ihamba. Ukubuyela emuva kwe-WebGL2 kuphelelwa ukunemba lapha;",
   "ui.notice.dismiss": "Cashisa"
 }

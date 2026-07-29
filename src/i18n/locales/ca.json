@@ -1,6 +1,6 @@
 {
   "about.title": "Què és el conjunt de Mandelbrot",
-  "about.lede": "És l'objecte més complicat de les matemàtiques, i està produït per una línia d'aritmètica que un nen podria seguir. Aquesta pàgina explica per què això és estrany.",
+  "about.lede": "Una línia d'aritmètica, repetida. El que surt té detalls a cada escala, sense fi, i res de la regla indica que hauria de ser. Aquesta pàgina explica per què això és estrany.",
   "about.rule.heading": "Una regla, repetida",
   "about.rule.p1": "Trieu un punt en un pla pla. Quadrat, afegiu el punt amb què vau començar i teniu un punt nou. Quadreu això, torneu a afegir l'original i continueu per sempre.",
   "about.rule.p2": "Poden passar dues coses. Els punts poden desaparèixer i no tornar mai més, corrent cap a l'infinit. O poden quedar-se a prop de casa sense importar quant de temps continuïs quadrant. El conjunt de Mandelbrot és simplement la col·lecció de punts de partida que es queden.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Les matemàtiques que hi ha darrere són encara més antigues, i es remunten a Pierre Fatou i Gaston Julia cap al 1918, que van estudiar aquestes iteracions dècades abans que hi hagués cap màquina que pogués extreure els resultats. Estaven raonant sobre una forma que cap d'ells no veuria mai.",
   "about.discovery.p3": "Qualsevol persona, en qualsevol lloc, calculant la mateixa regla aconsegueix el mateix objecte fins a l'últim filament. En aquest sentit no es va crear l'any 1980. S'hi va trobar.",
   "about.scale.heading": "Fins on arriba això",
-  "about.scale.p1": "Les imatges aquí assoleixen augments d'uns 10⁴¹. Si tot el conjunt es dibuixés a aquesta escala en una pantalla d'un metre d'ample, la pantalla hauria de ser centenars de bilions de vegades més ampla que l'univers observable per aguantar-la.",
+  "about.scale.p1": "Un dels llocs que s'enumeren aquí té un augment d'uns 10⁴¹. Si tot el conjunt es dibuixés a aquesta escala en una pantalla d'un metre d'ample, la pantalla hauria de ser centenars de bilions de vegades més ampla que l'univers observable per aguantar-la. L'aritmètica que hi ha a sota inclou uns 2.400 dígits decimals, de manera que el renderitzador no s'esgota fins a aproximadament 10²⁴⁰⁰, un nombre que no queda cap comparació física per fer.",
   "about.scale.p2": "Cap d'aquests detalls s'emmagatzema enlloc. Es calcula sota demanda, a partir de la mateixa regla d'una línia, cada vegada que mireu. No hi ha cap imatge subjacent que s'ampliï, només hi ha aritmètica i continua per sempre.",
   "about.explore.heading": "Vés i mira",
   "about.explore.p1": "Arrossegueu per moure's, desplaceu-vos per fer zoom. La pestanya Llocs té un conjunt de destinacions que val la pena veure, inclosa una illa profunda amb quaranta-dos decimals. Tot el que trobeu es troba a la barra d'adreces, de manera que qualsevol vista es pot compartir com a enllaç.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Aquest navegador no utilitza WebGPU, de manera que el renderitzador ha tornat a WebGL2, que es queda sense precisió amb zooms molt menys profunds.",
   "ui.notice.enableFlag": "Si el vostre navegador és compatible amb WebGPU però no l'utilitza, obriu chrome://flags, configureu Anul·lació de la llista de representació de programari a Habilitat i reinicieu el navegador. La pàgina chrome://gpu explica per què es va rebutjar.",
   "ui.notice.mobile": "En un telèfon o tauleta, el renderitzador funciona, però els zooms profunds són molt més lents que en una GPU d'escriptori i les vistes molt profundes poden trigar molts segons per fotograma. Reduir el nombre d'iteracions ajuda.",
+  "ui.notice.depthLimit": "Això és tan profund com el motor actual. El recurs WebGL2 es queda sense precisió aquí;",
   "ui.notice.dismiss": "Descartar"
 }

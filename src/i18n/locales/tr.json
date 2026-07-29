@@ -1,6 +1,6 @@
 {
   "about.title": "Mandelbrot kümesi nedir",
-  "about.lede": "Matematiğin en karmaşık nesnesidir ve bir çocuğun takip edebileceği tek bir aritmetik satırından üretilir. Bu sayfa bunun neden garip olduğuyla ilgili.",
+  "about.lede": "Bir aritmetik satırı tekrarlandı. Ortaya çıkan şeyin her ölçekte, sonu olmayan ayrıntıları vardır ve kuralda böyle olması gerektiğine dair hiçbir ipucu yoktur. Bu sayfa bunun neden garip olduğuyla ilgili.",
   "about.rule.heading": "Tekrarlanan bir kural",
   "about.rule.p1": "Düz bir düzlemde bir nokta seçin. Karesini alın, başladığınız noktayı ekleyin ve yeni bir nokta elde edin. Bunu düzeltin, orijinali tekrar ekleyin ve sonsuza kadar devam edin.",
   "about.rule.p2": "İki şey olabilir. Noktalar kaybolup bir daha geri gelmeyebilir, sonsuza doğru koşarak uzaklaşabilirler. Veya ne kadar kavga etmeye devam ederseniz edin, evlerinin yakınında kalabilirler. Mandelbrot kümesi basitçe kalan başlangıç ​​noktalarının toplamıdır.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Bunun arkasındaki matematik daha da eski; 1918 civarında, sonuçları çıkarabilecek herhangi bir makinenin bulunmasından onlarca yıl önce bu yinelemeleri inceleyen Pierre Fatou ve Gaston Julia'ya kadar uzanıyor. Hiçbirinin göremeyeceği bir şekil hakkında mantık yürütüyorlardı.",
   "about.discovery.p3": "Herhangi bir yerde aynı kuralı hesaplayan herkes aynı nesneyi son filamana kadar elde eder. Bu anlamda 1980'de yaratılmadı. Orada bulundu.",
   "about.scale.heading": "Bu nereye kadar gider",
-  "about.scale.p1": "Buradaki görüntüler yaklaşık 10⁴¹ büyütme oranına ulaşıyor. Eğer setin tamamı bu ölçekte bir metre genişliğindeki bir ekrana çizilseydi, ekranın onu tutabilmesi için gözlemlenebilir evrenden yüz trilyonlarca kat daha geniş olması gerekirdi.",
+  "about.scale.p1": "Burada listelenen yerlerden biri yaklaşık 10⁴¹'lik bir büyütmede yer almaktadır. Eğer tüm set bu ölçekte bir metre genişliğindeki bir ekrana çizilseydi, ekranın onu tutabilmesi için gözlemlenebilir evrenden yüz trilyonlarca kat daha geniş olması gerekirdi. Alttaki aritmetik yaklaşık 2.400 ondalık basamak taşır, bu nedenle oluşturucu kabaca 10²⁴⁰⁰'ye kadar tükenmez; bu, yapılacak fiziksel bir karşılaştırmaya gerek olmayan bir sayıdır.",
   "about.scale.p2": "Bu ayrıntıların hiçbiri hiçbir yerde saklanmıyor. Her baktığınızda aynı tek satırlık kurala göre talep üzerine hesaplanır. Büyütülen altta yatan bir görüntü yok; yalnızca aritmetik var ve bu sonsuza kadar devam ediyor.",
   "about.explore.heading": "Git ve bak",
   "about.explore.p1": "Taşımak için sürükleyin, yakınlaştırmak için kaydırın. Yerler sekmesi, kırk iki ondalık basamak aşağıda yer alan derin bir ada da dahil olmak üzere görülmeye değer bir dizi varış noktasına sahiptir. Bulduğunuz her şey adres çubuğunda olduğundan herhangi bir görünüm bağlantı olarak paylaşılabilir.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Bu tarayıcı WebGPU kullanmıyor, bu nedenle oluşturucu WebGL2'ye geri döndü, bu da çok daha sığ yakınlaştırmalarda hassasiyeti kaybediyor.",
   "ui.notice.enableFlag": "Tarayıcınız WebGPU'yu destekliyor ancak kullanmıyorsa chrome://flags'ı açın, Yazılım oluşturma listesini geçersiz kıl seçeneğini Etkin olarak ayarlayın ve tarayıcıyı yeniden başlatın. Chrome://gpu sayfası neden reddedildiğini açıklıyor.",
   "ui.notice.mobile": "Bir telefonda veya tablette oluşturucu çalışır, ancak derin yakınlaştırmalar masaüstü GPU'ya göre çok daha yavaştır ve çok derin görünümler kare başına birkaç saniye sürebilir. Yineleme sayısını azaltmak yardımcı olur.",
+  "ui.notice.depthLimit": "Bu, mevcut motorun gidebildiği derinliktir. WebGL2 geri dönüşünün hassasiyeti burada tükeniyor;",
   "ui.notice.dismiss": "Azletmek"
 }

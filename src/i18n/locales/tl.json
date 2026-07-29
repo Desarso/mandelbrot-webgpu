@@ -1,6 +1,6 @@
 {
   "about.title": "Ano ang set ng Mandelbrot",
-  "about.lede": "Ito ang pinaka-kumplikadong bagay sa matematika, at ito ay ginawa ng isang linya ng aritmetika na maaaring sundin ng isang bata. Ang pahinang ito ay tungkol sa kung bakit ito kakaiba.",
+  "about.lede": "Isang linya ng aritmetika, paulit-ulit. Ang lumalabas ay may detalye sa bawat sukat, walang katapusan, at wala sa panuntunang nagpapahiwatig na dapat ito. Ang pahinang ito ay tungkol sa kung bakit ito kakaiba.",
   "about.rule.heading": "Isang panuntunan, paulit-ulit",
   "about.rule.p1": "Pumili ng isang punto sa isang patag na eroplano. I-square ito, idagdag ang puntong sinimulan mo, at mayroon kang bagong punto. Kuwadrado iyon, idagdag muli ang orihinal, at magpatuloy magpakailanman.",
   "about.rule.p2": "Dalawang bagay ang maaaring mangyari. Ang mga puntos ay maaaring malihis at hindi na bumalik, karera palayo sa infinity. O maaari silang manatili malapit sa bahay kahit gaano pa katagal ang pag-squaring mo. Ang set ng Mandelbrot ay simpleng koleksyon ng mga panimulang punto na nananatili.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Ang matematika sa likod nito ay mas matanda pa, babalik kina Pierre Fatou at Gaston Julia noong 1918, na pinag-aralan ang mga pag-ulit na ito ilang dekada bago nagkaroon ng anumang makina na maaaring gumuhit ng mga resulta. Nangangatuwiran sila tungkol sa isang hugis na hindi makikita ng sinuman sa kanila.",
   "about.discovery.p3": "Sinuman, kahit saan, ang pag-compute ng parehong panuntunan ay nakakakuha ng parehong bagay hanggang sa huling filament. Sa ganitong kahulugan, hindi ito nilikha noong 1980. Natagpuan ito doon.",
   "about.scale.heading": "Hanggang saan ito bumababa",
-  "about.scale.p1": "Ang mga larawan dito ay umaabot sa mga magnification na humigit-kumulang 10⁴¹. Kung ang buong set ay iguguhit sa sukat na iyon sa isang screen na isang metro ang lapad, ang screen ay kailangang daan-daang trilyong beses na mas malawak kaysa sa nakikitang uniberso upang mahawakan ito.",
+  "about.scale.p1": "Ang isa sa mga lugar na nakalista dito ay nasa isang magnification na humigit-kumulang 10⁴¹. Kung ang buong set ay iguguhit sa sukat na iyon sa isang screen na isang metro ang lapad, ang screen ay kailangang daan-daang trilyong beses na mas malawak kaysa sa nakikitang uniberso upang mahawakan ito. Ang arithmetic sa ilalim ay nagdadala ng humigit-kumulang 2,400 decimal digit, kaya hindi nauubos ang renderer hanggang humigit-kumulang 10²⁴⁰⁰ — isang numero na walang pisikal na paghahambing na natitira upang gawin.",
   "about.scale.p2": "Wala sa detalyeng iyon ang nakaimbak kahit saan. Kinuwenta ito on demand, mula sa parehong one-line na panuntunan, sa tuwing titingin ka. Walang pinagbabatayan na imaheng pinalalaki — mayroon lamang aritmetika, at nagpapatuloy ito magpakailanman.",
   "about.explore.heading": "Pumunta at tumingin",
   "about.explore.p1": "I-drag upang ilipat, mag-scroll upang mag-zoom. Ang tab na Mga Lugar ay may hanay ng mga destinasyong karapat-dapat makita, kabilang ang isang malalim na isla na nasa apatnapu't dalawang decimal na lugar. Lahat ng makikita mo ay nasa address bar, kaya anumang view ay maaaring ibahagi bilang isang link.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ang browser na ito ay hindi gumagamit ng WebGPU, kaya ang renderer ay bumalik sa WebGL2, na nauubusan ng katumpakan sa mas mababaw na pag-zoom.",
   "ui.notice.enableFlag": "Kung sinusuportahan ng iyong browser ang WebGPU ngunit hindi ito ginagamit, buksan ang chrome://flags, itakda ang Override software rendering list sa Enabled, at i-restart ang browser. Ipinapaliwanag ng page na chrome://gpu kung bakit ito tinanggihan.",
   "ui.notice.mobile": "Sa isang telepono o tablet gumagana ang renderer, ngunit ang malalim na pag-zoom ay mas mabagal kaysa sa isang desktop GPU, at ang napakalalim na view ay maaaring tumagal ng maraming segundo sa isang frame. Nakakatulong ang pagpapababa sa bilang ng pag-ulit.",
+  "ui.notice.depthLimit": "Ito ay kasing lalim ng kasalukuyang makina. Ang WebGL2 fallback ay naubusan ng katumpakan dito;",
   "ui.notice.dismiss": "I-dismiss"
 }

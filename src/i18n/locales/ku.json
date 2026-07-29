@@ -1,6 +1,6 @@
 {
   "about.title": "Mandelbrot set çi ye",
-  "about.lede": "Ew di matematîkê de tiştê herî tevlihev e, û ew ji hêla yek rêzek jimartinê ve tê hilberandin ku zarokek dikare bişopîne. Ev rûpel li ser vê yekê ye ku çima ew ecêb e.",
+  "about.lede": "Rêzek hejmarî, dubare kirin. Tiştê ku derdikeve di her pîvanê de hûrgulî heye, bê dawî, û di rêzikê de tiştek nabêje ku divê ew be. Ev rûpel li ser vê yekê ye ku çima ew ecêb e.",
   "about.rule.heading": "Yek qaîdeyek, dubare kir",
   "about.rule.p1": "Li ser balafirek daîre xalek hilbijêrin. Qada wê bikin, xala ku we pê dest pê kir lê zêde bikin, û we xalek nû heye. Qada ku, dîsa orjînal lê zêde bike, û her û her berdewam bike.",
   "about.rule.p2": "Du tişt dikarin bibin. Dibe ku xal ji hev dûr bikevin û çu carî venegerin, berbi bêdawîbûnê ve diçin. An jî dibe ku ew li nêzê malê bimînin her çi qas hûn li hev bikin. Kompleksa Mandelbrot tenê berhevoka xalên destpêkê yên ku dimînin e.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematîka li pişt wê hîn kevntir e, vedigere Pierre Fatou û Gaston Julia li dora 1918, ku van dubareyan bi dehsalan lêkolîn kirin berî ku makîneyek hebe ku bikaribe encaman derxe. Wan li ser şikilek ku yek ji wan çu carî nabîne digotin.",
   "about.discovery.p3": "Kesek, li her deverê, hesabkirina heman qaîdeyê heman tiştê digihîje fîla paşîn. Di vê wateyê de ew di sala 1980 de nehatiye afirandin. Li wir hat dîtin.",
   "about.scale.heading": "Ev çiqas diçe",
-  "about.scale.p1": "Wêneyên li vir digihîjin mezinbûna dora 1041. Ger ku tevayî bi wê pîvanê li ser perdeyek bi firehiya metre were xêz kirin, pêdivî ye ku ekran bi sed trîlyon car ji gerdûna çavdêrî firehtir be da ku wê bigire.",
+  "about.scale.p1": "Yek ji cîhên ku li vir hatine navnîş kirin bi mezinbûnek bi qasî 104¹ rûniştiye. Ger ku tevayî bi wê pîvanê li ser perdeyek bi firehiya metre were xêz kirin, pêdivî ye ku ekran bi sed trîlyon car ji gerdûna çavdêrî firehtir be da ku wê bigire. Arîtmetîka li jêr dora 2,400 reqemên dehiyê hildigire, ji ber vê yekê renderer heta bi qasî 10²4⁰⁰-ê naqede - jimareyek ku çu berhevoka laşî namîne.",
   "about.scale.p2": "Yek ji wan hûrguliyan li tu derê nayê hilanîn. Her gava ku hûn lê dinêrin, ew li gorî daxwazê, ji heman qaîdeya yek-xêz tê hesibandin. Wêneyek bingehîn tune ku were mezin kirin - tenê hejmartî heye, û ew her û her berdewam dike.",
   "about.explore.heading": "Biçe û binêre",
   "about.explore.p1": "Ji bo bilivînin kaş bikin, ji bo mezinkirinê bigerin. Di tabloya Cihan de komek cîh hene ku hêjayî dîtinê ne, di nav de giravek kûr a ku çil û du cihên dehemîn li jêr rûniştiye. Her tiştê ku hûn dibînin di barika navnîşan de ye, ji ber vê yekê her dîtinek dikare wekî girêdanek were parve kirin.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ev gerok WebGPU bikar nayîne, ji ber vê yekê renderer dîsa ketiye WebGL2, ya ku di zoomên pir hindik de ji rastbûnê derdikeve.",
   "ui.notice.enableFlag": "Ger geroka we WebGPU piştgirî dike lê wê bikar nayîne, chrome:/ Rûpelê chrome: // gpu rave dike ka çima hate red kirin.",
   "ui.notice.mobile": "Li ser têlefonek an tabletê renderer dixebite, lê zoomên kûr ji GPU-ya sermaseyê pir hêdîtir in, û dîmenên pir kûr dibe ku di çarçoveyek pir saniyeyan de bigirin. Kêmkirina jimareya dubarekirinê dibe alîkar.",
+  "ui.notice.depthLimit": "Ev bi qasî ku motora heyî kûr dibe. Veguhastina WebGL2 li vir ji rastbûnê derdikeve;",
   "ui.notice.dismiss": "Berdan"
 }

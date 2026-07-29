@@ -1,6 +1,6 @@
 {
   "about.title": "Wat de Mandelbrotverzameling is",
-  "about.lede": "Het is het meest gecompliceerde object in de wiskunde en wordt geproduceerd door één rekenregel die een kind zou kunnen volgen. Deze pagina gaat over waarom dat vreemd is.",
+  "about.lede": "Eén regel rekenkunde, herhaald. Wat eruit komt bevat details op elke schaal, zonder einde, en niets in de regel duidt erop dat dit zo zou moeten zijn. Deze pagina gaat over waarom dat vreemd is.",
   "about.rule.heading": "Eén regel, herhaald",
   "about.rule.p1": "Wijs een punt op een vlak vlak aan. Maak het vierkant, voeg het punt toe waarmee je begon en je hebt een nieuw punt. Maak dat vierkant, voeg het origineel opnieuw toe en ga voor altijd door.",
   "about.rule.p2": "Er kunnen twee dingen gebeuren. De punten kunnen afdwalen en nooit meer terugkomen, wegrennend naar het oneindige. Of ze blijven misschien dichtbij huis, hoe lang je ook blijft kwadrateren. De Mandelbrot-set is eenvoudigweg de verzameling uitgangspunten die blijven.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "De wiskunde erachter is nog ouder en gaat terug tot Pierre Fatou en Gaston Julia rond 1918, die deze iteraties bestudeerden decennia voordat er een machine was die de resultaten kon trekken. Ze redeneerden over een vorm die geen van hen ooit zou zien.",
   "about.discovery.p3": "Iedereen, waar dan ook, die dezelfde regel berekent, krijgt hetzelfde object tot aan de laatste gloeidraad. In die zin is het niet in 1980 opgericht. Daar werd het gevonden.",
   "about.scale.heading": "Hoe ver gaat dit",
-  "about.scale.p1": "De afbeeldingen hier bereiken een vergroting van ongeveer 10⁴¹. Als de hele set op die schaal zou worden getekend op een scherm van een meter breed, zou het scherm honderden biljoenen keren breder moeten zijn dan het waarneembare universum om het te kunnen bevatten.",
+  "about.scale.p1": "Een van de hier genoemde plaatsen heeft een vergroting van ongeveer 10⁴¹. Als de hele set op die schaal zou worden getekend op een scherm van een meter breed, zou het scherm honderden biljoenen keren breder moeten zijn dan het waarneembare universum om het te kunnen bevatten. De rekenkunde eronder bevat ongeveer 2.400 decimale cijfers, dus de renderer is pas op ongeveer 10²⁴⁰⁰ leeg – een getal waarvoor geen fysieke vergelijking meer mogelijk is.",
   "about.scale.p2": "Niets van dat detail wordt ergens opgeslagen. Het wordt op verzoek berekend, op basis van dezelfde regel van één regel, elke keer dat u kijkt. Er is geen onderliggend beeld dat wordt uitvergroot; er is alleen maar rekenkunde, en dat gaat eeuwig door.",
   "about.explore.heading": "Ga kijken",
   "about.explore.p1": "Sleep om te verplaatsen, scroll om te zoomen. Het tabblad Plaatsen bevat een aantal bezienswaardige bestemmingen, waaronder een diep eiland met tweeënveertig decimalen lager. Alles wat u vindt staat in de adresbalk, dus elke weergave kan als link worden gedeeld.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Deze browser maakt geen gebruik van WebGPU, dus is de renderer teruggevallen op WebGL2, dat bij veel geringere zoomlenzen onnauwkeurig wordt.",
   "ui.notice.enableFlag": "Als uw browser WebGPU ondersteunt maar deze niet gebruikt, opent u chrome://flags, stelt u Override software rendering list in op Enabled en start u de browser opnieuw. Op de pagina chrome://gpu wordt uitgelegd waarom het werd geweigerd.",
   "ui.notice.mobile": "Op een telefoon of tablet werkt de renderer, maar diepe zoomlenzen zijn veel langzamer dan op een desktop-GPU, en zeer diepe weergaven kunnen vele seconden per frame duren. Het verlagen van het aantal iteraties helpt.",
+  "ui.notice.depthLimit": "Dit is zo diep als de huidige motor gaat. De terugval van WebGL2 is hier niet nauwkeurig;",
   "ui.notice.dismiss": "Afwijzen"
 }

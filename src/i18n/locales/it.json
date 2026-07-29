@@ -1,6 +1,6 @@
 {
   "about.title": "Cos'è l'insieme di Mandelbrot",
-  "about.lede": "È l'oggetto più complicato della matematica ed è prodotto da una riga di aritmetica che un bambino potrebbe seguire. Questa pagina spiega perché è strano.",
+  "about.lede": "Una riga di aritmetica, ripetuta. Ciò che viene fuori ha dettagli su ogni scala, senza fine, e nulla nella regola suggerisce che dovrebbe. Questa pagina spiega perché è strano.",
   "about.rule.heading": "Una regola, ripetuta",
   "about.rule.p1": "Scegli un punto su un piano piatto. Quadralo, aggiungi il punto da cui hai iniziato e hai un nuovo punto. Quadralo, aggiungi di nuovo l'originale e continua per sempre.",
   "about.rule.p2": "Possono succedere due cose. I punti possono allontanarsi e non tornare mai più, correndo verso l'infinito. Oppure potrebbero restare vicino a casa, non importa per quanto tempo continui a quadrare. L'insieme di Mandelbrot è semplicemente l'insieme dei punti di partenza che rimangono.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "La matematica dietro è ancora più antica e risale a Pierre Fatou e Gaston Julia intorno al 1918, che studiarono queste iterazioni decenni prima che esistesse una macchina in grado di ricavare i risultati. Stavano ragionando su una forma che nessuno di loro avrebbe mai visto.",
   "about.discovery.p3": "Chiunque, ovunque, calcolando la stessa regola ottiene lo stesso oggetto fino all'ultimo filamento. In questo senso non è stato creato nel 1980. È stato trovato lì.",
   "about.scale.heading": "Quanto in basso arriva",
-  "about.scale.p1": "Le immagini qui raggiungono ingrandimenti di circa 10⁴¹. Se l’intero set fosse disegnato a quella scala su uno schermo largo un metro, lo schermo dovrebbe essere centinaia di trilioni di volte più largo dell’universo osservabile per contenerlo.",
+  "about.scale.p1": "Uno dei luoghi qui elencati ha un ingrandimento di circa 10⁴¹. Se l’intero set fosse disegnato a quella scala su uno schermo largo un metro, lo schermo dovrebbe essere centinaia di trilioni di volte più largo dell’universo osservabile per contenerlo. L'aritmetica sottostante contiene circa 2.400 cifre decimali, quindi il renderer non si esaurisce fino a circa 10²⁴⁰⁰, un numero per il quale non è rimasto alcun confronto fisico.",
   "about.scale.p2": "Nessuno di questi dettagli è archiviato da nessuna parte. Viene calcolato su richiesta, dalla stessa regola di una riga, ogni volta che guardi. Non c’è alcuna immagine sottostante che venga ingrandita: c’è solo l’aritmetica, e va avanti all’infinito.",
   "about.explore.heading": "Vai e guarda",
   "about.explore.p1": "Trascina per spostare, scorri per ingrandire. La scheda Luoghi contiene una serie di destinazioni che vale la pena vedere, inclusa un'isola profonda che si trova a quarantadue cifre decimali. Tutto ciò che trovi è nella barra degli indirizzi, quindi qualsiasi visualizzazione può essere condivisa come collegamento.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Questo browser non utilizza WebGPU, quindi il renderer è tornato a WebGL2, che perde precisione con zoom molto meno profondi.",
   "ui.notice.enableFlag": "Se il tuo browser supporta WebGPU ma non la utilizza, apri chrome://flags, imposta Sostituisci elenco rendering software su Abilitato e riavvia il browser. La pagina chrome://gpu spiega perché è stata rifiutata.",
   "ui.notice.mobile": "Su un telefono o tablet il renderer funziona, ma gli zoom profondi sono molto più lenti rispetto a quelli su una GPU desktop e le visualizzazioni molto profonde possono richiedere molti secondi per fotogramma. Ridurre il conteggio delle iterazioni aiuta.",
+  "ui.notice.depthLimit": "Questo è profondo quanto il motore attuale. Il fallback WebGL2 qui non è più preciso;",
   "ui.notice.dismiss": "Congedare"
 }

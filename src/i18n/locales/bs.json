@@ -1,6 +1,6 @@
 {
   "about.title": "Šta je Mandelbrotov skup",
-  "about.lede": "To je najkomplikovaniji predmet u matematici, a proizvodi ga jedan aritmetički red koji bi dijete moglo pratiti. Ova stranica govori o tome zašto je to čudno.",
+  "about.lede": "Jedan aritmetički red, ponovljen. Ono što izlazi ima detalje na svakoj skali, bez kraja, i ništa u pravilu ne nagoveštava da bi trebalo. Ova stranica govori o tome zašto je to čudno.",
   "about.rule.heading": "Jedno pravilo, ponovljeno",
   "about.rule.p1": "Odaberite tačku na ravnoj ravni. Kvadratirajte, dodajte tačku s kojom ste počeli i imate novu tačku. Ukvadrirajte to, ponovo dodajte original i nastavite zauvijek.",
   "about.rule.p2": "Dvije stvari se mogu dogoditi. Bodovi mogu odlutati i više se nikada ne vratiti, jureći u beskonačnost. Ili mogu ostati u blizini kuće bez obzira koliko dugo se zadržavate. Mandelbrotov skup je jednostavno zbirka polaznih tačaka koje ostaju.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematika koja stoji iza toga je još starija, seže do Pierrea Fatoua i Gastona Julije oko 1918. godine, koji su proučavali ove iteracije decenijama prije nego što je postojala bilo kakva mašina koja bi mogla izvući rezultate. Razmišljali su o obliku koji niko od njih nikada neće vidjeti.",
   "about.discovery.p3": "Bilo ko, bilo gdje, računajući isto pravilo, dobija isti objekt do posljednje niti. U tom smislu nije nastala 1980. godine. Tamo je pronađeno.",
   "about.scale.heading": "Koliko daleko ovo ide",
-  "about.scale.p1": "Slike ovdje dostižu uvećanja od oko 10⁴¹. Kada bi se cijeli skup nacrtao u toj mjeri na ekranu širokom metar, ekran bi morao biti stotine triliona puta širi od vidljivog svemira da ga drži.",
+  "about.scale.p1": "Jedno od ovde navedenih mesta nalazi se na uvećanju od oko 10⁴¹. Kada bi se cijeli skup nacrtao u toj mjeri na ekranu širokom metar, ekran bi morao biti stotine triliona puta širi od vidljivog svemira da ga drži. Aritmetika ispod nosi oko 2400 decimalnih cifara, tako da renderer ne ponestane do otprilike 10²⁴⁰⁰ — broj bez fizičkog poređenja.",
   "about.scale.p2": "Niti jedan od tih detalja nije nigdje pohranjen. Izračunava se na zahtjev, iz istog pravila jednog reda, svaki put kada pogledate. Nema osnovne slike koja se uvećava – postoji samo aritmetika, i to traje zauvijek.",
   "about.explore.heading": "Idi i pogledaj",
   "about.explore.p1": "Prevucite za pomeranje, skrolujte za zumiranje. Kartica Mjesta sadrži skup destinacija koje vrijedi vidjeti, uključujući duboko ostrvo koje se nalazi na četrdeset i dva decimalna mjesta. Sve što pronađete nalazi se u adresnoj traci, tako da se svaki pogled može podijeliti kao link.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ovaj pretraživač ne koristi WebGPU, pa se renderer vratio na WebGL2, koji ostaje bez preciznosti pri daleko manjim zumovima.",
   "ui.notice.enableFlag": "Ako vaš pretraživač podržava WebGPU, ali ga ne koristi, otvorite chrome://flags, postavite Override software rendering list na Enabled i ponovo pokrenite pretraživač. Stranica chrome://gpu objašnjava zašto je odbijena.",
   "ui.notice.mobile": "Na telefonu ili tabletu renderer radi, ali duboko zumiranje je mnogo sporije nego na desktop GPU-u, a veoma duboki prikazi mogu trajati nekoliko sekundi po jednom kadru. Smanjenje broja ponavljanja pomaže.",
+  "ui.notice.depthLimit": "Ovo je duboko koliko i trenutni motor. Zamjena za WebGL2 ovdje ponestaje preciznosti;",
   "ui.notice.dismiss": "Odbaci"
 }

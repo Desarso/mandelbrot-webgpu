@@ -1,6 +1,6 @@
 {
   "about.title": "Wat die Mandelbrot-stel is",
-  "about.lede": "Dit is die mees ingewikkelde voorwerp in wiskunde, en dit word vervaardig deur een reël rekenkunde wat 'n kind kan volg. Hierdie bladsy gaan oor hoekom dit vreemd is.",
+  "about.lede": "Een reël rekenkunde, herhaal. Wat uitkom, het detail op elke skaal, sonder einde, en niks in die reël dui daarop dat dit moet nie. Hierdie bladsy gaan oor hoekom dit vreemd is.",
   "about.rule.heading": "Een reël, herhaal",
   "about.rule.p1": "Kies 'n punt op 'n plat vlak. Vierkant dit, voeg die punt by waarmee jy begin het, en jy het 'n nuwe punt. Vierkant dit, voeg die oorspronklike weer by en hou vir altyd aan.",
   "about.rule.p2": "Twee dinge kan gebeur. Die punte kan wegdwaal en nooit terugkom nie, en jaag na oneindig weg. Of hulle bly dalk naby die huis, maak nie saak hoe lank jy aanhou kwadraat nie. Die Mandelbrot-stel is bloot die versameling beginpunte wat bly.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Die wiskunde daaragter is nog ouer, en gaan terug na Pierre Fatou en Gaston Julia omstreeks 1918, wat hierdie herhalings bestudeer het dekades voordat daar enige masjien was wat die resultate kon teken. Hulle het geredeneer oor 'n vorm wat niemand van hulle ooit sou sien nie.",
   "about.discovery.p3": "Enigeen, enige plek, wat dieselfde reël bereken, kry dieselfde voorwerp tot by die laaste filament. In daardie sin is dit nie in 1980 geskep nie. Dit is daar gevind.",
   "about.scale.heading": "Hoe ver gaan dit",
-  "about.scale.p1": "Die beelde hier bereik vergrotings van ongeveer 10⁴¹. As die hele stel op daardie skaal op 'n skerm van 'n meter wyd geteken is, sou die skerm honderde triljoene keer wyer as die waarneembare heelal moes wees om dit te hou.",
+  "about.scale.p1": "Een van die plekke wat hier gelys word, het 'n vergroting van ongeveer 10⁴¹. As die hele stel op daardie skaal op 'n skerm van 'n meter wyd geteken is, sou die skerm honderde triljoene keer wyer as die waarneembare heelal moes wees om dit te hou. Die rekenkunde daaronder dra ongeveer 2 400 desimale syfers, so die weergever raak eers op ongeveer 10²⁴⁰⁰ – 'n getal met geen fisiese vergelyking meer om te maak nie.",
   "about.scale.p2": "Niks van daardie detail word nêrens gestoor nie. Dit word op aanvraag bereken, vanaf dieselfde eenlynreël, elke keer as jy kyk. Daar is geen onderliggende beeld wat vergroot word nie - daar is net rekenkunde, en dit gaan vir ewig aan.",
   "about.explore.heading": "Gaan kyk",
   "about.explore.p1": "Sleep om te beweeg, rol om te zoem. Die Plekke-oortjie het 'n stel bestemmings wat die moeite werd is om te sien, insluitend 'n diep eiland wat twee-en-veertig desimale plekke af lê. Alles wat jy kry is in die adresbalk, so enige aansig kan as 'n skakel gedeel word.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Hierdie blaaier gebruik nie WebGPU nie, so die weergawe het teruggeval na WebGL2, wat nie meer akkuraat is by baie vlakker inzooms nie.",
   "ui.notice.enableFlag": "As jou blaaier WebGPU ondersteun, maar dit nie gebruik nie, maak chrome://flags oop, stel Ignoreer sagteware-weergawelys op Geaktiveer en herbegin die blaaier. Die bladsy chrome://gpu verduidelik hoekom dit geweier is.",
   "ui.notice.mobile": "Op 'n foon of tablet werk die weergawe, maar diep zoems is baie stadiger as op 'n rekenaar GPU, en baie diep aansigte kan baie sekondes 'n raam neem. Die verlaging van die iterasietelling help.",
+  "ui.notice.depthLimit": "Dit is so diep soos die huidige enjin gaan. Die WebGL2-terugval loop uit presisie hier;",
   "ui.notice.dismiss": "Verwerp"
 }

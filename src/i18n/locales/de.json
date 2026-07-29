@@ -1,6 +1,6 @@
 {
   "about.title": "Was ist die Mandelbrot-Menge?",
-  "about.lede": "Es ist das komplizierteste Objekt in der Mathematik und wird durch eine einzige Rechenlinie erzeugt, der ein Kind folgen kann. Auf dieser Seite geht es darum, warum das seltsam ist.",
+  "about.lede": "Eine Rechenzeile, wiederholt. Was dabei herauskommt, hat Details in jedem Maßstab, ohne Ende, und nichts in der Regel weist darauf hin, dass es so sein sollte. Auf dieser Seite geht es darum, warum das seltsam ist.",
   "about.rule.heading": "Eine Regel, wiederholt",
   "about.rule.p1": "Wählen Sie einen Punkt auf einer flachen Ebene. Quadrieren Sie es, fügen Sie den Punkt hinzu, mit dem Sie begonnen haben, und Sie haben einen neuen Punkt. Quadrieren Sie das, fügen Sie das Original erneut hinzu und machen Sie ewig weiter.",
   "about.rule.p2": "Zwei Dinge können passieren. Die Punkte wandern möglicherweise ab und kehren nie wieder zurück und rasen in die Unendlichkeit davon. Oder sie bleiben in der Nähe ihres Zuhauses, egal wie lange Sie mit dem Quadrieren fortfahren. Die Mandelbrot-Menge ist einfach die Sammlung der verbleibenden Ausgangspunkte.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Die Mathematik dahinter ist noch älter und geht auf Pierre Fatou und Gaston Julia um 1918 zurück, die diese Iterationen untersuchten, Jahrzehnte bevor es eine Maschine gab, die die Ergebnisse zeichnen konnte. Sie dachten über eine Gestalt nach, die keiner von ihnen jemals sehen würde.",
   "about.discovery.p3": "Jeder, der überall die gleiche Regel berechnet, erhält das gleiche Objekt bis zum letzten Filament. In diesem Sinne wurde es nicht erst 1980 gegründet. Es wurde dort gefunden.",
   "about.scale.heading": "Wie weit geht das nach unten?",
-  "about.scale.p1": "Die Bilder erreichen hier Vergrößerungen von etwa 10⁴¹. Wenn die gesamte Gruppe in diesem Maßstab auf einem Bildschirm mit einer Breite von einem Meter dargestellt würde, müsste der Bildschirm Hunderte Billionen Mal breiter sein als das beobachtbare Universum, um ihn aufzunehmen.",
+  "about.scale.p1": "Einer der hier aufgeführten Orte liegt bei einer Vergrößerung von etwa 10⁴¹. Wenn die gesamte Gruppe in diesem Maßstab auf einem Bildschirm mit einer Breite von einem Meter dargestellt würde, müsste der Bildschirm Hunderte Billionen Mal breiter sein als das beobachtbare Universum, um ihn aufzunehmen. Die darunter liegende Arithmetik umfasst rund 2.400 Dezimalstellen, sodass der Renderer erst bei etwa 10²⁴⁰⁰ zur Neige geht – eine Zahl, für die kein physikalischer Vergleich mehr möglich ist.",
   "about.scale.p2": "Keine dieser Details wird irgendwo gespeichert. Es wird bei jedem Zugriff auf der Grundlage derselben einzeiligen Regel berechnet. Es gibt kein zugrunde liegendes Bild, das vergrößert wird – es gibt nur Arithmetik, und das geht ewig so weiter.",
   "about.explore.heading": "Geh und schau",
   "about.explore.p1": "Zum Verschieben ziehen, zum Zoomen scrollen. Die Registerkarte „Orte“ enthält eine Reihe sehenswerter Ziele, darunter eine tiefe Insel, die zweiundvierzig Dezimalstellen tiefer liegt. Alles, was Sie finden, befindet sich in der Adressleiste, sodass jede Ansicht als Link geteilt werden kann.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Dieser Browser verwendet keine WebGPU, daher ist der Renderer auf WebGL2 zurückgegriffen, das bei weitaus geringeren Zooms nicht mehr präzise ist.",
   "ui.notice.enableFlag": "Wenn Ihr Browser WebGPU unterstützt, es aber nicht verwendet, öffnen Sie chrome://flags, setzen Sie „Software-Rendering-Liste überschreiben“ auf „Aktiviert“ und starten Sie den Browser neu. Auf der Seite chrome://gpu wird erläutert, warum dies abgelehnt wurde.",
   "ui.notice.mobile": "Auf einem Telefon oder Tablet funktioniert der Renderer, aber tiefe Zooms sind viel langsamer als auf einer Desktop-GPU, und sehr tiefe Ansichten können viele Sekunden pro Bild dauern. Es hilft, die Anzahl der Iterationen zu verringern.",
+  "ui.notice.depthLimit": "Das ist so tief wie die aktuelle Engine reicht. Dem WebGL2-Fallback geht hier die Präzision verloren;",
   "ui.notice.dismiss": "Zurückweisen"
 }

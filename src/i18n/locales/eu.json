@@ -1,6 +1,6 @@
 {
   "about.title": "Mandelbrot multzoa zer den",
-  "about.lede": "Matematikako objekturik korapilatsuena da, eta ume batek jarraitu dezakeen aritmetika-lerro batek sortzen du. Orrialde honek zergatik den arraroa da.",
+  "about.lede": "Aritmetika lerro bat, errepikatua. Ateratzen denak xehetasunak ditu eskala guztietan, amaierarik gabe, eta arauan ezerk ez du iradokitzen behar duenik. Orrialde honek zergatik den arraroa da.",
   "about.rule.heading": "Arau bat, errepikatua",
   "about.rule.p1": "Aukeratu puntu bat plano lau batean. Karratu, gehitu hasi zaren puntua eta puntu berri bat duzu. Karratu hori, gehitu jatorrizkoa berriro eta jarraitu betirako.",
   "about.rule.p2": "Bi gauza gerta daitezke. Baliteke puntuak alde batera utzi eta ez itzultzea, infinitura ihesi. Edo etxetik gertu egon daitezke koadratzen duzun bitartean. Mandelbrot multzoa geratzen diren abiapuntuen bilduma besterik ez da.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Atzean dagoen matematika zaharragoa da oraindik, Pierre Fatou eta Gaston Juliarengana 1918 inguruan, zeinek iterazio horiek aztertu zituzten emaitzak atera zezakeen makinarik egon baino hamarkada lehenago. Inork ikusiko ez zuen forma bati buruz arrazoitzen ari ziren.",
   "about.discovery.p3": "Edonork, edonon, arau bera kalkulatuz objektu bera lortzen du azken harizpiraino. Zentzu horretan ez zen 1980an sortu. Han aurkitu zen.",
   "about.scale.heading": "Noraino doan hau",
-  "about.scale.p1": "Hemengo irudiek 10⁴¹ inguruko handitzeak lortzen dituzte. Multzo osoa metro zabaleko pantaila batean eskala horretan marraztuko balitz, pantailak unibertso behagarria baino ehunka bilioi aldiz zabalagoa izan beharko luke hura eusteko.",
+  "about.scale.p1": "Hemen zerrendatzen diren lekuetako bat 10⁴¹ inguruko handitze batean dago. Multzo osoa metro zabaleko pantaila batean eskala horretan marraztuko balitz, pantailak unibertso behagarria baino ehunka bilioi aldiz zabalagoa izan beharko luke hura eusteko. Azpian dagoen aritmetikak 2.400 zifra hamartar inguru ditu, beraz, errendatzailea ez da gutxi gorabehera 10²⁴⁰⁰ arte agortzen, konparazio fisikorik egiteko geratzen ez den zenbakia.",
   "about.scale.p2": "Xehetasun horietako bat ere ez da inon gordetzen. Eskaeraren arabera kalkulatzen da, lerro bakarreko arau beretik, begiratzen duzun bakoitzean. Ez dago azpiko irudirik handitzen; aritmetika baino ez dago, eta betiko irauten du.",
   "about.explore.heading": "Joan eta begiratu",
   "about.explore.p1": "Arrastatu mugitzeko, mugitu handitzeko. Lekuak fitxak ikustea merezi duten helmuga multzo bat dauka, berrogeita bi hamartarren beheran dagoen uharte sakon bat barne. Aurkitu duzun guztia helbide-barran dago, beraz, edozein ikuspegi parteka daiteke esteka gisa.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Arakatzaile honek ez du WebGPU erabiltzen, beraz, errendatzailea WebGL2ra jaitsi da, zehaztasunik gabe geratzen baita sakonera txikiagoko zoometan.",
   "ui.notice.enableFlag": "Zure arakatzaileak WebGPU onartzen badu, baina ez badu erabiltzen, ireki chrome://flags, ezarri Gainduta gainidatzi softwarearen errendatze-zerrenda eta berrabiarazi arakatzailea. chrome://gpu orrialdeak zergatik ukatu zen azaltzen du.",
   "ui.notice.mobile": "Telefonoan edo tabletan errendatzaileak funtzionatzen du, baina zoom sakonak mahaigaineko GPU batean baino askoz motelagoak dira, eta ikuspegi oso sakonek segundo asko behar dituzte fotogramako. Iterazio kopurua jaistea laguntzen du.",
+  "ui.notice.depthLimit": "Hau egungo motorrak bezain sakona da. WebGL2 fallback-a zehaztasunik gabe geratzen da hemen;",
   "ui.notice.dismiss": "Baztertu"
 }

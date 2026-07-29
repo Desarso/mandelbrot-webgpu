@@ -1,6 +1,6 @@
 {
   "about.title": "Kio estas la Mandelbrot-aro",
-  "about.lede": "Ĝi estas la plej komplika objekto en matematiko, kaj ĝi estas produktita per unu linio de aritmetiko kiun infano povus sekvi. Ĉi tiu paĝo temas pri kial tio estas stranga.",
+  "about.lede": "Unu linio de aritmetiko, ripetita. Kio eliras, havas detalojn je ĉiu skalo, sen fino, kaj nenio en la regulo sugestas, ke ĝi devus. Ĉi tiu paĝo temas pri kial tio estas stranga.",
   "about.rule.heading": "Unu regulo, ripetita",
   "about.rule.p1": "Elektu punkton sur plata ebeno. Kvadragu ĝin, aldonu la punkton per kiu vi komencis, kaj vi havas novan punkton. Kvadratu tion, aldonu la originalon denove, kaj daŭrigu por ĉiam.",
   "about.rule.p2": "Du aferoj povas okazi. La punktoj povas vagi for kaj neniam reveni, kuregante for al senfineco. Aŭ ili povas resti proksime de hejmo kiom ajn longe vi daŭre kvadratas. La Mandelbrot-aro estas simple la kolekto de deirpunktoj kiuj restas.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "La matematiko malantaŭ ĝi estas pli malnova ankoraŭ, irante reen al Pierre Fatou kaj Gaston Julia ĉirkaŭ 1918, kiuj studis tiujn ripetojn jardekojn antaŭ ol ekzistis iu maŝino kiu povis desegni la rezultojn. Ili rezonis pri formo, kiun neniu el ili iam vidus.",
   "about.discovery.p3": "Iu ajn, ie ajn, komputante la saman regulon ricevas la saman objekton ĝis la lasta filamento. Tiusence ĝi ne estis kreita en 1980. Ĝi estis trovita tie.",
   "about.scale.heading": "Kiom malproksimen ĉi tio iras",
-  "about.scale.p1": "La bildoj ĉi tie atingas pligrandigojn de proksimume 10⁴¹. Se la tuta aro estus desegnita je tiu skalo sur ekrano larĝa je metro, la ekrano devus esti centojn da duilionoj da fojoj pli larĝa ol la observebla universo por teni ĝin.",
+  "about.scale.p1": "Unu el la lokoj listigitaj ĉi tie sidas ĉe pligrandigo de proksimume 10⁴¹. Se la tuta aro estus desegnita je tiu skalo sur ekrano larĝa je metro, la ekrano devus esti centojn da duilionoj da fojoj pli larĝa ol la observebla universo por teni ĝin. La aritmetiko sube portas ĉirkaŭ 2,400 decimalciferojn, do la bildilo ne finiĝas ĝis ĉirkaŭ 10²⁴⁰⁰ - nombro kun neniu fizika komparo por fari.",
   "about.scale.p2": "Neniu el tiu detalo estas stokita ie ajn. Ĝi estas kalkulita laŭpeto, de la sama unulinia regulo, ĉiufoje kiam vi rigardas. Ne estas suba bildo pligrandigita - ekzistas nur aritmetiko, kaj ĝi daŭras eterne.",
   "about.explore.heading": "Iru kaj rigardu",
   "about.explore.p1": "Trenu por movi, rulumu por zomi. La langeto Lokoj havas aron de vidindaj cellokoj, inkluzive de profunda insulo, kiu sidas kvardek du dekumajn lokojn. Ĉio, kion vi trovas, estas en la adresbreto, do ajna vido povas esti dividita kiel ligilo.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ĉi tiu retumilo ne uzas WebGPU, do la bildilo revenis al WebGL2, kiu elĉerpigas precizecon ĉe multe pli malprofundaj zomoj.",
   "ui.notice.enableFlag": "Se via retumilo subtenas WebGPU sed ne uzas ĝin, malfermu chrome://flags, agordu Anstataŭigi programaran bildigan liston al Ebligita, kaj rekomencu la retumilon. La paĝo chrome://gpu klarigas kial ĝi estis rifuzita.",
   "ui.notice.mobile": "Sur telefono aŭ tablojdo la bildilo funkcias, sed profundaj zomoj estas multe pli malrapidaj ol sur labortabla GPU, kaj tre profundaj vidoj povas preni multajn sekundojn por kadro. Malaltigi la ripetarkalkulon helpas.",
+  "ui.notice.depthLimit": "Ĉi tio estas tiel profunda kiel la nuna motoro iras. La WebGL2-returniĝo elĉerpiĝas ĉi tie;",
   "ui.notice.dismiss": "Forĵeti"
 }

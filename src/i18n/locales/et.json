@@ -1,6 +1,6 @@
 {
   "about.title": "Mis on Mandelbroti komplekt",
-  "about.lede": "See on matemaatika kõige keerulisem objekt ja selle annab üks aritmeetikarea, mida laps võiks järgida. See leht räägib sellest, miks see imelik on.",
+  "about.lede": "Üks rida aritmeetikat, korratud. Sellel, mis välja tuleb, on detaile igal skaalal, ilma lõputa, ja miski reeglis ei viita sellele, et see peaks olema. See leht räägib sellest, miks see imelik on.",
   "about.rule.heading": "Üks reegel, korratud",
   "about.rule.p1": "Valige punkt tasasel tasapinnal. Ruudu see, lisage punkt, millest alustasite, ja teil on uus punkt. Ruudu see, lisage uuesti originaal ja jätkake igavesti.",
   "about.rule.p2": "Kaks asja võib juhtuda. Punktid võivad kaduda ja kunagi tagasi tulla, kihutades lõpmatusse. Või võivad nad jääda kodu lähedale, olenemata sellest, kui kaua te ruutu jätkate. Mandelbroti komplekt on lihtsalt kogum lähtepunkte, mis jäävad.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Selle taga olev matemaatika on veel vanem, ulatudes tagasi Pierre Fatou ja Gaston Juliani 1918. aasta paiku, kes uurisid neid iteratsioone aastakümneid enne, kui oli olemas masin, mis tulemusi saaks teha. Nad arutlesid kuju üle, mida keegi neist kunagi ei näeks.",
   "about.discovery.p3": "Igaüks, kus iganes, sama reegli arvutamisel saab sama objekti kuni viimase hõõgniidini. Selles mõttes ei loodud seda 1980. aastal. See leiti sealt.",
   "about.scale.heading": "Kui kaugele see läheb",
-  "about.scale.p1": "Siin olevate piltide suurendus on umbes 10⁴¹. Kui kogu komplekt joonistaks sellisel skaalal meetri laiusele ekraanile, peaks ekraan selle hoidmiseks olema vaadeldavast universumist sadu triljoneid kordi laiem.",
+  "about.scale.p1": "Üks siin loetletud kohtadest on umbes 10⁴¹ suurendusega. Kui kogu komplekt joonistaks sellisel skaalal meetri laiusele ekraanile, peaks ekraan selle hoidmiseks olema vaadeldavast universumist sadu triljoneid kordi laiem. Selle all olev aritmeetika sisaldab umbes 2400 kümnendkohta, nii et renderdaja saab otsa alles umbkaudu 10²⁴⁰⁰ – see arv, mille füüsilist võrdlust pole jäänud teha.",
   "about.scale.p2": "Ükski neist detailidest ei ole kuskil salvestatud. See arvutatakse nõudmisel, sama üherealise reegli alusel, iga kord, kui vaatate. Aluspilti ei suurendata – on ainult aritmeetika ja see kestab igavesti.",
   "about.explore.heading": "Mine ja vaata",
   "about.explore.p1": "Liigutamiseks lohistage, suumimiseks kerige. Vahekaardil Kohad on hulk sihtkohti, mida tasub vaadata, sealhulgas sügav saar, mis asub nelikümmend kaks kohta pärast koma. Kõik, mida leiate, on aadressiribal, nii et mis tahes vaadet saab lingina jagada.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "See brauser ei kasuta WebGPU-d, seega on renderdaja naasnud WebGL2-le, mille täpsus saab palju madalamate suumide korral otsa.",
   "ui.notice.enableFlag": "Kui teie brauser toetab WebGPU-d, kuid ei kasuta seda, avage chrome://flags, määrake Tarkvara renderdusloendi alistamine väärtuseks Lubatud ja taaskäivitage brauser. Leht chrome://gpu selgitab, miks sellest keelduti.",
   "ui.notice.mobile": "Telefonis või tahvelarvutis renderdaja töötab, kuid sügav suumimine on palju aeglasem kui lauaarvuti GPU-l ja väga sügavate vaadete jaoks võib kaadri kohta kuluda mitu sekundit. Iteratsioonide arvu vähendamine aitab.",
+  "ui.notice.depthLimit": "See on sama sügav kui praegune mootor. WebGL2 tagavara täpsus saab siin otsa;",
   "ui.notice.dismiss": "Loobu"
 }

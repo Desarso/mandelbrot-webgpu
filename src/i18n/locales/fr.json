@@ -1,6 +1,6 @@
 {
   "about.title": "Qu'est-ce que l'ensemble de Mandelbrot",
-  "about.lede": "C’est l’objet le plus compliqué en mathématiques, et il est produit par une seule ligne d’arithmétique qu’un enfant peut suivre. Cette page explique pourquoi c'est étrange.",
+  "about.lede": "Une ligne d'arithmétique, répétée. Ce qui en ressort comporte des détails à toutes les échelles, sans fin, et rien dans la règle ne laisse entendre que cela devrait être le cas. Cette page explique pourquoi c'est étrange.",
   "about.rule.heading": "Une règle, répétée",
   "about.rule.p1": "Choisissez un point sur un plan plat. Mettez-le au carré, ajoutez le point avec lequel vous avez commencé et vous obtenez un nouveau point. Mettez cela au carré, ajoutez à nouveau l'original et continuez pour toujours.",
   "about.rule.p2": "Deux choses peuvent arriver. Les points peuvent s'éloigner et ne jamais revenir, s'enfuyant vers l'infini. Ou bien ils peuvent rester près de chez eux, peu importe combien de temps vous continuez à vous affronter. L’ensemble de Mandelbrot est simplement la collection de points de départ qui restent.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Les mathématiques derrière cela sont encore plus anciennes, remontant à Pierre Fatou et Gaston Julia vers 1918, qui ont étudié ces itérations des décennies avant qu'il n'y ait une machine capable d'en tirer les résultats. Ils réfléchissaient à une forme qu’aucun d’eux ne verrait jamais.",
   "about.discovery.p3": "N'importe qui, n'importe où, calculant la même règle obtient le même objet jusqu'au dernier filament. En ce sens, il n’a pas été créé en 1980. On l'a trouvé là-bas.",
   "about.scale.heading": "Jusqu'où cela va",
-  "about.scale.p1": "Les images atteignent ici des grossissements d’environ 10⁴¹. Si l’ensemble était dessiné à cette échelle sur un écran d’un mètre de large, l’écran devrait être des centaines de milliards de fois plus large que l’univers observable pour pouvoir le contenir.",
+  "about.scale.p1": "L'un des endroits répertoriés ici se trouve à un grossissement d'environ 10⁴¹. Si l’ensemble était dessiné à cette échelle sur un écran d’un mètre de large, l’écran devrait être des centaines de milliards de fois plus large que l’univers observable pour pouvoir le contenir. L'arithmétique en dessous comporte environ 2 400 chiffres décimaux, de sorte que le moteur de rendu ne s'épuise qu'à environ 10²⁴⁰⁰ – un nombre sans comparaison physique à faire.",
   "about.scale.p2": "Aucun de ces détails n’est stocké nulle part. Il est calculé à la demande, à partir de la même règle d'une ligne, à chaque fois que vous regardez. Il n’y a pas d’image sous-jacente agrandie – il n’y a que de l’arithmétique, et cela continue éternellement.",
   "about.explore.heading": "Allez voir",
   "about.explore.p1": "Faites glisser pour vous déplacer, faites défiler pour zoomer. L'onglet Lieux propose un ensemble de destinations à voir, notamment une île profonde située à quarante-deux décimales plus bas. Tout ce que vous trouvez se trouve dans la barre d'adresse, donc n'importe quelle vue peut être partagée sous forme de lien.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ce navigateur n'utilise pas WebGPU, le moteur de rendu est donc revenu à WebGL2, qui manque de précision avec des zooms beaucoup moins profonds.",
   "ui.notice.enableFlag": "Si votre navigateur prend en charge WebGPU mais ne l'utilise pas, ouvrez chrome://flags, définissez Remplacer la liste de rendu du logiciel sur Activé et redémarrez le navigateur. La page chrome://gpu explique pourquoi elle a été refusée.",
   "ui.notice.mobile": "Sur un téléphone ou une tablette, le moteur de rendu fonctionne, mais les zooms profonds sont beaucoup plus lents que sur un GPU de bureau, et les vues très profondes peuvent prendre plusieurs secondes par image. Réduire le nombre d’itérations est utile.",
+  "ui.notice.depthLimit": "C’est aussi profond que le moteur actuel va. La solution de secours WebGL2 manque ici de précision ;",
   "ui.notice.dismiss": "Rejeter"
 }

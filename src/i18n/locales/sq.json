@@ -1,6 +1,6 @@
 {
   "about.title": "Çfarë është grupi Mandelbrot",
-  "about.lede": "Është objekti më i ndërlikuar në matematikë dhe prodhohet nga një linjë aritmetike që një fëmijë mund të ndjekë. Kjo faqe ka të bëjë me arsyen pse kjo është e çuditshme.",
+  "about.lede": "Një linjë aritmetike, e përsëritur. Ajo që del ka detaje në çdo shkallë, pa fund, dhe asgjë në rregull nuk lë të kuptohet se duhet. Kjo faqe ka të bëjë me arsyen pse kjo është e çuditshme.",
   "about.rule.heading": "Një rregull, i përsëritur",
   "about.rule.p1": "Zgjidh një pikë në një plan të sheshtë. Sheshoni atë, shtoni pikën me të cilën keni filluar dhe keni një pikë të re. Sheshoni atë, shtoni përsëri origjinalin dhe vazhdoni përgjithmonë.",
   "about.rule.p2": "Dy gjëra mund të ndodhin. Pikat mund të enden dhe të mos kthehen më kurrë, duke vrapuar deri në pafundësi. Ose ata mund të qëndrojnë pranë shtëpisë pa marrë parasysh sa kohë vazhdoni të ndaheni në katror. Seti Mandelbrot është thjesht koleksioni i pikave fillestare që qëndrojnë.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematika pas saj është akoma më e vjetër, duke u kthyer te Pierre Fatou dhe Gaston Julia rreth vitit 1918, të cilët studiuan këto përsëritje dekada përpara se të kishte ndonjë makinë që mund të nxirrte rezultatet. Ata po arsyetonin për një formë që asnjëri prej tyre nuk do ta shihte kurrë.",
   "about.discovery.p3": "Kushdo, kudo, duke llogaritur të njëjtin rregull merr të njëjtin objekt deri në filamentin e fundit. Në këtë kuptim, ai nuk u krijua në vitin 1980. Aty u gjet.",
   "about.scale.heading": "Sa larg shkon kjo",
-  "about.scale.p1": "Imazhet këtu arrijnë zmadhim rreth 1041. Nëse i gjithë grupi do të vizatohej në atë shkallë në një ekran një metër të gjerë, ekrani do të duhej të ishte qindra triliona herë më i gjerë se universi i vëzhgueshëm për ta mbajtur atë.",
+  "about.scale.p1": "Një nga vendet e listuara këtu qëndron në një zmadhim prej rreth 1041. Nëse i gjithë grupi do të vizatohej në atë shkallë në një ekran një metër të gjerë, ekrani do të duhej të ishte qindra triliona herë më i gjerë se universi i vëzhgueshëm për ta mbajtur atë. Aritmetika poshtë mbart rreth 2400 shifra dhjetore, kështu që interpretuesi nuk mbaron deri në afërsisht 10²4⁰⁰ - një numër pa asnjë krahasim fizik për t'u bërë.",
   "about.scale.p2": "Asnjë nga këto detaje nuk ruhet askund. Ai llogaritet sipas kërkesës, nga i njëjti rregull me një rresht, sa herë që shikoni. Nuk ka asnjë imazh themelor që zmadhohet - ka vetëm aritmetikë dhe vazhdon përgjithmonë.",
   "about.explore.heading": "Shkoni dhe shikoni",
   "about.explore.p1": "Zvarritni për të lëvizur, lëvizni për të zmadhuar. Skeda \"Vendet\" ka një sërë destinacionesh që ia vlen të shihen, duke përfshirë një ishull të thellë që qëndron dyzet e dy shifra dhjetore poshtë. Gjithçka që gjeni është në shiritin e adresave, kështu që çdo pamje mund të ndahet si një lidhje.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ky shfletues nuk po përdor WebGPU, kështu që interpretuesi është kthyer në WebGL2, i cili nuk ka saktësi në zmadhimet shumë më të cekëta.",
   "ui.notice.enableFlag": "Nëse shfletuesi juaj mbështet WebGPU, por nuk e përdor atë, hapni chrome://flags, vendosni listën e interpretimit të softuerit \"Override\" në \"Aktivizuar\" dhe rinisni shfletuesin. Faqja chrome://gpu shpjegon pse u refuzua.",
   "ui.notice.mobile": "Në një telefon ose tabletë renderuesi funksionon, por zmadhimet e thella janë shumë më të ngadalta se në një GPU desktop dhe pamjet shumë të thella mund të zgjasin shumë sekonda në kuadër. Ulja e numrit të përsëritjeve ndihmon.",
+  "ui.notice.depthLimit": "Kjo është aq e thellë sa shkon motori aktual. Rikthimi i WebGL2 këtu nuk ka saktësi;",
   "ui.notice.dismiss": "Largoje"
 }

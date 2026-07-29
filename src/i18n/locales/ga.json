@@ -1,6 +1,6 @@
 {
   "about.title": "Cad é an tacar Mandelbrot",
-  "about.lede": "Is é an réad is casta sa mhatamaitic é, agus déantar é trí líne uimhríochta amháin a d’fhéadfadh páiste a leanúint. Baineann an leathanach seo le cén fáth a bhfuil sé sin aisteach.",
+  "about.lede": "Líne amháin uimhríochta, arís agus arís eile. Tá mionsonraí ag gach scála, gan chríoch, sa mhéid a thagann amach, agus ní thugann aon rud le fios sa riail gur chóir. Baineann an leathanach seo le cén fáth a bhfuil sé sin aisteach.",
   "about.rule.heading": "Riail amháin, arís agus arís eile",
   "about.rule.p1": "Roghnaigh pointe ar eitleán cothrom. Cearnóg é, cuir leis an bpointe ar thosaigh tú leis, agus tá pointe nua agat. Cearnóg é sin, cuir an bunleagan leis arís, agus lean ort go deo.",
   "about.rule.p2": "Is féidir le dhá rud tarlú. D’fhéadfadh go n-imeoidh na pointí amach agus nach dtiocfaidh siad ar ais go deo, ag rásaíocht go héigríoch. Nó féadfaidh siad fanacht in aice leis an mbaile is cuma cé chomh fada agus a choinníonn tú ag cearnógach. Níl i sraith Mandelbrot ach bailiúchán pointí tosaigh a fhanann.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Tá an mhatamaitic taobh thiar di níos sine fós, ag dul ar ais go dtí Pierre Fatou agus Gaston Julia timpeall 1918, a rinne staidéar ar na blianta fada sula raibh aon mheaisín ann a d'fhéadfadh na torthaí a tharraingt. Bhí siad ag réasúnú faoi chruth nach bhfeicfeadh aon duine acu go deo.",
   "about.discovery.p3": "Faigheann duine ar bith, áit ar bith, a bhfuil an riail chéanna á ríomh acu, an réad céanna síos go dtí an fhiliméad deiridh. Sa chiall sin níor cruthaíodh i 1980 é. Fuarthas ann é.",
   "about.scale.heading": "Cé chomh fada síos a théann sé seo",
-  "about.scale.p1": "Sroicheann na híomhánna anseo méadaithe timpeall 10⁴¹. Dá ndéanfaí an fhoireann iomlán a tharraingt ar an scála sin ar scáileán méadar ar leithead, chaithfeadh an scáileán a bheith na céadta trilliún uaireanta níos leithne ná an cruinne inbhraite chun é a choinneáil.",
+  "about.scale.p1": "Tá méadú de thart ar 10⁴¹ ar cheann de na háiteanna atá liostaithe anseo. Dá ndéanfaí an fhoireann iomlán a tharraingt ar an scála sin ar scáileán méadar ar leithead, chaithfeadh an scáileán a bheith na céadta trilliún uaireanta níos leithne ná an cruinne inbhraite chun é a choinneáil. Gabhann an uimhríochtúil thíos thart ar 2,400 digit dheachúla, mar sin ní ritheann an rindreálaí amach go dtí thart ar 10²⁴⁰⁰ — uimhir nach bhfuil aon chomparáid fhisiciúil fágtha le déanamh.",
   "about.scale.p2": "Ní stóráiltear aon cheann de na sonraí sin in áit ar bith. Déantar é a ríomh ar éileamh, ón riail aon líne chéanna, gach uair a fhéachann tú. Níl aon íomhá bhunúsach á formhéadú — níl ann ach uimhríocht, agus leanann sé ar aghaidh go deo.",
   "about.explore.heading": "Téigh agus breathnú",
   "about.explore.p1": "Tarraing chun gluaiseacht, scrollaigh chun zúmáil. Tá sraith cinn scríbe ag an táb Áiteanna ar fiú féachaint orthu, lena n-áirítear oileán domhain a shuíonn daichead is dó deachúil síos. Tá gach rud a aimsíonn tú sa bharra seoltaí, mar sin is féidir aon radharc a roinnt mar nasc.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Níl an brabhsálaí seo ag baint úsáide as WebGPU, mar sin tá an rindreálaí tite ar ais go WebGL2, rud a théann as cruinneas ag súmáil i bhfad níos éadomhain.",
   "ui.notice.enableFlag": "Má thacaíonn do bhrabhsálaí le WebGPU ach nach bhfuil sé á úsáid, oscail chrome://flags, socraigh liosta rindreála bogearraí Sáraigh go Cumasaithe, agus atosaigh an brabhsálaí. Míníonn an leathanach chrome://gpu an fáth ar diúltaíodh dó.",
   "ui.notice.mobile": "Feidhmíonn an rindreálaí ar ghuthán nó ar thaibléad, ach tá súmáil dhomhain i bhfad níos moille ná mar a bhíonn ar GPU deisce, agus d’fhéadfadh go dtógfadh radharcanna an-domhain go leor soicind i ndiaidh a chéile. Cuidíonn sé leis an líon atriallta a ísliú.",
+  "ui.notice.depthLimit": "Tá sé seo chomh domhain agus a théann an t-inneall reatha. Ritheann cúl-ais WebGL2 as cruinneas anseo;",
   "ui.notice.dismiss": "Díbhe"
 }

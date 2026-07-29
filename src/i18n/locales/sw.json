@@ -1,6 +1,6 @@
 {
   "about.title": "Seti ya Mandelbrot ni nini",
-  "about.lede": "Ni kitu ngumu zaidi katika hisabati, na hutolewa na mstari mmoja wa hesabu ambao mtoto anaweza kufuata. Ukurasa huu unahusu kwa nini hiyo ni ya ajabu.",
+  "about.lede": "Mstari mmoja wa hesabu, unaorudiwa. Kinachotoka kina maelezo kwa kila kiwango, bila mwisho, na hakuna kitu katika sheria kinachoonyesha kwamba inapaswa. Ukurasa huu unahusu kwa nini hiyo ni ya ajabu.",
   "about.rule.heading": "Sheria moja, iliyorudiwa",
   "about.rule.p1": "Chagua hatua kwenye ndege ya gorofa. Weka mraba, ongeza nukta uliyoanza nayo, na una hoja mpya. Mraba huo, ongeza asili tena, na uendelee milele.",
   "about.rule.p2": "Mambo mawili yanaweza kutokea. Alama zinaweza kutangatanga na zisirudi tena, zikikimbia kwa ukomo. Au wanaweza kukaa karibu na nyumbani hata uendelee kugombana kwa muda gani. Seti ya Mandelbrot ni mkusanyiko wa pointi za kuanzia ambazo hukaa.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Hisabati nyuma yake bado ni ya zamani, ikirejea kwa Pierre Fatou na Gaston Julia karibu 1918, ambao walisoma marudio haya miongo kadhaa kabla ya kuwa na mashine yoyote ambayo inaweza kuchora matokeo. Walikuwa wakifikiri juu ya sura ambayo hakuna hata mmoja wao angeweza kuona.",
   "about.discovery.p3": "Mtu yeyote, mahali popote, akiweka sheria sawa anapata kitu sawa hadi kwenye filamenti ya mwisho. Kwa maana hiyo haikuundwa mwaka 1980. Ilipatikana huko.",
   "about.scale.heading": "Hii inaenda chini kiasi gani",
-  "about.scale.p1": "Picha hapa hufikia ukuzaji wa karibu 10⁴¹. Iwapo seti nzima ingechorwa kwa kipimo hicho kwenye skrini yenye upana wa mita, skrini ingebidi iwe na upana wa mamia ya trilioni ya ulimwengu unaoonekana ili kuishikilia.",
+  "about.scale.p1": "Mojawapo ya maeneo yaliyoorodheshwa hapa yapo katika ukuzaji wa takriban 10⁴¹. Iwapo seti nzima ingechorwa kwa kipimo hicho kwenye skrini yenye upana wa mita, skrini ingebidi iwe na upana wa mamia ya trilioni ya ulimwengu unaoonekana ili kuishikilia. Hesabu iliyo chini yake hubeba takriban tarakimu 2,400 za desimali, kwa hivyo kionyeshi hakiisha hadi takriban 10²⁴⁰⁰ - nambari isiyo na ulinganisho wa kimaumbile.",
   "about.scale.p2": "Hakuna maelezo hayo yaliyohifadhiwa popote. Inakokotolewa kwa mahitaji, kutoka kwa kanuni sawa ya mstari mmoja, kila wakati unapoangalia. Hakuna picha ya msingi inayokuzwa - kuna hesabu tu, na inaendelea milele.",
   "about.explore.heading": "Nenda ukaangalie",
   "about.explore.p1": "Buruta ili kusogeza, sogeza ili kukuza. Kichupo cha Maeneo kina seti ya maeneo yanayofaa kuonekana, ikijumuisha kisiwa cha kina ambacho kina nafasi za desimali arobaini na mbili chini. Kila kitu unachopata kiko kwenye upau wa anwani, kwa hivyo mwonekano wowote unaweza kushirikiwa kama kiungo.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Kivinjari hiki hakitumii WebGPU, kwa hivyo kionyeshi kimerudi kwenye WebGL2, ambayo inaishiwa na usahihi katika ukuzaji wa kina kifupi zaidi.",
   "ui.notice.enableFlag": "Ikiwa kivinjari chako kinaauni WebGPU lakini huitumii, fungua chrome://flags, weka Batilisha orodha ya uwasilishaji ya programu iwe Imewashwa, na uanze upya kivinjari. Ukurasa chrome://gpu unaeleza kwa nini ilikataliwa.",
   "ui.notice.mobile": "Kwenye simu au kompyuta kibao kionyeshi hufanya kazi, lakini ukuzaji wa kina ni wa polepole sana kuliko GPU ya eneo-kazi, na mionekano ya kina inaweza kuchukua sekunde nyingi kwa fremu. Kupunguza hesabu ya kurudia husaidia.",
+  "ui.notice.depthLimit": "Hii ni ya kina kama injini ya sasa inavyoenda. Njia mbadala ya WebGL2 inaishiwa na usahihi hapa;",
   "ui.notice.dismiss": "Ondoa"
 }

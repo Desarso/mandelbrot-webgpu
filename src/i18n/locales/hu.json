@@ -1,6 +1,6 @@
 {
   "about.title": "Mi az a Mandelbrot-készlet",
-  "about.lede": "Ez a matematika legbonyolultabb objektuma, és egy olyan aritmetikai sorból áll, amelyet egy gyermek követhet. Ez az oldal arról szól, hogy ez miért furcsa.",
+  "about.lede": "Egy sor aritmetika, ismételve. Ami kijön, annak minden léptékben részlete van, vég nélkül, és a szabályban semmi sem utal arra, hogy kellene. Ez az oldal arról szól, hogy ez miért furcsa.",
   "about.rule.heading": "Egy szabály, megismételve",
   "about.rule.p1": "Válasszon egy pontot egy sík síkon. Négyzetre tedd, add hozzá azt a pontot, amellyel elkezdted, és máris van egy új pont. Négyzetre, adja hozzá újra az eredetit, és folytassa örökké.",
   "about.rule.p2": "Két dolog történhet. A pontok elkalandozhatnak, és soha többé nem jönnek vissza, és a végtelenségig száguldanak. Vagy az otthonuk közelében maradhatnak, függetlenül attól, hogy mennyi ideig küzd. A Mandelbrot készlet egyszerűen a kiindulópontok gyűjteménye, amelyek megmaradnak.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "A mögötte álló matematika még régebbi, Pierre Fatou-ig és Gaston Juliáig nyúlik vissza 1918 körül, akik évtizedekkel azelőtt tanulmányozták ezeket az iterációkat, hogy még nem létezett olyan gép, amely le tudta volna vonni az eredményeket. Egy olyan alakról tanakodtak, amelyet soha egyikük sem láthatna.",
   "about.discovery.p3": "Bárki, bárhol ugyanazt a szabályt számítja ki, ugyanazt az objektumot kapja az utolsó izzószálig. Ebben az értelemben nem 1980-ban hozták létre. Ott találták.",
   "about.scale.heading": "Milyen messzire megy ez",
-  "about.scale.p1": "Az itt látható képek körülbelül 10⁴¹ nagyítást érnek el. Ha az egész halmazt ilyen léptékben egy méter széles képernyőre rajzolnák, a képernyőnek több száz billiószor szélesebbnek kellene lennie, mint a megfigyelhető univerzum, hogy elférjen.",
+  "about.scale.p1": "Az itt felsorolt ​​helyek egyike körülbelül 10⁴¹-es nagyítású. Ha az egész halmazt ilyen léptékben egy méter széles képernyőre rajzolnák, a képernyőnek több száz billiószor szélesebbnek kellene lennie, mint a megfigyelhető univerzum, hogy elférjen. Az alatta lévő aritmetika körülbelül 2400 tizedesjegyet tartalmaz, így a renderer csak nagyjából 10²⁴⁰⁰-ig fut ki – ez a szám, amelyet már nem kell fizikailag összehasonlítani.",
   "about.scale.p2": "A részleteket sehol sem tárolják. Igény szerint számítják ki, ugyanazon egysoros szabály alapján, minden alkalommal, amikor ránézel. Nincs mögöttes kép, amelyet felnagyítanak – csak aritmetika van, és ez örökké tart.",
   "about.explore.heading": "Menj és nézd",
   "about.explore.p1": "Húzza a mozgatáshoz, görgessen a nagyításhoz. A Helyek lapon van egy sor úti cél, amelyet érdemes megnézni, beleértve egy mély szigetet, amely negyvenkét tizedesjegygel lejjebb található. Minden, amit talál, a címsávban található, így bármely nézet megosztható hivatkozásként.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ez a böngésző nem használja a WebGPU-t, ezért a megjelenítő visszaesett a WebGL2-re, amely sokkal sekélyebb zoomoknál kifogy a pontosságból.",
   "ui.notice.enableFlag": "Ha böngészője támogatja a WebGPU-t, de nem használja, nyissa meg a chrome://flags fájlt, állítsa a Szoftver-renderelési lista felülbírálása Engedélyezve értékre, és indítsa újra a böngészőt. A chrome://gpu oldal elmagyarázza, miért utasították el.",
   "ui.notice.mobile": "Telefonon vagy táblagépen a renderer működik, de a mély zoom sokkal lassabb, mint az asztali GPU-n, és a nagyon mély nézetek több másodpercet is igénybe vehetnek egy képkockánként. Az iterációk számának csökkentése segít.",
+  "ui.notice.depthLimit": "Ez olyan mély, mint a jelenlegi motor. A WebGL2 tartalék itt kifogy a pontosságból;",
   "ui.notice.dismiss": "Elvetés"
 }

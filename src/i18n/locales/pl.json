@@ -1,6 +1,6 @@
 {
   "about.title": "Co to jest zbiór Mandelbrota",
-  "about.lede": "Jest to najbardziej skomplikowany obiekt w matematyce, a tworzy go jedna linia arytmetyczna, którą może śledzić dziecko. Na tej stronie dowiesz się, dlaczego jest to dziwne.",
+  "about.lede": "Jedna linia arytmetyczna, powtórzona. To, co wychodzi, ma szczegóły w każdej skali, bez końca i nic w regule nie wskazuje, że powinno. Na tej stronie dowiesz się, dlaczego jest to dziwne.",
   "about.rule.heading": "Jedna zasada, powtarzana",
   "about.rule.p1": "Wybierz punkt na płaskiej płaszczyźnie. Podnieś go do kwadratu, dodaj punkt, od którego zacząłeś, i masz nowy punkt. Wyrównaj to, dodaj oryginał ponownie i kontynuuj pracę w nieskończoność.",
   "about.rule.p2": "Mogą się wydarzyć dwie rzeczy. Punkty mogą zniknąć i nigdy nie wrócić, pędząc w nieskończoność. Mogą też pozostać w pobliżu domu, bez względu na to, jak długo będziesz walczyć. Zbiór Mandelbrota to po prostu zbiór punktów początkowych, które pozostają.",
@@ -22,7 +22,7 @@
   "about.discovery.p2": "Matematyka, która za tym stoi, jest jeszcze starsza i sięga czasów Pierre’a Fatou i Gastona Julii około 1918 roku, którzy badali te iteracje dziesiątki lat, zanim pojawiła się jakakolwiek maszyna mogąca wyciągnąć wyniki. Myśleli o kształcie, którego nikt z nich nigdy nie zobaczy.",
   "about.discovery.p3": "Każdy, gdziekolwiek, obliczając tę ​​samą regułę, przenosi ten sam obiekt do ostatniego włókna. W tym sensie nie powstał w 1980 roku. Znaleziono go tam.",
   "about.scale.heading": "Jak daleko to sięga",
-  "about.scale.p1": "Zdjęcia tutaj osiągają powiększenia około 10⁴¹. Gdyby cały zbiór narysowano w tej skali na ekranie o szerokości metra, ekran musiałby być setki bilionów razy szerszy niż obserwowalny Wszechświat, aby go pomieścić.",
+  "about.scale.p1": "Jedno z wymienionych tutaj miejsc widać przy powiększeniu około 10⁴¹. Gdyby cały zbiór narysowano w tej skali na ekranie o szerokości metra, ekran musiałby być setki bilionów razy szerszy niż obserwowalny Wszechświat, aby go pomieścić. Poniższa arytmetyka zawiera około 2400 cyfr dziesiętnych, więc moduł renderujący kończy się dopiero w przybliżeniu 10²⁴⁰⁰ — liczby, której nie trzeba już fizycznie porównywać.",
   "about.scale.p2": "Żaden z tych szczegółów nie jest nigdzie przechowywany. Jest obliczany na żądanie, na podstawie tej samej jednowierszowej reguły, za każdym razem, gdy patrzysz. Nie ma żadnego powiększanego obrazu bazowego – jest tylko arytmetyka i to trwa w nieskończoność.",
   "about.explore.heading": "Idź i spójrz",
   "about.explore.p1": "Przeciągnij, aby przenieść, przewiń, aby powiększyć. Karta Miejsca zawiera zestaw miejsc wartych zobaczenia, w tym głęboką wyspę z dokładnością do czterdziestu dwóch miejsc po przecinku. Wszystko, co znajdziesz, znajduje się na pasku adresu, więc każdy widok można udostępnić jako link.",
@@ -74,5 +74,6 @@
   "ui.notice.noWebgpu": "Ta przeglądarka nie korzysta z WebGPU, więc moduł renderujący powrócił do WebGL2, który traci precyzję przy znacznie mniejszych powiększeniach.",
   "ui.notice.enableFlag": "Jeśli Twoja przeglądarka obsługuje WebGPU, ale go nie używa, otwórz chrome://flags, ustaw Zastąp listę renderowania oprogramowania na Włączone i uruchom ponownie przeglądarkę. Strona chrome://gpu wyjaśnia, dlaczego została odrzucona.",
   "ui.notice.mobile": "Na telefonie lub tablecie moduł renderujący działa, ale głębokie przybliżenia są znacznie wolniejsze niż na procesorze graficznym do komputerów stacjonarnych, a bardzo głębokie widoki mogą zająć wiele sekund na klatkę. Pomaga zmniejszenie liczby iteracji.",
+  "ui.notice.depthLimit": "Jest tak głęboki, jak sięga obecny silnik. Rezerwa WebGL2 jest tutaj nieprecyzyjna;",
   "ui.notice.dismiss": "Odrzucać"
 }

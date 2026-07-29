@@ -28,12 +28,14 @@ describe("zoomDepth", () => {
 });
 
 describe("iterationsForSpan", () => {
-  it("grows monotonically with depth", () => {
-    const spans = ["2.8", "0.02", "1e-6", "3e-11", "1e-20", "6e-42"];
+  it("grows monotonically once past the shallow floor", () => {
+    const spans = ["1e-6", "3e-11", "1e-20", "6e-42"];
     const counts = spans.map(at);
     for (let i = 1; i < counts.length; i++) {
       expect(counts[i]).toBeGreaterThan(counts[i - 1]);
     }
+    // Wide views all sit on the floor rather than dropping toward zero.
+    expect(at("2.8")).toBe(at("0.02"));
   });
 
   it("stays in the region the hand-picked locations use", () => {
@@ -41,8 +43,21 @@ describe("iterationsForSpan", () => {
     // count. Auto should land near them, not an order of magnitude away.
     expect(at("2.8")).toBeGreaterThanOrEqual(300);
     expect(at("2.8")).toBeLessThanOrEqual(700);
-    expect(at("6e-42")).toBeGreaterThan(12000);
-    expect(at("6e-42")).toBeLessThan(30000);
+  });
+
+  it("matches what the sweeps measured as sufficient", () => {
+    // From /gpu.html?...&sweep=1 at the default centre: the count at which
+    // raising it stops resolving further pixels. Within 25% is close enough
+    // for a starting guess; being badly under means a blank frame.
+    for (const [span, needed] of [
+      ["1e-5", 1600],
+      ["1e-12", 6400],
+      ["1e-25", 20000],
+    ] as const) {
+      const value = at(span);
+      expect(value).toBeGreaterThan(needed * 0.75);
+      expect(value).toBeLessThan(needed * 1.5);
+    }
   });
 
   it("respects a limit when given one", () => {
