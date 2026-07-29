@@ -4,7 +4,7 @@
 
 This project is developed in **GPL port mode**. It studies and adapts
 implementation details from [FractalShark](https://github.com/mattsaccount364/FractalShark)
-(© Matt Saccenti and contributors, GPL-3.0), and is therefore licensed under the
+(© Matt Renzelmann and contributors, GPL-3.0), and is therefore licensed under the
 **GNU General Public License v3.0 or later**.
 
 That choice is deliberate and recorded here before any source was consulted, as
