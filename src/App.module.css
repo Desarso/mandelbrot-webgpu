@@ -731,3 +731,61 @@
   background: rgba(127, 212, 238, 0.16);
   color: #bfe8f6;
 }
+
+/* Corner readout. Top left, because the panel takes the right and the page
+   links take the bottom. */
+.hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(14, 16, 22, 0.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: #e8ecf4;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hudValue {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hudLabel {
+  font-size: 11px;
+  color: rgba(232, 236, 244, 0.45);
+}
+
+.hudAuto {
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid rgba(127, 212, 238, 0.45);
+  background: rgba(127, 212, 238, 0.14);
+  color: #bfe8f6;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.numberInput {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8ecf4;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.numberInput:focus {
+  outline: none;
+  border-color: rgba(127, 212, 238, 0.55);
+}

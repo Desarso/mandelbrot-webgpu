@@ -27,8 +27,10 @@
 import Decimal from "decimal.js";
 
 /**
- * Hard ceiling on iterations. Past this a frame takes long enough that the
- * driver watchdog becomes the real limit, not patience.
+ * Range of the manual slider. Not a hard ceiling on what the renderer will
+ * do — auto is deliberately unbounded, because clamping the count at depth
+ * does not make the frame cheap, it makes it wrong: every pixel hits the cap
+ * and the view reads as solid interior.
  */
 export const MAX_ITERATIONS = 200000;
 
@@ -57,7 +59,7 @@ export function zoomDepth(span: Decimal): number {
  * enough to justify showing "5,847", and a round number reads as the guess it
  * is rather than as a measurement.
  */
-export function iterationsForSpan(span: Decimal, limit: number): number {
+export function iterationsForSpan(span: Decimal, limit = Infinity): number {
   const raw = BASE + SCALE * Math.pow(zoomDepth(span), EXPONENT);
   const magnitude = Math.pow(10, Math.max(0, Math.floor(Math.log10(raw)) - 1));
   const rounded = Math.round(raw / magnitude) * magnitude;

@@ -77,6 +77,9 @@ export const STRINGS = {
   "ui.auto": "Auto",
   "ui.autoIterationsHint":
     "Choose the iteration count from the zoom level. Moving the slider turns this off.",
+  "ui.showOnCanvas": "Show count on canvas",
+  "ui.useSlider": "Switch to a slider",
+  "ui.useNumber": "Type an exact number",
   "ui.tab.colour": "Colour",
   "ui.tab.light": "Light",
   "ui.tab.advanced": "Advanced",

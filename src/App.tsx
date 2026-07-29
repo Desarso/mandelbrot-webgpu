@@ -115,6 +115,25 @@ const App: Component = () => {
   // phone or tablet" signal that does not involve sniffing the user agent.
   const isTouchDevice =
     typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+  // On by default: the iteration count is the one number that changes on its
+  // own while auto is on, and it is worth seeing with the panel hidden.
+  // A slider cannot express "exactly 250,000", and a number field is a poor
+  // way to sweep a range. Both, and remember which was last used.
+  const [numericInput, setNumericInput] = createSignal(
+    localStorage.getItem("mandelbrot.iteration-input") === "number"
+  );
+  const toggleNumericInput = () => {
+    const next = !numericInput();
+    localStorage.setItem("mandelbrot.iteration-input", next ? "number" : "slider");
+    setNumericInput(next);
+  };
+  const [showHud, setShowHud] = createSignal(
+    localStorage.getItem("mandelbrot.hud") !== "off"
+  );
+  const toggleHud = (on: boolean) => {
+    localStorage.setItem("mandelbrot.hud", on ? "on" : "off");
+    setShowHud(on);
+  };
   const [mobileNoticeDismissed, setMobileNoticeDismissed] = createSignal(
     localStorage.getItem("mandelbrot.mobile-notice") === "dismissed"
   );
@@ -240,6 +259,16 @@ const App: Component = () => {
         </a>
       </div>
 
+      <Show when={showHud()}>
+        <div class={styles.hud}>
+          <Show when={autoIterations()}>
+            <span class={styles.hudAuto}>{t("ui.auto")}</span>
+          </Show>
+          <span class={styles.hudValue}>{maxIterations().toLocaleString()}</span>
+          <span class={styles.hudLabel}>{t("ui.maxIterations")}</span>
+        </div>
+      </Show>
+
       <Show when={showMobileNotice()}>
         <div class={styles.notice}>
           <p>{t("ui.notice.mobile")}</p>
@@ -300,23 +329,62 @@ const App: Component = () => {
                   >
                     {t("ui.auto")}
                   </button>
-                  {maxIterations().toLocaleString()}
+                  <button
+                    class={styles.autoChip}
+                    title={numericInput() ? t("ui.useSlider") : t("ui.useNumber")}
+                    onClick={toggleNumericInput}
+                  >
+                    {numericInput() ? "\u2194" : "123"}
+                  </button>
+                  <Show when={!numericInput()}>
+                    {maxIterations().toLocaleString()}
+                  </Show>
                 </span>
               </label>
-              <input
-                id="iterations"
-                class={styles.slider}
-                type="range"
-                min="0"
-                max="1000"
-                step="1"
-                value={iterationsToSlider(maxIterations())}
-                onInput={(e) => {
-                  // Reaching for the slider is a clear statement that the
-                  // guess is not wanted, so stop overriding it.
-                  setAutoIterations(false);
-                  syncIterations(sliderToIterations(+e.currentTarget.value));
-                }}
+              <Show
+                when={numericInput()}
+                fallback={
+                  <input
+                    id="iterations"
+                    class={styles.slider}
+                    type="range"
+                    min="0"
+                    max="1000"
+                    step="1"
+                    value={iterationsToSlider(maxIterations())}
+                    onInput={(e) => {
+                      // Reaching for the control is a clear statement that the
+                      // guess is not wanted, so stop overriding it.
+                      setAutoIterations(false);
+                      syncIterations(sliderToIterations(+e.currentTarget.value));
+                    }}
+                  />
+                }
+              >
+                <input
+                  id="iterations"
+                  class={styles.numberInput}
+                  type="number"
+                  min="50"
+                  step="100"
+                  value={maxIterations()}
+                  onChange={(e) => {
+                    // Committed on change, not input: typing "1" on the way to
+                    // "100000" should not trigger a render at one iteration.
+                    const value = Math.round(Number(e.currentTarget.value));
+                    if (!Number.isFinite(value) || value < 50) {
+                      e.currentTarget.value = String(maxIterations());
+                      return;
+                    }
+                    setAutoIterations(false);
+                    syncIterations(value);
+                  }}
+                />
+              </Show>
+              <Toggle
+                label={t("ui.showOnCanvas")}
+                value={showHud()}
+                onChange={toggleHud}
               />
             </div>
           </section>

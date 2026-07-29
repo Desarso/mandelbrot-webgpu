@@ -45,10 +45,19 @@ describe("iterationsForSpan", () => {
     expect(at("6e-42")).toBeLessThan(30000);
   });
 
-  it("never exceeds the limit, however deep the view", () => {
+  it("respects a limit when given one", () => {
     expect(at("1e-300")).toBeLessThanOrEqual(LIMIT);
     expect(at("1e-3000")).toBeLessThanOrEqual(LIMIT);
     expect(iterationsForSpan(new Decimal("1e-500"), 5000)).toBe(5000);
+  });
+
+  it("is unbounded without one, because a clamped count renders wrong", () => {
+    // Capping at depth does not make the frame cheap, it makes every pixel hit
+    // the cap and the view read as solid interior.
+    const deep = iterationsForSpan(new Decimal("1e-600"));
+    expect(deep).toBeGreaterThan(LIMIT);
+    expect(iterationsForSpan(new Decimal("1e-2000"))).toBeGreaterThan(deep);
+    expect(Number.isFinite(iterationsForSpan(new Decimal("1e-2000")))).toBe(true);
   });
 
   it("returns whole, round numbers", () => {
