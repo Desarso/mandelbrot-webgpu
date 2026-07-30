@@ -29,6 +29,8 @@ export interface BackendStats {
   skipRatio: number;
   /** Reference rebases this frame — the glitch-avoidance path. */
   rebases: number;
+  /** Fraction of samples that used the whole iteration budget, 0..1. */
+  cappedRatio: number;
 }
 
 export interface RenderBackend {

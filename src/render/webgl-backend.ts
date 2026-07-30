@@ -143,6 +143,9 @@ export class WebGlBackend implements RenderBackend {
       // The WebGL path has no approximation and no counters.
       skipRatio: 0,
       rebases: 0,
+      // The WebGL path does not count these, so auto cannot measure its way to
+      // a budget here and falls back to the depth estimate alone.
+      cappedRatio: 0,
     };
   }
 

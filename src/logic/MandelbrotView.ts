@@ -50,6 +50,17 @@ export interface ViewInfo {
   atDepthLimit: boolean;
   /** Iterations this depth is likely to need, for the auto-iteration toggle. */
   suggestedIterations: number;
+  /** Fraction of samples that used the whole iteration budget, 0..1. */
+  cappedRatio: number;
+  /** Device pixels in the frame these stats came from. */
+  pixels: number;
+  /**
+   * The count this frame was actually rendered with. Not the same as the
+   * current setting: changing the setting takes effect a frame later, and
+   * pairing a new count with the previous frame's measurement makes any
+   * search over it draw exactly the wrong conclusion.
+   */
+  iterations: number;
   /** Set when the backend has stopped working, e.g. a lost GPU device. */
   error?: string;
 }
@@ -104,6 +115,9 @@ export class MandelbrotView {
       rebases: 0,
       atDepthLimit: false,
       suggestedIterations: 0,
+      cappedRatio: 0,
+      pixels: 0,
+      iterations: 0,
     });
     this.view = view;
     this.setView = setView;
@@ -287,7 +301,7 @@ export class MandelbrotView {
 
     try {
       const stats = await this.backend.draw(request);
-      this.publishView(stats);
+      this.publishView(stats, request);
     } catch (error) {
       console.error("[mandelbrot] draw failed:", error);
       this.setView({
@@ -303,7 +317,7 @@ export class MandelbrotView {
     }
   }
 
-  private publishView(stats: BackendStats) {
+  private publishView(stats: BackendStats, request: DrawRequest) {
     const digits = Math.max(
       6,
       Math.ceil(-Math.log10(this.unitsPerPixel().toNumber())) + 2
@@ -322,6 +336,9 @@ export class MandelbrotView {
       rebases: stats.rebases,
       atDepthLimit: this.spanY.lessThanOrEqualTo(this.minSpan() * 1.001),
       suggestedIterations: iterationsForSpan(this.spanY),
+      cappedRatio: stats.cappedRatio,
+      pixels: request.width * request.height,
+      iterations: request.maxIterations,
     });
 
     const url = new URL(window.location.href);

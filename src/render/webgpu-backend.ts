@@ -48,6 +48,7 @@ export class WebGpuBackend implements RenderBackend {
       renderMs: stats.renderMs,
       skipRatio: stats.skipRatio,
       rebases: stats.rebases,
+      cappedRatio: stats.cappedRatio,
     };
   }
 

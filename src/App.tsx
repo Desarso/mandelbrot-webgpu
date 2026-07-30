@@ -10,6 +10,7 @@ import {
 } from "solid-js";
 import { MandelbrotView, type ViewInfo } from "./logic/MandelbrotView";
 import { MAX_ITERATIONS } from "./logic/iterations";
+import { nextIterations, type Probe } from "./logic/autoIterations";
 
 export { MAX_ITERATIONS };
 import {
@@ -52,6 +53,9 @@ const TAB_LABELS: Record<(typeof TABS)[number], StringKey> = {
  * for without looking.
  */
 const FEATURED_PRESETS = 6;
+
+/** Below this the frame is not a representative sample of the view. */
+const MIN_MEASURABLE_PIXELS = 64 * 64;
 
 /**
  * Ceiling on the iteration slider. Deep views legitimately need tens of
@@ -166,17 +170,49 @@ const App: Component = () => {
 
   // Follow the zoom while auto is on. The guard matters: setting the count
   // re-renders, which republishes the view, which lands back here.
+  // Probes taken for the view currently being measured.
+  let search: { key: string; probes: Probe[]; done: boolean } | null = null;
+
   createEffect(() => {
     if (!autoIterations()) return;
     const info = view();
     if (!info) return;
-    // Not mid-gesture. Raising the count invalidates the reference orbit, so
+    // Not mid-gesture. Changing the count invalidates the reference orbit, so
     // adjusting on every frame of a zoom rebuilt it on every frame of a zoom --
-    // hundreds of milliseconds each, which is what made auto feel like it was
-    // climbing far too eagerly. Wait for the view to settle.
+    // hundreds of milliseconds each. Wait for the view to settle.
     if (info.preview) return;
-    const suggested = info.suggestedIterations;
-    if (suggested > 0 && suggested !== maxIterations()) syncIterations(suggested);
+
+    const key = `${info.centerX}|${info.centerY}|${info.zoom}`;
+    if (!search || search.key !== key) {
+      // A new view. Start from the depth estimate, which is a decent opening
+      // guess, and let the measurements correct it from there.
+      search = { key, probes: [], done: false };
+      const opening = info.suggestedIterations;
+      if (opening > 0 && opening !== maxIterations()) {
+        syncIterations(opening);
+        return;
+      }
+    }
+    if (search.done) return;
+
+    // The count this frame was rendered with, not the current setting. The
+    // effect re-runs the moment the setting changes, which is a frame before
+    // anything has been rendered at it; pairing the new count with the old
+    // frame's measurement reads as "raising bought nothing" and walks the
+    // search straight down to the floor.
+    const measured = info.iterations;
+    if (measured <= 0) return;
+    // A frame too small to be representative tells us nothing. A collapsed
+    // container renders one pixel, and if that pixel happens to be inside the
+    // set the measurement reads as "100% capped at every budget", which is
+    // true of that pixel and useless as evidence about the view.
+    if (info.pixels < MIN_MEASURABLE_PIXELS) return;
+    if (search.probes.some((p) => p.iterations === measured)) return;
+    search.probes.push({ iterations: measured, capped: info.cappedRatio });
+
+    const decision = nextIterations(search.probes, MAX_ITERATIONS);
+    if (decision.action === "settle") search.done = true;
+    if (decision.iterations !== measured) syncIterations(decision.iterations);
   });
 
   // Auto is the default, so it is *not* in the URL -- an explicit ?i= is what

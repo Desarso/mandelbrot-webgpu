@@ -175,6 +175,56 @@ async function main() {
     return;
   }
 
+  // `&sscheck=1`: does supersampling actually change the picture? Renders the
+  // same view at each sample grid and reports how many sampled pixels differ.
+  if (params.get("sscheck") === "1") {
+    const base = {
+      centerX: new Decimal(centerX),
+      centerY: new Decimal(centerY),
+      unitsPerPixel: spanDecimal.div(canvas.height),
+      width: canvas.width,
+      height: canvas.height,
+      maxIterations: iterations,
+    };
+    const points: [number, number][] = [];
+    for (let y = 3; y < canvas.height; y += 5) {
+      for (let x = 3; x < canvas.width; x += 5) points.push([x, y]);
+    }
+    const shot = async (grid: number) => {
+      const r = await renderer.render({
+        ...base,
+        colors: { ...DEFAULT_COLORS, palette, ...colorOverrides, supersample: grid },
+      } as never);
+      return { px: await renderer.debugReadPixels(points), ms: r.renderMs };
+    };
+    const one = await shot(1);
+    const rows: string[] = [];
+    for (const grid of [2, 3]) {
+      const it = await shot(grid);
+      let differing = 0;
+      let worst = 0;
+      for (let i = 0; i < points.length; i++) {
+        let d = 0;
+        for (let ch = 0; ch < 3; ch++) d = Math.max(d, Math.abs(one.px[i][ch] - it.px[i][ch]));
+        if (d > 0) differing++;
+        worst = Math.max(worst, d);
+      }
+      rows.push(
+        `${grid}x${grid}   ${String(differing).padStart(6)}/${points.length} pixels differ ` +
+          `(${((differing / points.length) * 100).toFixed(1)}%)  worst channel ${worst}/255  ` +
+          `${it.ms.toFixed(0)}ms vs ${one.ms.toFixed(0)}ms`
+      );
+    }
+    stats.textContent = [
+      `span           ${span}   iterations ${iterations}`,
+      `sampled        ${points.length} pixels, against 1x1`,
+      ``,
+      ...rows,
+    ].join("\n");
+    console.log("[sscheck]\n" + stats.textContent);
+    return;
+  }
+
   // `&verify=1`: render the same view with and without linear approximation and
   // report how far apart the images are. An approximation that changes the
   // picture is not an approximation, it is a bug.
@@ -331,6 +381,7 @@ async function main() {
     `approximation  ${(result.skipRatio * 100).toFixed(1)}% of iterations skipped ` +
       `(${result.approxSteps.toLocaleString()} steps, ${result.skippedIterations.toLocaleString()} iterations)`,
     `rebases        ${result.rebases.toLocaleString()}`,
+    `capped         ${(result.cappedRatio * 100).toFixed(1)}% of samples used the whole budget`,
     `coverage       ${nonBlack}/${coveragePoints.length} sampled pixels escaped`,
     ...(diagnostic ? ["diagnostic", diagnostic] : []),
     `orbit check    (gpu reduced samples vs exact BigInt)`,

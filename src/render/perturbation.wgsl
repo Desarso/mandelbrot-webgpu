@@ -59,7 +59,14 @@ struct Uniforms {
 @group(0) @binding(4) var<storage, read> la: array<f32>;
 /** levelOffsets then levelCounts, laLevels each. */
 @group(0) @binding(5) var<storage, read> laIndex: array<u32>;
-/** [0] iterations skipped, [1] LA steps taken, [2] rebases, [3] plain steps. */
+/**
+ * [0] iterations skipped, [1] LA steps taken, [2] rebases, [3] plain steps,
+ * [4] samples that used the whole iteration budget, [5] samples total.
+ *
+ * [4] and [5] are what tells the caller whether the budget was the binding
+ * constraint. A sample that hit the cap either is interior or simply ran out
+ * of iterations, and only raising the cap distinguishes them.
+ */
 @group(0) @binding(6) var<storage, read_write> stats: array<atomic<u32>>;
 /**
  * One entry per sub-sample, holding everything the colouring needs and
@@ -640,6 +647,8 @@ fn compute(@builtin(global_invocation_id) gid: vec3<u32>) {
     var skips: u32 = 0u;
     var rebases: u32 = 0u;
     var plain: u32 = 0u;
+    var capped: u32 = 0u;
+    var total: u32 = 0u;
 
     for (var sy: u32 = 0u; sy < grid; sy = sy + 1u) {
         for (var sx: u32 = 0u; sx < grid; sx = sx + 1u) {
@@ -651,6 +660,8 @@ fn compute(@builtin(global_invocation_id) gid: vec3<u32>) {
             skips = skips + s.skips;
             rebases = rebases + s.rebases;
             plain = plain + (s.n - s.skipped);
+            total = total + 1u;
+            if (!s.escaped) { capped = capped + 1u; }
 
             // mode 2 is a diagnostic view: red = iterations used, green =
             // escaped, blue = log2 of the final delta, alpha = rebases. It
@@ -679,6 +690,8 @@ fn compute(@builtin(global_invocation_id) gid: vec3<u32>) {
     atomicAdd(&stats[1], skips);
     atomicAdd(&stats[2], rebases);
     atomicAdd(&stats[3], plain);
+    atomicAdd(&stats[4], capped);
+    atomicAdd(&stats[5], total);
 }
 
 /// Turns the stored field into pixels. No iteration happens here.

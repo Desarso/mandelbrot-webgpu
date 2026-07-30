@@ -117,6 +117,12 @@ export interface RenderStats {
   plainIterations: number;
   /** Fraction of iterations avoided by approximation, 0..1. */
   skipRatio: number;
+  /**
+   * Fraction of samples that used the whole iteration budget, 0..1. Includes
+   * genuine interior, so it is only meaningful compared against the same view
+   * rendered at a different budget.
+   */
+  cappedRatio: number;
 }
 
 /** Which per-pixel iteration the shader should run. Must match perturbation.wgsl. */
@@ -283,7 +289,7 @@ export class WebGpuRenderer {
     this.stopsBuffer = storageBuffer(ctx.device, MAX_STOPS * 4, "palette-stops");
     this.statsBuffer = storageBuffer(
       ctx.device,
-      4,
+      8,
       "render-stats",
       GPUBufferUsage.COPY_SRC
     );
@@ -894,7 +900,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     f32[38] = request.centerX.toNumber();
     f32[39] = request.centerY.toNumber();
     device.queue.writeBuffer(this.uniformBuffer, 0, uniforms);
-    device.queue.writeBuffer(this.statsBuffer, 0, new Uint32Array(4));
+    device.queue.writeBuffer(this.statsBuffer, 0, new Uint32Array(8));
 
     // What the field holds is a function of the geometry and the iteration,
     // not of the palette. Rebuilding it is the whole cost of a frame, so it is
@@ -1023,7 +1029,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       };
     }
 
-    const counters = new Uint32Array(await readBuffer(device, this.statsBuffer, 16));
+    const counters = new Uint32Array(await readBuffer(device, this.statsBuffer, 32));
     const skippedIterations = counters[0];
     const plainIterations = counters[3];
     const total = skippedIterations + plainIterations;
@@ -1042,6 +1048,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       rebases: counters[2],
       plainIterations,
       skipRatio: total > 0 ? skippedIterations / total : 0,
+      cappedRatio: counters[5] > 0 ? counters[4] / counters[5] : 0,
     };
   }
 }

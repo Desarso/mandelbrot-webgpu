@@ -62,7 +62,7 @@ export const DEFAULT_COLORS: ColorSettings = {
   cycle: 64,
   offset: 0,
   smooth: true,
-  mapping: 0,
+  mapping: 1,
   mirror: false,
   interior: "#000000",
   stops: ["#08103a", "#2f6bcb", "#f2ffff", "#ffaa00", "#3a1400"],
