@@ -45,6 +45,19 @@ const MEANINGFUL = 0.0002;
 /** Steps are powers of two, so a search spans a wide range in few renders. */
 const STEP = 2;
 
+/**
+ * Above this, treat the frame as telling us nothing except "not enough yet".
+ *
+ * Escape is a cliff, not a slope. Measured at 1e-25, the whole sampled frame
+ * was still capped at 2000 iterations, and at 4000, and at 13000 — and then
+ * at 20000 all but 318 of 7004 pixels escaped at once. Between those points
+ * doubling the budget changes the measurement by exactly nothing, which the
+ * "raising bought no improvement" rule reads as sufficiency. It is the
+ * opposite: nothing has escaped yet because the budget is nowhere near
+ * enough, and giving it back renders a black screen.
+ */
+const MOSTLY_CAPPED = 0.98;
+
 /** Never propose fewer than this; cheap views should still look right. */
 const MIN_ITERATIONS = 100;
 
@@ -65,6 +78,17 @@ export function nextIterations(probes: readonly Probe[], limit: number): Decisio
   const top = sorted[sorted.length - 1];
   const below = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
 
+  // Almost nothing has escaped. Keep raising regardless of what the last step
+  // did or did not buy, because below the escape threshold it buys nothing
+  // right up until it buys everything.
+  if (top.capped >= MOSTLY_CAPPED) {
+    const higher = clamp(top.iterations * STEP);
+    if (higher > top.iterations && !tried(higher)) {
+      return { action: "try", iterations: higher };
+    }
+    return { action: "settle", iterations: top.iterations };
+  }
+
   // Is the largest budget tried actually enough? Either nothing hit the cap,
   // or the step up to it converted almost nothing, which means the budget had
   // stopped being the binding constraint before we got there.
@@ -83,7 +107,10 @@ export function nextIterations(probes: readonly Probe[], limit: number): Decisio
   // cheapest budget that renders the same picture as the most expensive one,
   // and probe below it until that stops being true.
   const best = top.capped;
-  const sufficient = sorted.filter((p) => p.capped <= best + MEANINGFUL);
+  const sufficient = sorted.filter(
+    (p) => p.capped <= best + MEANINGFUL && p.capped < MOSTLY_CAPPED
+  );
+  if (sufficient.length === 0) return { action: "settle", iterations: top.iterations };
   const cheapest = sufficient[0];
 
   const lower = clamp(cheapest.iterations / STEP);

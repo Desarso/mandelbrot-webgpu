@@ -170,8 +170,10 @@ const App: Component = () => {
 
   // Follow the zoom while auto is on. The guard matters: setting the count
   // re-renders, which republishes the view, which lands back here.
-  // Probes taken for the view currently being measured.
+  // Probes taken for the view currently being measured, and what the last
+  // completed search settled on.
   let search: { key: string; probes: Probe[]; done: boolean } | null = null;
+  let settledIterations = 0;
 
   createEffect(() => {
     if (!autoIterations()) return;
@@ -187,7 +189,11 @@ const App: Component = () => {
       // A new view. Start from the depth estimate, which is a decent opening
       // guess, and let the measurements correct it from there.
       search = { key, probes: [], done: false };
-      const opening = info.suggestedIterations;
+      // Open from whatever the last search settled on rather than the depth
+      // estimate. Panning at a fixed zoom lands on a view with much the same
+      // requirement, and restarting from a guess makes the count visibly jump
+      // around while the search rediscovers the answer it already had.
+      const opening = settledIterations || info.suggestedIterations;
       if (opening > 0 && opening !== maxIterations()) {
         syncIterations(opening);
         return;
@@ -211,7 +217,10 @@ const App: Component = () => {
     search.probes.push({ iterations: measured, capped: info.cappedRatio });
 
     const decision = nextIterations(search.probes, MAX_ITERATIONS);
-    if (decision.action === "settle") search.done = true;
+    if (decision.action === "settle") {
+      search.done = true;
+      settledIterations = decision.iterations;
+    }
     if (decision.iterations !== measured) syncIterations(decision.iterations);
   });
 

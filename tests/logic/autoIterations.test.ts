@@ -30,6 +30,39 @@ function search(needed: number, interior: number, start: number) {
 }
 
 describe("nextIterations", () => {
+  it("climbs through a flat region where nothing escapes yet", () => {
+    // Real measurements at 1e-25: the whole sampled frame is still capped at
+    // 2000 iterations, and at 4000, and at 13000 — then all but 318 of 7004
+    // pixels escape at once at 20000. Doubling inside that flat region buys
+    // nothing measurable, and reading that as "enough" is what sent auto back
+    // to the floor and rendered a black screen.
+    const measure = (n: number): Probe => ({
+      iterations: n,
+      capped: n >= 16000 ? 318 / 7004 : 1,
+    });
+    const probes: Probe[] = [measure(2000)];
+    for (let i = 0; i < 40; i++) {
+      const d = nextIterations(probes, LIMIT);
+      if (d.action === "settle") {
+        expect(d.iterations).toBeGreaterThanOrEqual(16000);
+        return;
+      }
+      probes.push(measure(d.iterations));
+    }
+    throw new Error("did not converge");
+  });
+
+  it("never settles on a budget that leaves the frame all but black", () => {
+    // Two probes that both show a fully capped frame must not be read as
+    // agreeing that the smaller one is sufficient.
+    const probes: Probe[] = [
+      { iterations: 500, capped: 1 },
+      { iterations: 1000, capped: 1 },
+    ];
+    const decision = nextIterations(probes, LIMIT);
+    expect(decision.iterations).toBeGreaterThan(1000);
+  });
+
   it("climbs to what the view needs when it starts too low", () => {
     const { settled } = search(20000, 0.05, 1000);
     // Doubling from 1000 lands on 16000 or 32000; either renders the picture.
