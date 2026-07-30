@@ -209,7 +209,7 @@ Fractal renderers fail quietly — a subtly wrong image still looks like a
 fractal. Three layers, because each catches things the others cannot.
 
 ```bash
-pnpm test          # 51 checks: CPU oracle vs BigInt, no GPU needed
+pnpm test          # 70 checks: CPU oracle vs BigInt, no GPU needed
 ```
 
 Open **`/selftest.html`** for the GPU layer — 18 checks that run the actual WGSL
@@ -230,9 +230,12 @@ BigInt orbit computed in the page.
 | `&la=0` | disables the approximation |
 | `&verify=1` | renders with and without approximation and diffs the pixels |
 | `&bench=1` | times each configuration repeatedly with the orbit warm |
+| `&sweep=1` | renders one view at a range of iteration counts and reports how many pixels are still unresolved at each |
 
 `&verify=1` exists because an approximation that changes the picture is not an
-approximation; it caught two real bugs. `&bench=1` exists because single renders
+approximation; it caught two real bugs. `&sweep=1` is what the auto-iteration
+curve is calibrated against — guessing produced counts that were both too high
+where people explore and too low to render anything at all deeper. `&bench=1` exists because single renders
 across page loads are not comparable — orbit generation alone ranged from 292 ms
 to 15 s on the same machine within a few minutes, and three conclusions drawn
 from single measurements turned out to be noise.

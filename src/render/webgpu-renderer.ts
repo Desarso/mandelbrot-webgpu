@@ -12,6 +12,7 @@ import bigfixedSource from "../gpu/shaders/bigfixed.wgsl?raw";
 import orbitBindings from "../gpu/shaders/orbit-bindings.wgsl?raw";
 import orbitSource from "../gpu/shaders/orbit.wgsl?raw";
 import perturbationSource from "./perturbation.wgsl?raw";
+import { reprojectionFor } from "./reprojection";
 
 /**
  * Rows per dispatch, and a ceiling on how many dispatches a frame is split
@@ -747,34 +748,19 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
 
   reproject(request: RenderRequest): boolean {
     const last = this.lastFrame;
-    if (!last || !this.history || !this.historyValid || !this.blitPipeline) return false;
-    // Resolution may differ -- interaction renders smaller -- but a changed
-    // aspect ratio would stretch the picture, so that one does disqualify it.
-    const wasAspect = last.width / last.height;
-    const nowAspect = request.width / request.height;
-    if (Math.abs(wasAspect - nowAspect) > 0.01) return false;
-
-    const ratio = request.unitsPerPixel.div(last.unitsPerPixel).toNumber();
-    // Past a few doublings there is more stretched pixel than picture, and
-    // zooming out far enough leaves the old frame a speck in the middle.
-    if (!Number.isFinite(ratio) || ratio <= 0 || ratio > 8 || ratio < 1 / 64) {
+    if (!last || !this.history || !this.historyValid || !this.blitPipeline) {
       return false;
     }
 
-    // How far the centre moved, in old-frame pixels. Screen y runs downwards
-    // and the imaginary axis upwards, hence the negation.
-    const dx = request.centerX.minus(last.centerX).div(last.unitsPerPixel).toNumber();
-    const dy = last.centerY.minus(request.centerY).div(last.unitsPerPixel).toNumber();
-    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
-    if (Math.abs(dx) > request.width * 4 || Math.abs(dy) > request.height * 4) {
-      return false;
-    }
-
-    const offsetX = 0.5 * (1 - ratio) + dx / request.width;
-    const offsetY = 0.5 * (1 - ratio) + dy / request.height;
+    const mapping = reprojectionFor(last, request);
+    if (!mapping) return false;
 
     const encoder = this.ctx.device.createCommandEncoder({ label: "reproject" });
-    this.encodeBlit(encoder, this.history, new Float32Array([ratio, ratio, offsetX, offsetY]));
+    this.encodeBlit(
+      encoder,
+      this.history,
+      new Float32Array([mapping.scale, mapping.scale, mapping.offsetX, mapping.offsetY])
+    );
     this.ctx.device.queue.submit([encoder.finish()]);
     return true;
   }
