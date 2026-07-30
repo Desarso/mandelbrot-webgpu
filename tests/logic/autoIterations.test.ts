@@ -69,11 +69,23 @@ describe("nextIterations", () => {
     expect(settled).toBeGreaterThanOrEqual(16000);
   });
 
-  it("gives budget back when it starts far too high", () => {
-    // This is the complaint that started it: auto guessing much too high.
+  it("never proposes a count below one it has already confirmed", () => {
+    // Probing downward is how the count used to flash black mid-zoom: below
+    // the escape threshold a smaller budget does not render a worse picture,
+    // it renders no picture. The cost is that an opening guess which is too
+    // high stays too high, which is why the opening guess comes from the
+    // previous view's measurement rather than from a formula.
     const { settled } = search(1600, 0.09, 51200);
-    expect(settled).toBeLessThan(51200);
-    expect(settled).toBeGreaterThanOrEqual(1600);
+    expect(settled).toBeGreaterThanOrEqual(51200);
+  });
+
+  it("respects a floor, so zooming in never lowers the count", () => {
+    const probes: Probe[] = [
+      { iterations: 8000, capped: 0.05 },
+      { iterations: 16000, capped: 0.05 },
+    ];
+    const decision = nextIterations(probes, LIMIT, 8000);
+    expect(decision.iterations).toBeGreaterThanOrEqual(8000);
   });
 
   it("settles immediately when the starting guess is already right", () => {
@@ -103,9 +115,11 @@ describe("nextIterations", () => {
     expect(decision.action).toBe("settle");
   });
 
-  it("treats a wholly escaped frame as budget to give back", () => {
+  it("settles at once when nothing hit the cap", () => {
+    // Every sample escaped, so the budget is definitively not the constraint
+    // and raising it further would learn nothing.
     const decision = nextIterations([{ iterations: 8000, capped: 0 }], LIMIT);
-    expect(decision).toEqual({ action: "try", iterations: 4000 });
+    expect(decision).toEqual({ action: "settle", iterations: 8000 });
   });
 
   it("does not mistake genuine interior for an insufficient budget", () => {

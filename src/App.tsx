@@ -172,8 +172,10 @@ const App: Component = () => {
   // re-renders, which republishes the view, which lands back here.
   // Probes taken for the view currently being measured, and what the last
   // completed search settled on.
-  let search: { key: string; probes: Probe[]; done: boolean } | null = null;
+  let search: { key: string; probes: Probe[]; done: boolean; floor: number } | null =
+    null;
   let settledIterations = 0;
+  let settledZoom = 0;
 
   createEffect(() => {
     if (!autoIterations()) return;
@@ -188,12 +190,22 @@ const App: Component = () => {
     if (!search || search.key !== key) {
       // A new view. Start from the depth estimate, which is a decent opening
       // guess, and let the measurements correct it from there.
-      search = { key, probes: [], done: false };
+      // Zooming in never needs fewer iterations than the view it came from, so
+      // the previous answer becomes a floor. Without it the search would try a
+      // smaller count on the way to confirming the larger one, and at depth a
+      // smaller count does not render a worse picture, it renders a black one.
+      const zoomingIn = settledZoom > 0 && info.zoom > settledZoom;
+      const floor = zoomingIn ? settledIterations : 0;
+      search = { key, probes: [], done: false, floor };
+
       // Open from whatever the last search settled on rather than the depth
       // estimate. Panning at a fixed zoom lands on a view with much the same
       // requirement, and restarting from a guess makes the count visibly jump
-      // around while the search rediscovers the answer it already had.
-      const opening = settledIterations || info.suggestedIterations;
+      // around while the search rediscovers the answer it already had. Zooming
+      // out is the one case where a lower count is legitimate.
+      const opening = zoomingIn
+        ? Math.max(settledIterations, info.suggestedIterations)
+        : settledIterations || info.suggestedIterations;
       if (opening > 0 && opening !== maxIterations()) {
         syncIterations(opening);
         return;
@@ -216,10 +228,11 @@ const App: Component = () => {
     if (search.probes.some((p) => p.iterations === measured)) return;
     search.probes.push({ iterations: measured, capped: info.cappedRatio });
 
-    const decision = nextIterations(search.probes, MAX_ITERATIONS);
+    const decision = nextIterations(search.probes, MAX_ITERATIONS, search.floor);
     if (decision.action === "settle") {
       search.done = true;
       settledIterations = decision.iterations;
+      settledZoom = info.zoom;
     }
     if (decision.iterations !== measured) syncIterations(decision.iterations);
   });

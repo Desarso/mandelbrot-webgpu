@@ -64,58 +64,62 @@ const MIN_ITERATIONS = 100;
 /**
  * Decides what to render next, given the probes taken so far for one view.
  *
- * `probes` is in the order they were taken and must be non-empty. Returns
- * either the next count to try, or the count to settle on.
+ * Only ever proposes going *up*, or settling on a count already measured and
+ * found sufficient. It never probes below what it knows works, because a probe
+ * below the escape threshold does not render a slightly worse picture — it
+ * renders a black one, and doing that mid-zoom is a visible flash of nothing.
+ *
+ * The cost of never probing down is that an opening guess which is too high
+ * stays too high. That is the right trade: the opening guess comes from what
+ * the previous view actually measured rather than from a formula, so it is
+ * rarely far out, and zooming out resets it toward the depth estimate.
+ *
+ * `probes` is in the order they were taken and must be non-empty. `floor` is a
+ * count never to go below — while zooming in, what the shallower view needed.
  */
-export function nextIterations(probes: readonly Probe[], limit: number): Decision {
-  const clamp = (n: number) =>
-    Math.max(MIN_ITERATIONS, Math.min(limit, Math.round(n)));
+export function nextIterations(
+  probes: readonly Probe[],
+  limit: number,
+  floor = MIN_ITERATIONS
+): Decision {
+  const low = Math.max(MIN_ITERATIONS, floor);
+  const clamp = (n: number) => Math.max(low, Math.min(limit, Math.round(n)));
   const tried = (n: number) => probes.some((p) => p.iterations === n);
 
-  // Capped fraction falls as the budget rises and never rises, so sorting by
-  // budget also sorts by how resolved the frame is.
   const sorted = [...probes].sort((a, b) => a.iterations - b.iterations);
   const top = sorted[sorted.length - 1];
   const below = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
 
-  // Almost nothing has escaped. Keep raising regardless of what the last step
-  // did or did not buy, because below the escape threshold it buys nothing
-  // right up until it buys everything.
-  if (top.capped >= MOSTLY_CAPPED) {
+  const raise = (): Decision => {
     const higher = clamp(top.iterations * STEP);
     if (higher > top.iterations && !tried(higher)) {
       return { action: "try", iterations: higher };
     }
     return { action: "settle", iterations: top.iterations };
-  }
+  };
 
-  // Is the largest budget tried actually enough? Either nothing hit the cap,
-  // or the step up to it converted almost nothing, which means the budget had
-  // stopped being the binding constraint before we got there.
-  const enough =
-    top.capped === 0 || (below !== null && below.capped - top.capped <= MEANINGFUL);
+  // Every sample escaped, so the budget is definitively not the constraint.
+  // Nothing is learned by raising it further.
+  if (top.capped === 0) return { action: "settle", iterations: top.iterations };
 
-  if (!enough) {
-    const higher = clamp(top.iterations * STEP);
-    if (higher > top.iterations && !tried(higher)) {
-      return { action: "try", iterations: higher };
-    }
-    return { action: "settle", iterations: top.iterations };
-  }
+  // Almost nothing has escaped. Keep raising whatever the last step appeared
+  // to buy, because below the escape threshold it buys nothing right up until
+  // it buys everything.
+  if (top.capped >= MOSTLY_CAPPED) return raise();
 
-  // It is enough, so the question becomes how much can be given back. Take the
-  // cheapest budget that renders the same picture as the most expensive one,
-  // and probe below it until that stops being true.
+  // One measurement cannot say whether the budget was binding; it takes two at
+  // different budgets to see whether more of it converts anything.
+  if (below === null) return raise();
+
+  // More budget is still resolving pixels, so it is still the constraint.
+  if (below.capped - top.capped > MEANINGFUL) return raise();
+
+  // It has stopped mattering. Settle on the cheapest count already measured
+  // that draws the same picture — no new probe, so nothing can flash black.
   const best = top.capped;
   const sufficient = sorted.filter(
     (p) => p.capped <= best + MEANINGFUL && p.capped < MOSTLY_CAPPED
   );
-  if (sufficient.length === 0) return { action: "settle", iterations: top.iterations };
-  const cheapest = sufficient[0];
-
-  const lower = clamp(cheapest.iterations / STEP);
-  if (lower < cheapest.iterations && !tried(lower)) {
-    return { action: "try", iterations: lower };
-  }
-  return { action: "settle", iterations: cheapest.iterations };
+  const cheapest = sufficient.length > 0 ? sufficient[0] : top;
+  return { action: "settle", iterations: Math.max(low, cheapest.iterations) };
 }
