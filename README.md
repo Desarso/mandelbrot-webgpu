@@ -14,9 +14,21 @@ Live at **[mandelbrot.gabrielmalek.com](https://mandelbrot.gabrielmalek.com)**.
 
 Both pages, and the whole interface, exist in 83 languages.
 
+<p>
+  <img src="docs/screenshots/desktop-seahorse-valley.webp" alt="Seahorse Valley at 2.3e5x with the Places tab open" width="66%">
+  <img src="docs/screenshots/phone-seahorse-valley.webp" alt="The same view on a phone, controls collapsed" width="24%">
+</p>
+<img src="docs/screenshots/desktop-home.webp" alt="The home view with the colour panel" width="66%">
+
+<sub>Screenshots of the live site taken in headless Chromium without a GPU, so
+the readout shows the WebGL2 fallback. Both paths handle views this shallow;
+only the WebGPU path goes past about `1e-34`.</sub>
+
 ```bash
 pnpm install
-pnpm dev
+pnpm dev          # Vite dev server
+pnpm build        # static bundle in dist/
+pnpm test         # CPU-side test suite, no GPU needed
 ```
 
 GPLv3 — see [LICENSE](LICENSE), and [LICENSE.md](LICENSE.md) for why.
@@ -209,8 +221,12 @@ Fractal renderers fail quietly — a subtly wrong image still looks like a
 fractal. Three layers, because each catches things the others cannot.
 
 ```bash
-pnpm test          # 70 checks: CPU oracle vs BigInt, no GPU needed
+pnpm test          # 82 tests, no GPU needed
 ```
+
+The CPU suite checks the fixed-point arithmetic against an exact BigInt oracle,
+and covers the skip table, nucleus finding, method selection, reprojection and
+the iteration curves.
 
 Open **`/selftest.html`** for the GPU layer — 18 checks that run the actual WGSL
 against the BigInt oracle on real hardware: `mul32` over 4102 cases including
@@ -280,10 +296,12 @@ src/
   gpu/           device setup, WGSL arithmetic library, self-test
   orbit/         nucleus finding (Newton, period detection, size estimate)
   render/        backends (webgl, webgpu), perturbation shader, BLA table
+  ui/            shared controls
   logic/         view state, input, URL encoding, colour settings, locations
   i18n/          source strings, generated locales, language detection
 scripts/         translation generator
 tests/           vitest, CPU oracle
+*.html           entry points: index, about, tech, gpu, selftest
 ```
 
 The app picks **WebGPU** when the browser exposes it and falls back to
