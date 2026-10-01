@@ -8,9 +8,17 @@
 
 import Decimal from "decimal.js";
 import { compileShader, readBuffer, storageBuffer, type GpuContext } from "../gpu/device";
-import bigfixedSource from "../gpu/shaders/bigfixed.wgsl?raw";
-import orbitBindings from "../gpu/shaders/orbit-bindings.wgsl?raw";
-import orbitSource from "../gpu/shaders/orbit.wgsl?raw";
+import {
+  createOrbitBindGroup,
+  createOrbitBuffers,
+  createOrbitPipeline,
+  destroyOrbitBuffers,
+  orbitKernelFor,
+  orbitModule,
+  orbitSharedModule,
+  type OrbitBuffers,
+  type OrbitKernel,
+} from "../gpu/orbit-kernel";
 import perturbationSource from "./perturbation.wgsl?raw";
 import { reprojectionFor } from "./reprojection";
 
@@ -46,8 +54,6 @@ const IDENTITY_XFORM = new Float32Array([1, 1, 0, 0]);
 import { hexToRgb, MAX_STOPS, type ColorSettings } from "../logic/colorSettings";
 import { parseFixed } from "../arithmetic/types";
 import { BASE_STEP, ENTRY_FLOATS, buildBla } from "./bla";
-
-const orbitModule = [orbitBindings, bigfixedSource, orbitSource].join("\n");
 
 /** Precision profiles, chosen from the zoom depth. */
 const LIMB_PROFILES = [8, 16, 32, 64, 128, 256] as const;
@@ -200,17 +206,14 @@ function splitComplex(x: Decimal, y: Decimal) {
   };
 }
 
-function scratchWords(limbs: number): number {
-  return 7 * limbs + 2 * limbs * 3;
-}
-
 export class WebGpuRenderer {
   private ctx: GpuContext;
   private canvas: HTMLCanvasElement;
   private context: GPUCanvasContext;
   private format: GPUTextureFormat;
 
-  private orbitPipelines = new Map<number, GPUComputePipeline>();
+  private orbitPipelines = new Map<number, { pipeline: GPUComputePipeline; kernel: OrbitKernel }>();
+  private orbitModules = new Map<OrbitKernel, GPUShaderModule>();
   private renderPipeline: GPUComputePipeline | null = null;
   private blitPipeline: GPURenderPipeline | null = null;
 
@@ -254,6 +257,12 @@ export class WebGpuRenderer {
   private statsBuffer: GPUBuffer;
   private orbitBuffer: GPUBuffer | null = null;
   private orbitCapacity = 0;
+  /**
+   * The current reference's state, seed and status cursor, kept after the
+   * orbit is built so that raising the iteration count can carry on from the
+   * last sample instead of starting again from z = 0.
+   */
+  private orbitBuffers: OrbitBuffers | null = null;
 
   /** Cached reference orbit: regenerating it per frame would kill panning. */
   private refX = new Decimal(0);
@@ -388,78 +397,80 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     });
   }
 
-  private orbitPipeline(limbs: number): GPUComputePipeline {
+  private orbitPipeline(limbs: number): { pipeline: GPUComputePipeline; kernel: OrbitKernel } {
     const cached = this.orbitPipelines.get(limbs);
     if (cached) return cached;
+    const { device } = this.ctx;
+    const kernel = orbitKernelFor(device, limbs);
     // The module compiled cleanly during the self-test, so plain creation is
     // safe here; errors would already have surfaced at init.
-    const module = this.ctx.device.createShaderModule({
-      label: `orbit-${limbs}`,
-      code: orbitModule,
-    });
-    const pipeline = this.ctx.device.createComputePipeline({
-      label: `orbit-${limbs}`,
-      layout: "auto",
-      compute: { module, entryPoint: "advanceOrbit", constants: { LIMBS: limbs } },
-    });
-    this.orbitPipelines.set(limbs, pipeline);
-    return pipeline;
+    let module = this.orbitModules.get(kernel);
+    if (!module) {
+      module = device.createShaderModule({
+        label: `orbit-${kernel}`,
+        code: kernel === "shared" ? orbitSharedModule : orbitModule,
+      });
+      this.orbitModules.set(kernel, module);
+    }
+    const entry = { pipeline: createOrbitPipeline(device, module, kernel, limbs), kernel };
+    this.orbitPipelines.set(limbs, entry);
+    return entry;
   }
 
-  /** Generates the reference orbit at the view centre, entirely on the GPU. */
+  /**
+   * Generates the reference orbit at the view centre, entirely on the GPU.
+   *
+   * With `extend`, carries the current orbit on from its last sample instead.
+   * Raising the iteration count does not change a single sample already
+   * computed -- the orbit is the same sequence, just longer -- and the auto
+   * iteration search raises it by doubling, so rebuilding from z = 0 spent
+   * half or more of every rebuild recomputing what was already there.
+   */
   private async generateOrbit(
     request: RenderRequest,
-    limbs: number
+    limbs: number,
+    extend: boolean
   ): Promise<{ length: number; escaped: boolean; ms: number }> {
     const { device } = this.ctx;
     const started = performance.now();
     const maxSamples = request.maxIterations + 1;
+    const { pipeline, kernel } = this.orbitPipeline(limbs);
 
-    this.ensureOrbitCapacity(maxSamples);
+    let sampleCount = 1;
+    if (extend && this.orbitBuffers) {
+      // State, seed and the status cursor already describe the last sample;
+      // only the sample buffer has to grow, keeping what it holds.
+      sampleCount = this.refLength;
+      this.ensureOrbitCapacity(maxSamples, sampleCount);
+    } else {
+      if (this.orbitBuffers) destroyOrbitBuffers(this.orbitBuffers);
+      this.ensureOrbitCapacity(maxSamples);
+      this.orbitBuffers = createOrbitBuffers(device, kernel, limbs);
+      const { seed, state, status } = this.orbitBuffers;
 
-    const pipeline = this.orbitPipeline(limbs);
-    const state = storageBuffer(device, limbs * 2, "orbit-state");
-    const seed = storageBuffer(device, limbs * 2, "orbit-seed");
-    const scratch = storageBuffer(device, scratchWords(limbs), "orbit-scratch");
-    const status = storageBuffer(device, 4, "orbit-status", GPUBufferUsage.COPY_SRC);
-    const params = device.createBuffer({
-      size: 16,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
+      const seedData = new Uint32Array(limbs * 2);
+      seedData.set(parseFixed(request.centerX.toFixed(), limbs), 0);
+      seedData.set(parseFixed(request.centerY.toFixed(), limbs), limbs);
+      device.queue.writeBuffer(seed, 0, seedData);
+      device.queue.writeBuffer(state, 0, new Uint32Array(limbs * 2));
+      // `sampleCount` counts written samples; sample 0 (z = 0) comes from the
+      // CPU. The shader emits at `startIndex + iter + 1`, so startIndex must
+      // be the index of the last sample already written, i.e. sampleCount - 1.
+      // Passing the count itself skips one sample per batch and shifts all
+      // the rest. Sample 0 (z = 0) is written by the CPU, so the shader
+      // resumes from 1.
+      device.queue.writeBuffer(status, 0, new Uint32Array([1, 0, 0, 0]));
+      device.queue.writeBuffer(this.orbitBuffer!, 0, new Float32Array(6));
+    }
 
-    const seedData = new Uint32Array(limbs * 2);
-    seedData.set(parseFixed(request.centerX.toFixed(), limbs), 0);
-    seedData.set(parseFixed(request.centerY.toFixed(), limbs), limbs);
-    device.queue.writeBuffer(seed, 0, seedData);
-    device.queue.writeBuffer(state, 0, new Uint32Array(limbs * 2));
-    device.queue.writeBuffer(status, 0, new Uint32Array(4));
-    device.queue.writeBuffer(this.orbitBuffer!, 0, new Float32Array(6));
-
-    const bind = device.createBindGroup({
-      layout: pipeline.getBindGroupLayout(0),
-      entries: [
-        { binding: 0, resource: { buffer: state } },
-        { binding: 1, resource: { buffer: seed } },
-        { binding: 2, resource: { buffer: scratch } },
-        { binding: 3, resource: { buffer: this.orbitBuffer! } },
-        { binding: 4, resource: { buffer: status } },
-        { binding: 5, resource: { buffer: params } },
-      ],
-    });
-
-    // `sampleCount` counts written samples; sample 0 (z = 0) comes from the CPU.
-    // The shader emits at `startIndex + iter + 1`, so startIndex must be the
-    // index of the last sample already written, i.e. sampleCount - 1. Passing
-    // the count itself skips one sample per batch and shifts all the rest.
-    // Sample 0 (z = 0) is written by the CPU, so the shader resumes from 1.
-    device.queue.writeBuffer(status, 0, new Uint32Array([1, 0, 0, 0]));
+    const buffers = this.orbitBuffers!;
+    const bind = createOrbitBindGroup(device, pipeline, buffers, this.orbitBuffer!);
     device.queue.writeBuffer(
-      params,
+      buffers.params,
       0,
       new Uint32Array([ORBIT_BATCH, 0, maxSamples, 0])
     );
 
-    let sampleCount = 1;
     let escaped = false;
     let batchLimit = DISPATCHES_PER_SUBMIT;
 
@@ -484,7 +495,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       device.queue.submit([encoder.finish()]);
 
       // Only the 4-word status comes back; the big state never leaves the GPU.
-      const raw = new Uint32Array(await readBuffer(device, status, 16));
+      const raw = new Uint32Array(await readBuffer(device, buffers.status, 16));
 
       // Aim the next submission at the budget. A deep view at a high limb
       // count can take milliseconds per dispatch, and 24 of those in one
@@ -503,7 +514,6 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       }
     }
 
-    [state, seed, scratch, status, params].forEach((b) => b.destroy());
     return {
       length: Math.max(2, sampleCount),
       escaped,
@@ -674,15 +684,22 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     this.fieldKey = "";
   }
 
-  private ensureOrbitCapacity(samples: number) {
+  /** Grows the sample buffer, carrying the first `keep` samples across. */
+  private ensureOrbitCapacity(samples: number, keep = 0) {
     if (this.orbitCapacity >= samples && this.orbitBuffer) return;
-    this.orbitBuffer?.destroy();
-    this.orbitBuffer = storageBuffer(
+    const grown = storageBuffer(
       this.ctx.device,
       samples * 6,
       "orbit-samples",
       GPUBufferUsage.COPY_SRC
     );
+    if (this.orbitBuffer && keep > 0) {
+      const encoder = this.ctx.device.createCommandEncoder({ label: "orbit-grow" });
+      encoder.copyBufferToBuffer(this.orbitBuffer, 0, grown, 0, keep * 24);
+      this.ctx.device.queue.submit([encoder.finish()]);
+    }
+    this.orbitBuffer?.destroy();
+    this.orbitBuffer = grown;
     this.orbitCapacity = samples;
   }
 
@@ -791,11 +808,14 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       .minus(this.refX)
       .abs()
       .plus(request.centerY.minus(this.refY).abs());
-    const stale =
-      !this.refValid ||
-      limbs !== this.refLimbs ||
-      request.maxIterations > this.refIterations ||
-      drift.greaterThan(halfSpan.times(0.5));
+    const sameReference =
+      this.refValid && limbs === this.refLimbs && !drift.greaterThan(halfSpan.times(0.5));
+    const needsMore = request.maxIterations > this.refIterations;
+    // An orbit that escaped already has every sample it will ever have; a
+    // larger budget would only recompute them. One that did not can be
+    // carried on from where it stopped.
+    const extend = sameReference && needsMore && !this.refEscaped;
+    const stale = !sameReference || extend;
 
     // Mid-gesture, keep whatever reference we have. Perturbation stays exact
     // with a stale reference — it just rebases more — and rebuilding costs tens
@@ -804,9 +824,13 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
 
     let orbitMs = 0;
     if (method !== Method.Direct && stale && canRebuild) {
-      this.refX = request.centerX;
-      this.refY = request.centerY;
-      const orbit = await this.generateOrbit(request, limbs);
+      // Extending keeps the reference where it is: the view may have moved a
+      // little since, but the orbit belongs to the point it was seeded with.
+      if (!extend) {
+        this.refX = request.centerX;
+        this.refY = request.centerY;
+      }
+      const orbit = await this.generateOrbit(request, limbs, extend);
       this.refLimbs = limbs;
       this.refIterations = request.maxIterations;
       this.refLength = orbit.length;

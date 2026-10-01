@@ -115,8 +115,11 @@ fn advanceOrbit(@builtin(local_invocation_id) local: vec3<u32>) {
     // before any commands in the submission, so a per-dispatch uniform could
     // not vary within one encoder — self-sequencing sidesteps that entirely and
     // turns hundreds of CPU round trips into a handful.
+    // A full sample buffer stops the run like an escape does. Iterating past
+    // it would leave `state` ahead of the last sample written, and the orbit
+    // could no longer be extended from where it stopped.
     if (tid == 0u) {
-        escaped = status[1];
+        escaped = select(status[1], 1u, status[0] >= params.maxSamples);
         resumeAt = status[0] - 1u;   // index of the last sample written
     }
     // Uniform load: the early exit below is control flow guarding barriers.
@@ -165,6 +168,7 @@ fn advanceOrbit(@builtin(local_invocation_id) local: vec3<u32>) {
                 status[1] = 1u;
                 status[2] = index;
             }
+            if (index + 1u >= params.maxSamples) { escaped = 1u; }
         }
         sync();
     }
