@@ -70,8 +70,19 @@ cannot overflow before the carry pass.
 parallelism available is *inside* each big-number operation. Running the whole
 recurrence in a single workgroup gives barriers instead of the grid-wide
 synchronisation WebGPU does not have, and lets one dispatch advance hundreds of
-iterations with no CPU round trip. Multiplication spreads its columns across 256
-threads; carry resolution is serial.
+iterations with no CPU round trip. The three products an iteration needs —
+`x²`, `y²`, `xy` — accumulate their columns in one parallel pass, each product
+then resolves its carries on its own thread, and `x'` and `y'` are assembled
+side by side, all in workgroup memory: four barriers an iteration. Measured on a
+GTX 1660 Ti at 8 limbs, **3.4 µs an iteration**, against 17.2 µs when the three
+multiplications ran one after another out of a storage buffer. That older kernel
+stays as the fallback for a device whose workgroup memory is too small, and the
+self-test holds the two to the same samples bit for bit.
+
+Raising the iteration count does not change a sample already computed, so the
+orbit is carried on from its last sample rather than rebuilt from zero, and one
+that already escaped is not recomputed at all. The auto-iteration search raises
+the count by doubling; at `1e-38` a 25% raise went from 555 ms to 152 ms.
 
 **Nothing big comes back.** The CPU uploads the centre once, encodes batches of
 dispatches, and reads a four-word status buffer per batch. The high-precision
@@ -173,13 +184,19 @@ in linear light with a single gamma encode at the end.
 
 ## Staying responsive
 
-- **Banded rendering.** A frame is four horizontal bands with a yield between
-  them, so a gesture arriving mid-frame costs one band rather than a screen.
-  Band size adapts to measured cost, targeting 50 ms per submission — a command
-  that runs too long is killed by the driver watchdog, which takes the device
-  and the tab with it. Fencing between bands is the obvious implementation and
-  is badly wrong: it drains the pipeline, and eight fenced bands took 569 ms
-  against 215 ms unsplit.
+- **Banded rendering.** A frame is split into horizontal bands sized from the
+  measured GPU cost of the last comparable frame, targeting 50 ms per
+  submission — a command that runs too long is killed by the driver watchdog,
+  which takes the device and the tab with it. A frame nothing has been measured
+  for gets four. Cheap frames run as one band: every dispatch ends in a tail
+  waiting on its slowest pixels, and a quarter-resolution gesture frame at
+  `1e-38` took 21 ms in four bands and 16 ms in one. Fencing between bands is
+  the obvious implementation and is badly wrong: it drains the pipeline, and
+  eight fenced bands took 569 ms against 215 ms unsplit. Not fencing at all is
+  wrong the other way — every band is queued within a millisecond, so a gesture
+  arriving mid-frame finds nothing left to cancel. So one band stays queued
+  behind the one running: a gesture 10 ms into a full 1280×800 frame at
+  `6e-42` gets its first frame after 108 ms instead of 182 ms.
 - **Reprojection.** A pan or zoom moves the picture far more often than it
   changes it, so the last completed frame is re-blitted under the new view
   transform while the real one computes. One full-screen triangle, and exact
@@ -209,15 +226,16 @@ Fractal renderers fail quietly — a subtly wrong image still looks like a
 fractal. Three layers, because each catches things the others cannot.
 
 ```bash
-pnpm test          # 70 checks: CPU oracle vs BigInt, no GPU needed
+pnpm test          # 133 checks: CPU oracle vs BigInt, no GPU needed
 ```
 
-Open **`/selftest.html`** for the GPU layer — 18 checks that run the actual WGSL
+Open **`/selftest.html`** for the GPU layer — 31 checks that run the actual WGSL
 against the BigInt oracle on real hardware: `mul32` over 4102 cases including
 every boundary value, big add/sub/multiply at 8/16/64 limbs, and reference
 orbits compared sample-for-sample. Batch sizes 1, 7 and 128 are checked
 separately; a single-dispatch run cannot catch a batch-boundary bug, and one
-lived there until it was.
+lived there until it was. Both orbit kernels are checked against the oracle and
+against each other word for word, including an orbit extended part-way through.
 
 Open **`/gpu.html?cx=…&cy=…&span=…&i=…`** to render one view on the WebGPU path
 with timings, plus a live comparison of the reduced orbit against an exact
@@ -305,8 +323,10 @@ Techniques that were evaluated and found not to help here:
   strictly more general — it applies at any point in the orbit rather than only
   the start — and is already implemented, to second order.
 - **Web Worker split.** The only synchronous main-thread work of consequence is
-  building the skip table, 17–25 ms once per orbit. Everything else is GPU work
-  behind an `await`. An OffscreenCanvas rewrite to move 20 ms is not worth it.
+  building the skip table once per orbit: 12.6 ms for 20,000 iterations and
+  110 ms for 200,000 in Chrome on Linux, since it stopped allocating an object
+  per complex operation (it was 42 ms and 366 ms). Everything else is GPU work
+  behind an `await`. An OffscreenCanvas rewrite to move that is not worth it.
 
 Genuinely not done: browser matrix beyond Chrome on macOS, and recovery from a
 lost GPU device (it is detected and reported, but the page must be reloaded).

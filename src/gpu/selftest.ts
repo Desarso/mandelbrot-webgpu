@@ -15,8 +15,16 @@ import {
 import bigfixedSource from "./shaders/bigfixed.wgsl?raw";
 import arithtestBindings from "./shaders/arithtest-bindings.wgsl?raw";
 import arithtestSource from "./shaders/arithtest.wgsl?raw";
-import orbitBindings from "./shaders/orbit-bindings.wgsl?raw";
-import orbitSource from "./shaders/orbit.wgsl?raw";
+import {
+  createOrbitBindGroup,
+  createOrbitBuffers,
+  createOrbitPipeline,
+  destroyOrbitBuffers,
+  orbitKernelFor,
+  orbitModule,
+  orbitSharedModule,
+  type OrbitKernel,
+} from "./orbit-kernel";
 import {
   fromLimbs,
   parseFixed,
@@ -34,7 +42,6 @@ import {
 
 // Bindings must precede the arithmetic library: WGSL has no forward references.
 export const arithtestModule = [arithtestBindings, bigfixedSource, arithtestSource].join("\n");
-export const orbitModule = [orbitBindings, bigfixedSource, orbitSource].join("\n");
 
 export interface CheckResult {
   name: string;
@@ -220,87 +227,112 @@ async function checkBigOp(
   };
 }
 
+interface OrbitRun {
+  /** Raw sample words, so two runs can be compared bit for bit. */
+  words: Uint32Array;
+  sampleCount: number;
+  escaped: boolean;
+  ms: number;
+}
+
 /**
+ * Advances an orbit the way the renderer does: many dispatches, each resuming
+ * from the status buffer.
+ *
  * @param batchSize when set, the orbit is advanced in several dispatches
  * instead of one. That path has its own index bookkeeping and has to be
  * checked separately -- a single dispatch cannot catch a batch-boundary bug.
+ * @param pauseAt when set, stops there, then grows the sample buffer and
+ * carries on from the state the first run left behind, which is how the
+ * renderer extends an orbit when the iteration count goes up.
  */
+async function runOrbit(
+  ctx: GpuContext,
+  kernel: OrbitKernel,
+  limbs: number,
+  centerX: string,
+  centerY: string,
+  iterations: number,
+  batchSize?: number,
+  pauseAt?: number
+): Promise<OrbitRun> {
+  const { device } = ctx;
+  const source = kernel === "shared" ? orbitSharedModule : orbitModule;
+  const module = await compileShader(device, source, `orbit-${kernel}`);
+  const pipeline = createOrbitPipeline(device, module, kernel, limbs);
+  const buffers = createOrbitBuffers(device, kernel, limbs);
+
+  const seedData = new Uint32Array(limbs * 2);
+  seedData.set(parseFixed(centerX, limbs), 0);
+  seedData.set(parseFixed(centerY, limbs), limbs);
+  device.queue.writeBuffer(buffers.seed, 0, seedData);
+  device.queue.writeBuffer(buffers.state, 0, new Uint32Array(limbs * 2));
+  // status[0] is the resume cursor: the shader continues from the last sample
+  // written, and sample 0 (z = 0) is written here.
+  device.queue.writeBuffer(buffers.status, 0, new Uint32Array([1, 0, 0, 0]));
+
+  const started = performance.now();
+  let rawStatus = new Uint32Array(4);
+  let sampleCount = 1;
+  const batch = batchSize ?? iterations;
+  let samples: GPUBuffer | null = null;
+
+  for (const target of pauseAt ? [pauseAt, iterations] : [iterations]) {
+    const maxSamples = target + 1;
+    const grown = storageBuffer(device, maxSamples * 6, "orbit-samples", GPUBufferUsage.COPY_SRC);
+    if (samples) {
+      const encoder = device.createCommandEncoder();
+      encoder.copyBufferToBuffer(samples, 0, grown, 0, sampleCount * 24);
+      device.queue.submit([encoder.finish()]);
+      samples.destroy();
+    } else {
+      device.queue.writeBuffer(grown, 0, new Float32Array(6));
+    }
+    samples = grown;
+    const bind = createOrbitBindGroup(device, pipeline, buffers, samples);
+
+    while (sampleCount - 1 < target) {
+      const done = sampleCount - 1;
+      device.queue.writeBuffer(
+        buffers.params,
+        0,
+        new Uint32Array([Math.min(batch, target - done), 0, maxSamples, 0])
+      );
+      const encoder = device.createCommandEncoder();
+      const pass = encoder.beginComputePass();
+      pass.setPipeline(pipeline);
+      pass.setBindGroup(0, bind);
+      pass.dispatchWorkgroups(1);
+      pass.end();
+      device.queue.submit([encoder.finish()]);
+
+      rawStatus = new Uint32Array(await readBuffer(device, buffers.status, 16));
+      if (rawStatus[0] <= sampleCount) break;
+      sampleCount = rawStatus[0];
+      if (rawStatus[1] === 1) break;
+    }
+    if (rawStatus[1] === 1) break;
+  }
+  const ms = performance.now() - started;
+  // An escape during the first leg leaves the buffer at its first size.
+  const words = new Uint32Array(await readBuffer(device, samples!, samples!.size));
+  samples!.destroy();
+  destroyOrbitBuffers(buffers);
+  return { words, sampleCount, escaped: rawStatus[1] === 1, ms };
+}
+
 async function checkOrbit(
   ctx: GpuContext,
+  kernel: OrbitKernel,
   limbs: number,
   centerX: string,
   centerY: string,
   iterations: number,
   batchSize?: number
 ): Promise<CheckResult> {
-  const { device } = ctx;
+  const run = await runOrbit(ctx, kernel, limbs, centerX, centerY, iterations, batchSize);
+  const data = new Float32Array(run.words.buffer);
   const maxSamples = iterations + 1;
-
-  const module = await compileShader(device, orbitModule, "orbit");
-  const pipeline = device.createComputePipeline({
-    layout: "auto",
-    compute: { module, entryPoint: "advanceOrbit", constants: { LIMBS: limbs } },
-  });
-
-  const state = storageBuffer(device, limbs * 2, "orbit-state");
-  const seed = storageBuffer(device, limbs * 2, "orbit-seed");
-  const scratch = storageBuffer(device, scratchWords(limbs), "orbit-scratch");
-  const samples = storageBuffer(device, maxSamples * 6, "orbit-samples", GPUBufferUsage.COPY_SRC);
-  const status = storageBuffer(device, 4, "orbit-status", GPUBufferUsage.COPY_SRC);
-  const params = device.createBuffer({
-    size: 16,
-    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-  });
-
-  const seedData = new Uint32Array(limbs * 2);
-  seedData.set(parseFixed(centerX, limbs), 0);
-  seedData.set(parseFixed(centerY, limbs), limbs);
-  device.queue.writeBuffer(seed, 0, seedData);
-  device.queue.writeBuffer(state, 0, new Uint32Array(limbs * 2));
-  // status[0] is the resume cursor: the shader continues from the last sample
-  // written, and sample 0 (z = 0) is written here.
-  device.queue.writeBuffer(status, 0, new Uint32Array([1, 0, 0, 0]));
-  device.queue.writeBuffer(samples, 0, new Float32Array(6));
-
-  const bind = device.createBindGroup({
-    layout: pipeline.getBindGroupLayout(0),
-    entries: [
-      { binding: 0, resource: { buffer: state } },
-      { binding: 1, resource: { buffer: seed } },
-      { binding: 2, resource: { buffer: scratch } },
-      { binding: 3, resource: { buffer: samples } },
-      { binding: 4, resource: { buffer: status } },
-      { binding: 5, resource: { buffer: params } },
-    ],
-  });
-
-  const started = performance.now();
-  let rawStatus = new Uint32Array(4);
-  let sampleCount = 1;
-  const batch = batchSize ?? iterations;
-
-  while (sampleCount - 1 < iterations) {
-    const done = sampleCount - 1;
-    device.queue.writeBuffer(
-      params,
-      0,
-      new Uint32Array([Math.min(batch, iterations - done), 0, maxSamples, 0])
-    );
-    const encoder = device.createCommandEncoder();
-    const pass = encoder.beginComputePass();
-    pass.setPipeline(pipeline);
-    pass.setBindGroup(0, bind);
-    pass.dispatchWorkgroups(1);
-    pass.end();
-    device.queue.submit([encoder.finish()]);
-
-    rawStatus = new Uint32Array(await readBuffer(device, status, 16));
-    if (rawStatus[0] <= sampleCount) break;
-    sampleCount = rawStatus[0];
-    if (rawStatus[1] === 1) break;
-  }
-  const elapsed = performance.now() - started;
-  const data = new Float32Array(await readBuffer(device, samples, maxSamples * 24));
 
   // Oracle.
   const c = {
@@ -311,7 +343,7 @@ async function checkOrbit(
 
   let worst = 0;
   let worstIndex = -1;
-  const compared = Math.min(expected.length, sampleCount, maxSamples);
+  const compared = Math.min(expected.length, run.sampleCount, maxSamples);
   for (let i = 1; i < compared; i++) {
     const gx = fromHdr({
       mantissaHi: data[i * 6 + 0],
@@ -332,15 +364,51 @@ async function checkOrbit(
     }
   }
 
-  [state, seed, scratch, samples, status, params].forEach((b) => b.destroy());
-
   // Samples are emitted with ~48 mantissa bits, so agreement to ~1e-12 is the
   // most the reduced format can promise.
   const passed = compared > 1 && worst < 1e-11;
   return {
-    name: `orbit @ ${limbs} limbs, ${iterations} iterations${batchSize ? `, batched by ${batchSize}` : ""} (${centerX})`,
+    name: `orbit (${kernel}) @ ${limbs} limbs, ${iterations} iterations${batchSize ? `, batched by ${batchSize}` : ""} (${centerX})`,
     passed,
-    detail: `compared ${compared - 1} samples, worst error ${worst.toExponential(2)} at #${worstIndex}, ${elapsed.toFixed(1)}ms, escaped=${rawStatus[1] === 1}`,
+    detail: `compared ${compared - 1} samples, worst error ${worst.toExponential(2)} at #${worstIndex}, ${run.ms.toFixed(1)}ms, escaped=${run.escaped}`,
+  };
+}
+
+/**
+ * The shared kernel against the storage kernel, word for word. Agreeing with
+ * the oracle to 1e-11 is not enough here: the renderer swaps one for the other
+ * by device, and the picture must not depend on which one ran. Also covers
+ * extending an orbit, which has to land on exactly the samples a single run
+ * produces.
+ */
+async function checkOrbitKernelsAgree(
+  ctx: GpuContext,
+  limbs: number,
+  centerX: string,
+  centerY: string,
+  iterations: number,
+  pauseAt?: number
+): Promise<CheckResult> {
+  const storage = await runOrbit(ctx, "storage", limbs, centerX, centerY, iterations, 512);
+  const shared = await runOrbit(ctx, "shared", limbs, centerX, centerY, iterations, 512, pauseAt);
+  let firstDifference = -1;
+  const words = Math.min(storage.sampleCount, shared.sampleCount) * 6;
+  for (let i = 0; i < words; i++) {
+    if (storage.words[i] !== shared.words[i]) {
+      firstDifference = Math.floor(i / 6);
+      break;
+    }
+  }
+  const passed =
+    firstDifference < 0 &&
+    storage.sampleCount === shared.sampleCount &&
+    storage.escaped === shared.escaped;
+  return {
+    name: `orbit kernels agree @ ${limbs} limbs, ${iterations} iterations${pauseAt ? `, extended from ${pauseAt}` : ""}`,
+    passed,
+    detail: passed
+      ? `${shared.sampleCount} samples bit-identical; storage ${storage.ms.toFixed(1)}ms, shared ${shared.ms.toFixed(1)}ms`
+      : `samples ${storage.sampleCount} vs ${shared.sampleCount}, escaped ${storage.escaped} vs ${shared.escaped}, first difference at #${firstDifference}`,
   };
 }
 
@@ -361,31 +429,54 @@ export async function runSelfTest(
     results.push(await checkBigOp(ctx, 2, limbs, 64));
     results.push(await checkBigOp(ctx, 0, limbs, 64));
   }
-  results.push(await checkOrbit(ctx, 16, "-1", "0", 32));
-  results.push(await checkOrbit(ctx, 32, "-0.25", "0", 128));
-  results.push(await checkOrbit(ctx, 64, "-0.743643887037151", "0.13182590420533", 256));
-  results.push(
-    await checkOrbit(
-      ctx,
-      64,
-      "-0.600705755160234496572763605385",
-      "0.441239870241679552586993134940",
-      512
-    )
-  );
-  // The renderer advances the orbit in batches; that bookkeeping needs its own
-  // coverage, and must agree sample-for-sample with the single-dispatch run.
-  for (const batch of [1, 7, 128]) {
+  for (const kernel of ["storage", "shared"] as const) {
+    results.push(await checkOrbit(ctx, kernel, 16, "-1", "0", 32));
+    results.push(await checkOrbit(ctx, kernel, 32, "-0.25", "0", 128));
+    results.push(
+      await checkOrbit(ctx, kernel, 64, "-0.743643887037151", "0.13182590420533", 256)
+    );
     results.push(
       await checkOrbit(
         ctx,
-        32,
+        kernel,
+        64,
         "-0.600705755160234496572763605385",
         "0.441239870241679552586993134940",
-        400,
-        batch
+        512
       )
     );
+    // The renderer advances the orbit in batches; that bookkeeping needs its
+    // own coverage, and must agree sample-for-sample with the single-dispatch
+    // run.
+    for (const batch of [1, 7, 128]) {
+      results.push(
+        await checkOrbit(
+          ctx,
+          kernel,
+          32,
+          "-0.600705755160234496572763605385",
+          "0.441239870241679552586993134940",
+          400,
+          batch
+        )
+      );
+    }
+  }
+
+  const minibrot = [
+    "-0.600705755160234496572768007106812410353017771",
+    "0.4412398702416795525869921575573731614595608",
+  ] as const;
+  // Eight limbs is where nearly every view runs; 4000 iterations of the
+  // period-1215 minibrot pass close to zero over and over.
+  results.push(await checkOrbitKernelsAgree(ctx, 8, ...minibrot, 4000));
+  results.push(await checkOrbitKernelsAgree(ctx, 8, ...minibrot, 4000, 1500));
+  results.push(await checkOrbitKernelsAgree(ctx, 16, ...minibrot, 3000, 1000));
+  results.push(await checkOrbitKernelsAgree(ctx, 64, ...minibrot, 1200));
+  // Escapes partway: both must stop at the same sample.
+  results.push(await checkOrbitKernelsAgree(ctx, 32, "-0.75", "0.01", 3000));
+  if (orbitKernelFor(ctx.device, 256) === "shared") {
+    results.push(await checkOrbitKernelsAgree(ctx, 256, ...minibrot, 300, 100));
   }
 
   results.forEach(log);

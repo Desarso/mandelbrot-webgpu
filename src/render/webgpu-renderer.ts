@@ -8,21 +8,30 @@
 
 import Decimal from "decimal.js";
 import { compileShader, readBuffer, storageBuffer, type GpuContext } from "../gpu/device";
-import bigfixedSource from "../gpu/shaders/bigfixed.wgsl?raw";
-import orbitBindings from "../gpu/shaders/orbit-bindings.wgsl?raw";
-import orbitSource from "../gpu/shaders/orbit.wgsl?raw";
+import {
+  createOrbitBindGroup,
+  createOrbitBuffers,
+  createOrbitPipeline,
+  destroyOrbitBuffers,
+  orbitKernelFor,
+  orbitModule,
+  orbitSharedModule,
+  type OrbitBuffers,
+  type OrbitKernel,
+} from "../gpu/orbit-kernel";
 import perturbationSource from "./perturbation.wgsl?raw";
 import { reprojectionFor } from "./reprojection";
 
 /**
- * Rows per dispatch, and a ceiling on how many dispatches a frame is split
- * into. Smaller bands abandon sooner but cost more submits. Measured at
- * 720x480 and 1e-25, 7 runs each with the orbit warm:
+ * Rows per dispatch, and how many dispatches a frame is split into, for a
+ * frame whose cost is not known yet. Smaller bands abandon sooner but cost
+ * more submits. Measured at 720x480 and 1e-25, 7 runs each with the orbit
+ * warm:
  *
  *   1 band 215ms, 2 bands 218ms, 4 bands 223ms, 8 bands 254ms
  *
- * Four is the corner: 3.6% to be able to drop three quarters of a frame the
- * user has already zoomed past.
+ * Once a frame has been measured, bandRowsFor sizes bands from its cost
+ * instead.
  */
 const TILE_ROWS = 64;
 const MAX_TILES = 4;
@@ -46,8 +55,6 @@ const IDENTITY_XFORM = new Float32Array([1, 1, 0, 0]);
 import { hexToRgb, MAX_STOPS, type ColorSettings } from "../logic/colorSettings";
 import { parseFixed } from "../arithmetic/types";
 import { BASE_STEP, ENTRY_FLOATS, buildBla } from "./bla";
-
-const orbitModule = [orbitBindings, bigfixedSource, orbitSource].join("\n");
 
 /** Precision profiles, chosen from the zoom depth. */
 const LIMB_PROFILES = [8, 16, 32, 64, 128, 256] as const;
@@ -176,10 +183,42 @@ export function limbsForScale(unitsPerPixel: Decimal): number {
   return LIMB_PROFILES[LIMB_PROFILES.length - 1];
 }
 
+const LOG2_10 = Math.log2(10);
+
+/**
+ * `Math.floor(Number(value.abs().log(2).toFixed(6)))`, which is how the binary
+ * exponent of a view's scale and offset has always been chosen, without the
+ * arbitrary-precision logarithm. That logarithm was the largest single cost of
+ * preparing a frame on the CPU -- two per frame, at 70-plus digits -- and a
+ * gesture runs one frame per pointer event.
+ *
+ * log2 of the leading seventeen digits plus the decimal exponent times log2(10)
+ * is good to about 1e-12 even at 1e-2000. Rounding that to six places only
+ * goes wrong if it sits within the error of a rounding boundary, and anything
+ * within 1e-10 of one is handed to the exact expression instead, so the answer
+ * is always the one the original computes.
+ */
+export function binaryExponent(value: Decimal): number {
+  const digits = value.d;
+  const lead = digits[0];
+  const leadDigits = lead >= 1e6 ? 7 : Math.floor(Math.log10(lead)) + 1;
+  let leading = lead;
+  if (digits.length > 1) leading += digits[1] / 1e7;
+  if (digits.length > 2) leading += digits[2] / 1e14;
+  const log2 = Math.log2(leading / 10 ** (leadDigits - 1)) + value.e * LOG2_10;
+
+  const millionths = log2 * 1e6;
+  const fraction = millionths - Math.floor(millionths);
+  if (!Number.isFinite(log2) || Math.abs(fraction - 0.5) < 1e-4) {
+    return Math.floor(Number(value.abs().log(2).toFixed(6)));
+  }
+  return Math.floor(Math.round(millionths) / 1e6);
+}
+
 /** Splits a Decimal into an f32 mantissa and a binary exponent. */
 function splitExponent(value: Decimal): { mantissa: number; exponent: number } {
   if (value.isZero()) return { mantissa: 0, exponent: 0 };
-  const exponent = Math.floor(Number(value.abs().log(2).toFixed(6)));
+  const exponent = binaryExponent(value);
   const mantissa = Number(value.div(new Decimal(2).pow(exponent)).toFixed(12));
   return { mantissa, exponent };
 }
@@ -191,7 +230,7 @@ function splitExponent(value: Decimal): { mantissa: number; exponent: number } {
 function splitComplex(x: Decimal, y: Decimal) {
   const magnitude = Decimal.max(x.abs(), y.abs());
   if (magnitude.isZero()) return { x: 0, y: 0, exponent: 0 };
-  const exponent = Math.floor(Number(magnitude.log(2).toFixed(6)));
+  const exponent = binaryExponent(magnitude);
   const divisor = new Decimal(2).pow(exponent);
   return {
     x: Number(x.div(divisor).toFixed(12)),
@@ -200,17 +239,14 @@ function splitComplex(x: Decimal, y: Decimal) {
   };
 }
 
-function scratchWords(limbs: number): number {
-  return 7 * limbs + 2 * limbs * 3;
-}
-
 export class WebGpuRenderer {
   private ctx: GpuContext;
   private canvas: HTMLCanvasElement;
   private context: GPUCanvasContext;
   private format: GPUTextureFormat;
 
-  private orbitPipelines = new Map<number, GPUComputePipeline>();
+  private orbitPipelines = new Map<number, { pipeline: GPUComputePipeline; kernel: OrbitKernel }>();
+  private orbitModules = new Map<OrbitKernel, GPUShaderModule>();
   private renderPipeline: GPUComputePipeline | null = null;
   private blitPipeline: GPURenderPipeline | null = null;
 
@@ -244,8 +280,14 @@ export class WebGpuRenderer {
    * recolouring would recompute the frame it is trying to avoid.
    */
   private fieldKey = "";
-  /** Rolling cost of one screen row, used to size the next frame's bands. */
-  private msPerRow = 0;
+  /**
+   * Measured GPU cost of recent frames, by kind of frame and sample count. A
+   * different method, budget or colouring mode costs something else per
+   * sample, so a measurement only carries over to a frame of the same kind.
+   */
+  private frameCosts = new Map<string, { samples: number; ms: number }>();
+  /** Where the per-frame counters come back, reused across frames. */
+  private statsReadback: GPUBuffer | null = null;
   /** True when the last render stopped early. */
   private aborted = false;
   private laBuffer: GPUBuffer | null = null;
@@ -254,6 +296,17 @@ export class WebGpuRenderer {
   private statsBuffer: GPUBuffer;
   private orbitBuffer: GPUBuffer | null = null;
   private orbitCapacity = 0;
+  /**
+   * The current reference's state, seed and status cursor, kept after the
+   * orbit is built so that raising the iteration count can carry on from the
+   * last sample instead of starting again from z = 0.
+   */
+  private orbitBuffers: OrbitBuffers | null = null;
+  /** The orbit decoded for the per-pixel loop; see decodeReference. */
+  private referenceBuffer: GPUBuffer | null = null;
+  private referenceCapacity = 0;
+  private decodePipeline: GPUComputePipeline | null = null;
+  private decodeParams: GPUBuffer;
 
   /** Cached reference orbit: regenerating it per frame would kill panning. */
   private refX = new Decimal(0);
@@ -293,6 +346,11 @@ export class WebGpuRenderer {
       "render-stats",
       GPUBufferUsage.COPY_SRC
     );
+    this.decodeParams = ctx.device.createBuffer({
+      label: "decode-range",
+      size: 16,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
   }
 
   async init() {
@@ -339,6 +397,11 @@ export class WebGpuRenderer {
       label: "perturbation-shade",
       layout: pipelineLayout,
       compute: { module: renderModule, entryPoint: "shadePass" },
+    });
+    this.decodePipeline = device.createComputePipeline({
+      label: "decode-reference",
+      layout: "auto",
+      compute: { module: renderModule, entryPoint: "decodeReference" },
     });
 
     const blitModule = await compileShader(
@@ -388,78 +451,80 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     });
   }
 
-  private orbitPipeline(limbs: number): GPUComputePipeline {
+  private orbitPipeline(limbs: number): { pipeline: GPUComputePipeline; kernel: OrbitKernel } {
     const cached = this.orbitPipelines.get(limbs);
     if (cached) return cached;
+    const { device } = this.ctx;
+    const kernel = orbitKernelFor(device, limbs);
     // The module compiled cleanly during the self-test, so plain creation is
     // safe here; errors would already have surfaced at init.
-    const module = this.ctx.device.createShaderModule({
-      label: `orbit-${limbs}`,
-      code: orbitModule,
-    });
-    const pipeline = this.ctx.device.createComputePipeline({
-      label: `orbit-${limbs}`,
-      layout: "auto",
-      compute: { module, entryPoint: "advanceOrbit", constants: { LIMBS: limbs } },
-    });
-    this.orbitPipelines.set(limbs, pipeline);
-    return pipeline;
+    let module = this.orbitModules.get(kernel);
+    if (!module) {
+      module = device.createShaderModule({
+        label: `orbit-${kernel}`,
+        code: kernel === "shared" ? orbitSharedModule : orbitModule,
+      });
+      this.orbitModules.set(kernel, module);
+    }
+    const entry = { pipeline: createOrbitPipeline(device, module, kernel, limbs), kernel };
+    this.orbitPipelines.set(limbs, entry);
+    return entry;
   }
 
-  /** Generates the reference orbit at the view centre, entirely on the GPU. */
+  /**
+   * Generates the reference orbit at the view centre, entirely on the GPU.
+   *
+   * With `extend`, carries the current orbit on from its last sample instead.
+   * Raising the iteration count does not change a single sample already
+   * computed -- the orbit is the same sequence, just longer -- and the auto
+   * iteration search raises it by doubling, so rebuilding from z = 0 spent
+   * half or more of every rebuild recomputing what was already there.
+   */
   private async generateOrbit(
     request: RenderRequest,
-    limbs: number
+    limbs: number,
+    extend: boolean
   ): Promise<{ length: number; escaped: boolean; ms: number }> {
     const { device } = this.ctx;
     const started = performance.now();
     const maxSamples = request.maxIterations + 1;
+    const { pipeline, kernel } = this.orbitPipeline(limbs);
 
-    this.ensureOrbitCapacity(maxSamples);
+    let sampleCount = 1;
+    if (extend && this.orbitBuffers) {
+      // State, seed and the status cursor already describe the last sample;
+      // only the sample buffer has to grow, keeping what it holds.
+      sampleCount = this.refLength;
+      this.ensureOrbitCapacity(maxSamples, sampleCount);
+    } else {
+      if (this.orbitBuffers) destroyOrbitBuffers(this.orbitBuffers);
+      this.ensureOrbitCapacity(maxSamples);
+      this.orbitBuffers = createOrbitBuffers(device, kernel, limbs);
+      const { seed, state, status } = this.orbitBuffers;
 
-    const pipeline = this.orbitPipeline(limbs);
-    const state = storageBuffer(device, limbs * 2, "orbit-state");
-    const seed = storageBuffer(device, limbs * 2, "orbit-seed");
-    const scratch = storageBuffer(device, scratchWords(limbs), "orbit-scratch");
-    const status = storageBuffer(device, 4, "orbit-status", GPUBufferUsage.COPY_SRC);
-    const params = device.createBuffer({
-      size: 16,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
+      const seedData = new Uint32Array(limbs * 2);
+      seedData.set(parseFixed(request.centerX.toFixed(), limbs), 0);
+      seedData.set(parseFixed(request.centerY.toFixed(), limbs), limbs);
+      device.queue.writeBuffer(seed, 0, seedData);
+      device.queue.writeBuffer(state, 0, new Uint32Array(limbs * 2));
+      // `sampleCount` counts written samples; sample 0 (z = 0) comes from the
+      // CPU. The shader emits at `startIndex + iter + 1`, so startIndex must
+      // be the index of the last sample already written, i.e. sampleCount - 1.
+      // Passing the count itself skips one sample per batch and shifts all
+      // the rest. Sample 0 (z = 0) is written by the CPU, so the shader
+      // resumes from 1.
+      device.queue.writeBuffer(status, 0, new Uint32Array([1, 0, 0, 0]));
+      device.queue.writeBuffer(this.orbitBuffer!, 0, new Float32Array(6));
+    }
 
-    const seedData = new Uint32Array(limbs * 2);
-    seedData.set(parseFixed(request.centerX.toFixed(), limbs), 0);
-    seedData.set(parseFixed(request.centerY.toFixed(), limbs), limbs);
-    device.queue.writeBuffer(seed, 0, seedData);
-    device.queue.writeBuffer(state, 0, new Uint32Array(limbs * 2));
-    device.queue.writeBuffer(status, 0, new Uint32Array(4));
-    device.queue.writeBuffer(this.orbitBuffer!, 0, new Float32Array(6));
-
-    const bind = device.createBindGroup({
-      layout: pipeline.getBindGroupLayout(0),
-      entries: [
-        { binding: 0, resource: { buffer: state } },
-        { binding: 1, resource: { buffer: seed } },
-        { binding: 2, resource: { buffer: scratch } },
-        { binding: 3, resource: { buffer: this.orbitBuffer! } },
-        { binding: 4, resource: { buffer: status } },
-        { binding: 5, resource: { buffer: params } },
-      ],
-    });
-
-    // `sampleCount` counts written samples; sample 0 (z = 0) comes from the CPU.
-    // The shader emits at `startIndex + iter + 1`, so startIndex must be the
-    // index of the last sample already written, i.e. sampleCount - 1. Passing
-    // the count itself skips one sample per batch and shifts all the rest.
-    // Sample 0 (z = 0) is written by the CPU, so the shader resumes from 1.
-    device.queue.writeBuffer(status, 0, new Uint32Array([1, 0, 0, 0]));
+    const buffers = this.orbitBuffers!;
+    const bind = createOrbitBindGroup(device, pipeline, buffers, this.orbitBuffer!);
     device.queue.writeBuffer(
-      params,
+      buffers.params,
       0,
       new Uint32Array([ORBIT_BATCH, 0, maxSamples, 0])
     );
 
-    let sampleCount = 1;
     let escaped = false;
     let batchLimit = DISPATCHES_PER_SUBMIT;
 
@@ -484,7 +549,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       device.queue.submit([encoder.finish()]);
 
       // Only the 4-word status comes back; the big state never leaves the GPU.
-      const raw = new Uint32Array(await readBuffer(device, status, 16));
+      const raw = new Uint32Array(await readBuffer(device, buffers.status, 16));
 
       // Aim the next submission at the budget. A deep view at a high limb
       // count can take milliseconds per dispatch, and 24 of those in one
@@ -503,7 +568,6 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       }
     }
 
-    [state, seed, scratch, status, params].forEach((b) => b.destroy());
     return {
       length: Math.max(2, sampleCount),
       escaped,
@@ -642,18 +706,46 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
   }
 
   /**
-   * The orbit buffer is bound on every render, so it has to exist even when the
-   * direct method never reads it.
+   * Rows per dispatch: as many as fit SUBMIT_BUDGET_MS by the last measurement
+   * of a frame like this one, or four even bands when there is none.
+   *
+   * Every dispatch ends in a tail where most of the GPU waits on its slowest
+   * pixels, so splitting a cheap frame only adds tails: a quarter-resolution
+   * gesture frame at 1e-38 took 21ms in four bands and 16ms in one. At full
+   * resolution each band past the first costs about 2.5ms (1280x800, 6e-42:
+   * 1 band 139ms, 4 bands 143ms, 8 bands 152ms, 16 bands 178ms).
+   *
+   * The rolling cost per row this replaces was taken when the last band was
+   * submitted, not when it finished, so it measured the CPU and never the GPU,
+   * and every frame came out as four bands whatever it cost.
    */
-  /**
-   * Rows per dispatch: four bands normally, fewer rows when the last frame
-   * showed this view is slow enough to risk the watchdog.
-   */
-  private bandHeightFor(width: number, height: number): number {
+  private bandRowsFor(kind: string, width: number, height: number, grid: number): number {
     const even = Math.max(TILE_ROWS, Math.ceil(height / MAX_TILES));
-    if (this.msPerRow <= 0) return even;
-    const affordable = Math.floor(SUBMIT_BUDGET_MS / this.msPerRow);
-    return Math.max(8, Math.min(even, affordable));
+    const samples = width * height * grid * grid;
+    // The same frame size measured directly, or else the smallest larger one
+    // scaled down. Never scaled up: a small frame is mostly the tail of its
+    // slowest pixels, and stretching that over a full-size frame predicts
+    // several times what it costs.
+    let estimate = -1;
+    let from = Infinity;
+    for (const [key, cost] of this.frameCosts) {
+      if (!key.startsWith(kind + "@") || cost.samples < samples || cost.samples >= from) continue;
+      from = cost.samples;
+      estimate = (cost.ms * samples) / cost.samples;
+    }
+    if (estimate < 0) return even;
+    const bands = Math.max(1, Math.ceil(estimate / SUBMIT_BUDGET_MS));
+    return Math.max(8, Math.ceil(height / bands));
+  }
+
+  private recordFrameCost(kind: string, samples: number, ms: number) {
+    const key = `${kind}@${samples}`;
+    this.frameCosts.delete(key);
+    this.frameCosts.set(key, { samples, ms });
+    // Only the last few kinds matter; a Map iterates oldest first.
+    while (this.frameCosts.size > 8) {
+      this.frameCosts.delete(this.frameCosts.keys().next().value!);
+    }
   }
 
   /** Largest sample grid up to `wanted` whose field fits in one binding. */
@@ -674,15 +766,52 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     this.fieldKey = "";
   }
 
-  private ensureOrbitCapacity(samples: number) {
+  /**
+   * Decodes the first `length` raw samples into the form the per-pixel loop
+   * reads. Cheap -- one invocation per sample, once per orbit -- so an
+   * extended orbit is simply decoded again from the start.
+   */
+  private decodeReference(length: number) {
+    const { device } = this.ctx;
+    if (this.referenceCapacity < length || !this.referenceBuffer) {
+      this.referenceBuffer?.destroy();
+      this.referenceBuffer = storageBuffer(device, length * 8, "reference-decoded");
+      this.referenceCapacity = length;
+    }
+    device.queue.writeBuffer(this.decodeParams, 0, new Uint32Array([0, length, 0, 0]));
+    const bind = device.createBindGroup({
+      layout: this.decodePipeline!.getBindGroupLayout(1),
+      entries: [
+        { binding: 0, resource: { buffer: this.orbitBuffer! } },
+        { binding: 1, resource: { buffer: this.referenceBuffer } },
+        { binding: 2, resource: { buffer: this.decodeParams } },
+      ],
+    });
+    const encoder = device.createCommandEncoder({ label: "decode-reference" });
+    const pass = encoder.beginComputePass();
+    pass.setPipeline(this.decodePipeline!);
+    pass.setBindGroup(1, bind);
+    pass.dispatchWorkgroups(Math.ceil(length / 64));
+    pass.end();
+    device.queue.submit([encoder.finish()]);
+  }
+
+  /** Grows the sample buffer, carrying the first `keep` samples across. */
+  private ensureOrbitCapacity(samples: number, keep = 0) {
     if (this.orbitCapacity >= samples && this.orbitBuffer) return;
-    this.orbitBuffer?.destroy();
-    this.orbitBuffer = storageBuffer(
+    const grown = storageBuffer(
       this.ctx.device,
       samples * 6,
       "orbit-samples",
       GPUBufferUsage.COPY_SRC
     );
+    if (this.orbitBuffer && keep > 0) {
+      const encoder = this.ctx.device.createCommandEncoder({ label: "orbit-grow" });
+      encoder.copyBufferToBuffer(this.orbitBuffer, 0, grown, 0, keep * 24);
+      this.ctx.device.queue.submit([encoder.finish()]);
+    }
+    this.orbitBuffer?.destroy();
+    this.orbitBuffer = grown;
     this.orbitCapacity = samples;
   }
 
@@ -791,11 +920,14 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       .minus(this.refX)
       .abs()
       .plus(request.centerY.minus(this.refY).abs());
-    const stale =
-      !this.refValid ||
-      limbs !== this.refLimbs ||
-      request.maxIterations > this.refIterations ||
-      drift.greaterThan(halfSpan.times(0.5));
+    const sameReference =
+      this.refValid && limbs === this.refLimbs && !drift.greaterThan(halfSpan.times(0.5));
+    const needsMore = request.maxIterations > this.refIterations;
+    // An orbit that escaped already has every sample it will ever have; a
+    // larger budget would only recompute them. One that did not can be
+    // carried on from where it stopped.
+    const extend = sameReference && needsMore && !this.refEscaped;
+    const stale = !sameReference || extend;
 
     // Mid-gesture, keep whatever reference we have. Perturbation stays exact
     // with a stale reference — it just rebases more — and rebuilding costs tens
@@ -804,15 +936,20 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
 
     let orbitMs = 0;
     if (method !== Method.Direct && stale && canRebuild) {
-      this.refX = request.centerX;
-      this.refY = request.centerY;
-      const orbit = await this.generateOrbit(request, limbs);
+      // Extending keeps the reference where it is: the view may have moved a
+      // little since, but the orbit belongs to the point it was seeded with.
+      if (!extend) {
+        this.refX = request.centerX;
+        this.refY = request.centerY;
+      }
+      const orbit = await this.generateOrbit(request, limbs, extend);
       this.refLimbs = limbs;
       this.refIterations = request.maxIterations;
       this.refLength = orbit.length;
       this.refEscaped = orbit.escaped;
       this.refValid = true;
       orbitMs = orbit.ms;
+      this.decodeReference(orbit.length);
       this.tableMs = 0;
       if (method === Method.Hdr) await this.buildApproxTable(request);
     }
@@ -821,6 +958,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     // Every buffer in the bind group must exist even when this method does not
     // read it: the direct path builds neither an orbit nor a skip table.
     this.ensureOrbitCapacity(1);
+    if (!this.referenceBuffer) this.decodeReference(1);
     if (!this.laBuffer || !this.laIndexBuffer) {
       this.laBuffer = storageBuffer(device, ENTRY_FLOATS, "la-table");
       this.laIndexBuffer = storageBuffer(device, 2, "la-index");
@@ -924,7 +1062,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     const bind = device.createBindGroup({
       layout: this.bindLayout!,
       entries: [
-        { binding: 0, resource: { buffer: this.orbitBuffer! } },
+        { binding: 0, resource: { buffer: this.referenceBuffer! } },
         { binding: 1, resource: { buffer: this.uniformBuffer } },
         { binding: 2, resource: this.target!.createView() },
         { binding: 3, resource: { buffer: this.stopsBuffer } },
@@ -946,9 +1084,12 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     // boundary -- and since an abandoned frame presents nothing, the caller's
     // retry was abandoned too, and the canvas stayed black for good.
     this.abortRequested = false;
+    // Everything that changes what a sample costs, for sizing bands.
+    const costKey = [method, request.maxIterations, colors.mode, u32[20], this.refLength].join("|");
     const bandRows =
-      request.tileRows ?? this.bandHeightFor(request.width, request.height);
+      request.tileRows ?? this.bandRowsFor(costKey, request.width, request.height, grid);
     let completed = true;
+    const inFlight: Promise<undefined>[] = [];
 
     for (let top = 0; fieldStale && top < request.height; top += bandRows) {
       const rows = Math.min(bandRows, request.height - top);
@@ -965,11 +1106,15 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       device.queue.submit([encoder.finish()]);
 
       if (top + rows >= request.height) break;
-      // Yield to the event loop, but do not fence. Waiting on the GPU between
-      // bands drains the pipeline and costs more than the whole frame was
-      // worth; a macrotask is enough to let a pending wheel or pointer event
-      // run and ask us to stop, while the bands already queued keep going.
-      await yieldToEvents();
+      // Keep one band queued behind the one running and wait for the one
+      // before. Fencing on every band drains the pipeline and costs more than
+      // the whole frame was worth; not fencing at all queued every band within
+      // a millisecond, long before any input could arrive to cancel them, so
+      // an abort almost never had anything left to drop. Two in flight keeps
+      // the GPU fed and lets an abort land within a band or two.
+      inFlight.push(device.queue.onSubmittedWorkDone());
+      if (inFlight.length >= 2) await inFlight.shift();
+      else await yieldToEvents();
       // Only give up when there is a finished frame to show instead. Without
       // one -- the first frame after a load or a resize -- abandoning means
       // presenting nothing at all, and a blank canvas is worse than a frame
@@ -980,20 +1125,26 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         break;
       }
     }
-    if (fieldStale && completed) {
-      // Smoothed, because one frame's timing is noisy and a band size that
-      // swings every frame is worse than one that is slightly wrong.
-      const measured = (performance.now() - started) / Math.max(request.height, 1);
-      this.msPerRow = this.msPerRow > 0 ? this.msPerRow * 0.5 + measured * 0.5 : measured;
-    }
     this.fieldKey = completed ? fieldKey : "";
+
+    // The counters ride along with the last submission, and mapping them is
+    // the one wait for the whole frame. Waiting for the queue to drain and
+    // then reading them back was two round trips where one will do.
+    if (!this.statsReadback || this.statsReadback.mapState !== "unmapped") {
+      this.statsReadback = device.createBuffer({
+        label: "render-stats-readback",
+        size: 32,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+      });
+    }
+    const statsReadback = this.statsReadback;
 
     // Shading is cheap enough to do in one go, and it has to run even when the
     // field was reused -- that is the entire point of keeping it. An abandoned
     // frame is the exception: its field is half one view and half another, and
     // shading that would draw the seam. Show the last whole frame instead.
+    const encoder = device.createCommandEncoder({ label: "shade" });
     if (completed) {
-      const encoder = device.createCommandEncoder({ label: "shade" });
       const pass = encoder.beginComputePass();
       pass.setPipeline(this.shadePipeline!);
       pass.setBindGroup(0, bind);
@@ -1009,12 +1160,21 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         { texture: this.history! },
         { width: request.width, height: request.height }
       );
-      device.queue.submit([encoder.finish()]);
       this.historyValid = true;
     }
+    encoder.copyBufferToBuffer(this.statsBuffer, 0, statsReadback, 0, 32);
+    device.queue.submit([encoder.finish()]);
 
-    await device.queue.onSubmittedWorkDone();
+    await statsReadback.mapAsync(GPUMapMode.READ);
+    const counters = new Uint32Array(statsReadback.getMappedRange().slice(0));
+    statsReadback.unmap();
     const renderMs = performance.now() - started;
+
+    if (fieldStale && completed && request.tileRows === undefined) {
+      // Includes the shading, which is small beside the iteration and errs on
+      // the side of smaller bands.
+      this.recordFrameCost(costKey, request.width * request.height * grid * grid, renderMs);
+    }
 
     // Only a finished frame updates this. An abandoned one leaves both the
     // history texture and this description alone, so reprojection keeps
@@ -1029,7 +1189,6 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       };
     }
 
-    const counters = new Uint32Array(await readBuffer(device, this.statsBuffer, 32));
     const skippedIterations = counters[0];
     const plainIterations = counters[3];
     const total = skippedIterations + plainIterations;
