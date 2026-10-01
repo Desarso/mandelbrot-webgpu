@@ -23,14 +23,15 @@ import perturbationSource from "./perturbation.wgsl?raw";
 import { reprojectionFor } from "./reprojection";
 
 /**
- * Rows per dispatch, and a ceiling on how many dispatches a frame is split
- * into. Smaller bands abandon sooner but cost more submits. Measured at
- * 720x480 and 1e-25, 7 runs each with the orbit warm:
+ * Rows per dispatch, and how many dispatches a frame is split into, for a
+ * frame whose cost is not known yet. Smaller bands abandon sooner but cost
+ * more submits. Measured at 720x480 and 1e-25, 7 runs each with the orbit
+ * warm:
  *
  *   1 band 215ms, 2 bands 218ms, 4 bands 223ms, 8 bands 254ms
  *
- * Four is the corner: 3.6% to be able to drop three quarters of a frame the
- * user has already zoomed past.
+ * Once a frame has been measured, bandRowsFor sizes bands from its cost
+ * instead.
  */
 const TILE_ROWS = 64;
 const MAX_TILES = 4;
@@ -247,8 +248,14 @@ export class WebGpuRenderer {
    * recolouring would recompute the frame it is trying to avoid.
    */
   private fieldKey = "";
-  /** Rolling cost of one screen row, used to size the next frame's bands. */
-  private msPerRow = 0;
+  /**
+   * Measured GPU cost of recent frames, by kind of frame and sample count. A
+   * different method, budget or colouring mode costs something else per
+   * sample, so a measurement only carries over to a frame of the same kind.
+   */
+  private frameCosts = new Map<string, { samples: number; ms: number }>();
+  /** Where the per-frame counters come back, reused across frames. */
+  private statsReadback: GPUBuffer | null = null;
   /** True when the last render stopped early. */
   private aborted = false;
   private laBuffer: GPUBuffer | null = null;
@@ -667,18 +674,46 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
   }
 
   /**
-   * The orbit buffer is bound on every render, so it has to exist even when the
-   * direct method never reads it.
+   * Rows per dispatch: as many as fit SUBMIT_BUDGET_MS by the last measurement
+   * of a frame like this one, or four even bands when there is none.
+   *
+   * Every dispatch ends in a tail where most of the GPU waits on its slowest
+   * pixels, so splitting a cheap frame only adds tails: a quarter-resolution
+   * gesture frame at 1e-38 took 21ms in four bands and 16ms in one. At full
+   * resolution each band past the first costs about 2.5ms (1280x800, 6e-42:
+   * 1 band 139ms, 4 bands 143ms, 8 bands 152ms, 16 bands 178ms).
+   *
+   * The rolling cost per row this replaces was taken when the last band was
+   * submitted, not when it finished, so it measured the CPU and never the GPU,
+   * and every frame came out as four bands whatever it cost.
    */
-  /**
-   * Rows per dispatch: four bands normally, fewer rows when the last frame
-   * showed this view is slow enough to risk the watchdog.
-   */
-  private bandHeightFor(width: number, height: number): number {
+  private bandRowsFor(kind: string, width: number, height: number, grid: number): number {
     const even = Math.max(TILE_ROWS, Math.ceil(height / MAX_TILES));
-    if (this.msPerRow <= 0) return even;
-    const affordable = Math.floor(SUBMIT_BUDGET_MS / this.msPerRow);
-    return Math.max(8, Math.min(even, affordable));
+    const samples = width * height * grid * grid;
+    // The same frame size measured directly, or else the smallest larger one
+    // scaled down. Never scaled up: a small frame is mostly the tail of its
+    // slowest pixels, and stretching that over a full-size frame predicts
+    // several times what it costs.
+    let estimate = -1;
+    let from = Infinity;
+    for (const [key, cost] of this.frameCosts) {
+      if (!key.startsWith(kind + "@") || cost.samples < samples || cost.samples >= from) continue;
+      from = cost.samples;
+      estimate = (cost.ms * samples) / cost.samples;
+    }
+    if (estimate < 0) return even;
+    const bands = Math.max(1, Math.ceil(estimate / SUBMIT_BUDGET_MS));
+    return Math.max(8, Math.ceil(height / bands));
+  }
+
+  private recordFrameCost(kind: string, samples: number, ms: number) {
+    const key = `${kind}@${samples}`;
+    this.frameCosts.delete(key);
+    this.frameCosts.set(key, { samples, ms });
+    // Only the last few kinds matter; a Map iterates oldest first.
+    while (this.frameCosts.size > 8) {
+      this.frameCosts.delete(this.frameCosts.keys().next().value!);
+    }
   }
 
   /** Largest sample grid up to `wanted` whose field fits in one binding. */
@@ -1017,9 +1052,12 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     // boundary -- and since an abandoned frame presents nothing, the caller's
     // retry was abandoned too, and the canvas stayed black for good.
     this.abortRequested = false;
+    // Everything that changes what a sample costs, for sizing bands.
+    const costKey = [method, request.maxIterations, colors.mode, u32[20], this.refLength].join("|");
     const bandRows =
-      request.tileRows ?? this.bandHeightFor(request.width, request.height);
+      request.tileRows ?? this.bandRowsFor(costKey, request.width, request.height, grid);
     let completed = true;
+    const inFlight: Promise<undefined>[] = [];
 
     for (let top = 0; fieldStale && top < request.height; top += bandRows) {
       const rows = Math.min(bandRows, request.height - top);
@@ -1036,11 +1074,15 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       device.queue.submit([encoder.finish()]);
 
       if (top + rows >= request.height) break;
-      // Yield to the event loop, but do not fence. Waiting on the GPU between
-      // bands drains the pipeline and costs more than the whole frame was
-      // worth; a macrotask is enough to let a pending wheel or pointer event
-      // run and ask us to stop, while the bands already queued keep going.
-      await yieldToEvents();
+      // Keep one band queued behind the one running and wait for the one
+      // before. Fencing on every band drains the pipeline and costs more than
+      // the whole frame was worth; not fencing at all queued every band within
+      // a millisecond, long before any input could arrive to cancel them, so
+      // an abort almost never had anything left to drop. Two in flight keeps
+      // the GPU fed and lets an abort land within a band or two.
+      inFlight.push(device.queue.onSubmittedWorkDone());
+      if (inFlight.length >= 2) await inFlight.shift();
+      else await yieldToEvents();
       // Only give up when there is a finished frame to show instead. Without
       // one -- the first frame after a load or a resize -- abandoning means
       // presenting nothing at all, and a blank canvas is worse than a frame
@@ -1051,20 +1093,26 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         break;
       }
     }
-    if (fieldStale && completed) {
-      // Smoothed, because one frame's timing is noisy and a band size that
-      // swings every frame is worse than one that is slightly wrong.
-      const measured = (performance.now() - started) / Math.max(request.height, 1);
-      this.msPerRow = this.msPerRow > 0 ? this.msPerRow * 0.5 + measured * 0.5 : measured;
-    }
     this.fieldKey = completed ? fieldKey : "";
+
+    // The counters ride along with the last submission, and mapping them is
+    // the one wait for the whole frame. Waiting for the queue to drain and
+    // then reading them back was two round trips where one will do.
+    if (!this.statsReadback || this.statsReadback.mapState !== "unmapped") {
+      this.statsReadback = device.createBuffer({
+        label: "render-stats-readback",
+        size: 32,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+      });
+    }
+    const statsReadback = this.statsReadback;
 
     // Shading is cheap enough to do in one go, and it has to run even when the
     // field was reused -- that is the entire point of keeping it. An abandoned
     // frame is the exception: its field is half one view and half another, and
     // shading that would draw the seam. Show the last whole frame instead.
+    const encoder = device.createCommandEncoder({ label: "shade" });
     if (completed) {
-      const encoder = device.createCommandEncoder({ label: "shade" });
       const pass = encoder.beginComputePass();
       pass.setPipeline(this.shadePipeline!);
       pass.setBindGroup(0, bind);
@@ -1080,12 +1128,21 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
         { texture: this.history! },
         { width: request.width, height: request.height }
       );
-      device.queue.submit([encoder.finish()]);
       this.historyValid = true;
     }
+    encoder.copyBufferToBuffer(this.statsBuffer, 0, statsReadback, 0, 32);
+    device.queue.submit([encoder.finish()]);
 
-    await device.queue.onSubmittedWorkDone();
+    await statsReadback.mapAsync(GPUMapMode.READ);
+    const counters = new Uint32Array(statsReadback.getMappedRange().slice(0));
+    statsReadback.unmap();
     const renderMs = performance.now() - started;
+
+    if (fieldStale && completed && request.tileRows === undefined) {
+      // Includes the shading, which is small beside the iteration and errs on
+      // the side of smaller bands.
+      this.recordFrameCost(costKey, request.width * request.height * grid * grid, renderMs);
+    }
 
     // Only a finished frame updates this. An abandoned one leaves both the
     // history texture and this description alone, so reprojection keeps
@@ -1100,7 +1157,6 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       };
     }
 
-    const counters = new Uint32Array(await readBuffer(device, this.statsBuffer, 32));
     const skippedIterations = counters[0];
     const plainIterations = counters[3];
     const total = skippedIterations + plainIterations;
