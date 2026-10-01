@@ -179,8 +179,8 @@ hi = p11 + (mid &gt;&gt; 16u) + midCarry + loCarry;</code></pre>
       <p>
         <code>z ← z² + c</code> is strictly serial: iteration n+1 needs
         iteration n. The only parallelism available is <em>inside</em> each
-        big-number operation, where 256 threads each own a column of the
-        multiplication. Keeping the whole recurrence in a single workgroup means
+        big-number operation, where up to 256 threads each own a column of
+        the three multiplications an iteration needs. Keeping the whole recurrence in a single workgroup means
         barriers can be used instead of the grid-wide synchronisation WebGPU
         does not have, and one submission can advance thousands of iterations
         without a round trip to the CPU.
