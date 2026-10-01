@@ -34,13 +34,13 @@ export const BASE_STEP = 8;
  * With second-order terms the leading neglected term is cubic, so the same
  * tolerance buys a much larger radius than it did for the linear form.
  */
-const TOLERANCE = 2 ** -16;
+export const TOLERANCE = 2 ** -16;
 
 /**
  * Radius penalty per merge, in log2. Errors accumulate along a step, and a
  * merged step covers twice as many iterations as its halves.
  */
-const MERGE_PENALTY_LOG2 = 1;
+export const MERGE_PENALTY_LOG2 = 1;
 
 /** Sentinel log2-radius meaning "this step is never usable". */
 export const NEVER = -1e30;
@@ -154,6 +154,130 @@ export interface BuildOptions {
   quadratic?: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// The builder below runs the same arithmetic as normalise/multiply/add/scale
+// and compose, in the same order, but on numbers held in Float64Arrays rather
+// than one object per value. A 200,000-iteration orbit took 300ms to tabulate
+// with an allocation per operation, all of it on the main thread. The output
+// is bit-identical; tests/render/bla-reference.ts keeps the object version as
+// the oracle that holds it to that.
+//
+// A step is STEP_WORDS doubles: A, B, C, D, E as (x, y, e), then radiusLog2.
+
+const STEP_WORDS = 16;
+const A = 0;
+const B = 3;
+const C = 6;
+const D = 9;
+const E = 12;
+const RADIUS = 15;
+
+/**
+ * `2 ** k` for every exponent the builder can ask for, made with that same
+ * expression so a lookup returns exactly what computing it would.
+ */
+const POW2_BIAS = 1200;
+const POW2 = new Float64Array(2 * POW2_BIAS + 1);
+for (let k = -POW2_BIAS; k <= POW2_BIAS; k++) POW2[k + POW2_BIAS] = 2 ** k;
+
+const bits = new Float64Array(1);
+const words = new Uint32Array(bits.buffer);
+const HIGH = new Uint8Array(new Uint16Array([1]).buffer)[0] === 1 ? 1 : 0;
+
+/**
+ * `Math.floor(Math.log2(m))` for finite m > 0, mostly without calling log2.
+ *
+ * The answer is the binary exponent of m, which can be read straight out of
+ * its bits -- except that Math.log2 rounds, and when m is within a few ulps of
+ * a power of two its result can land on the neighbouring integer. Mantissas
+ * within 2^-36 of either end of [1, 2), and subnormals, go through Math.log2
+ * itself, so the result is always what the original expression gives. Away
+ * from the ends log2 sits at least 2e-11 from an integer, a hundred times its
+ * largest rounding error for any double.
+ */
+function floorLog2(m: number): number {
+  bits[0] = m;
+  const high = words[HIGH];
+  const low = words[1 - HIGH];
+  const biased = (high >>> 20) & 0x7ff;
+  const top = high & 0xfffff;
+  const next = low >>> 16;
+  const nearOne = top === 0 && next === 0;
+  const nearTwo = top === 0xfffff && next === 0xffff;
+  if (biased === 0 || nearOne || nearTwo) return Math.floor(Math.log2(m));
+  return biased - 1023;
+}
+
+/** normalise(), writing (x, y, e) to dst[at..at+2]. */
+function normaliseTo(dst: Float64Array, at: number, x: number, y: number, e: number) {
+  const magnitude = Math.max(Math.abs(x), Math.abs(y));
+  if (magnitude === 0 || !Number.isFinite(magnitude)) {
+    dst[at] = 0;
+    dst[at + 1] = 0;
+    dst[at + 2] = 0;
+    return;
+  }
+  const shift = floorLog2(magnitude);
+  const factor = POW2[POW2_BIAS - shift];
+  dst[at] = x * factor;
+  dst[at + 1] = y * factor;
+  dst[at + 2] = e + shift;
+}
+
+/** multiply(). `dst` may be either operand. */
+function multiplyTo(
+  dst: Float64Array, at: number,
+  p: Float64Array, i: number,
+  q: Float64Array, j: number
+) {
+  const px = p[i], py = p[i + 1], qx = q[j], qy = q[j + 1];
+  normaliseTo(dst, at, px * qx - py * qy, px * qy + py * qx, p[i + 2] + q[j + 2]);
+}
+
+/** add(). `dst` may be either operand. */
+function addTo(
+  dst: Float64Array, at: number,
+  p: Float64Array, i: number,
+  q: Float64Array, j: number
+) {
+  const px = p[i], py = p[i + 1], pe = p[i + 2];
+  const qx = q[j], qy = q[j + 1], qe = q[j + 2];
+  const difference = pe - qe;
+  let takeP = false;
+  let takeQ = false;
+  if (px === 0 && py === 0) takeQ = true;
+  else if (qx === 0 && qy === 0) takeP = true;
+  else if (difference > 80) takeP = true;
+  else if (difference < -80) takeQ = true;
+
+  if (takeQ) {
+    dst[at] = qx;
+    dst[at + 1] = qy;
+    dst[at + 2] = qe;
+  } else if (takeP) {
+    dst[at] = px;
+    dst[at + 1] = py;
+    dst[at + 2] = pe;
+  } else if (difference >= 0) {
+    const factor = POW2[POW2_BIAS - difference];
+    normaliseTo(dst, at, px + qx * factor, py + qy * factor, pe);
+  } else {
+    const factor = POW2[POW2_BIAS + difference];
+    normaliseTo(dst, at, px * factor + qx, py * factor + qy, qe);
+  }
+}
+
+/** scale(). `dst` may be the operand. */
+function scaleTo(dst: Float64Array, at: number, p: Float64Array, i: number, factor: number) {
+  normaliseTo(dst, at, p[i] * factor, p[i + 1] * factor, p[i + 2]);
+}
+
+/** log2Magnitude(). */
+function log2At(p: Float64Array, i: number): number {
+  const m = Math.hypot(p[i], p[i + 1]);
+  return m === 0 ? -Infinity : p[i + 2] + Math.log2(m);
+}
+
 /**
  * Builds the skip table from reference orbit samples.
  *
@@ -183,19 +307,27 @@ export function buildBla(
 
   const maxDeltaLog2 = maxDelta > 0 ? Math.log2(maxDelta) : -Infinity;
   const toleranceLog2 = Math.log2(TOLERANCE);
-  const levels: Step[][] = [];
+  const levels: Float64Array[] = [];
+
+  // Working registers: the step being built, 2X, scratch, and the constant 1.
+  const r = new Float64Array(STEP_WORDS + 18);
+  const TWO_X = STEP_WORDS;
+  const T0 = STEP_WORDS + 3;
+  const T1 = STEP_WORDS + 6;
+  const NEXT_C = STEP_WORDS + 9;
+  const NEXT_D = STEP_WORDS + 12;
+  const ONE_AT = STEP_WORDS + 15;
+  r[ONE_AT] = 1;
 
   // ---- level 0 -------------------------------------------------------------
   const level0Count = Math.floor(count / BASE_STEP);
-  const level0: Step[] = [];
+  const level0 = new Float64Array(level0Count * STEP_WORDS);
 
   for (let s = 0; s < level0Count; s++) {
     const start = s * BASE_STEP;
-    let a = ONE;
-    let b = ZERO;
-    let c = ZERO;
-    let d = ZERO;
-    let e = ZERO;
+    // A = 1; B, C, D, E = 0.
+    r.fill(0, 0, STEP_WORDS);
+    r[A] = 1;
 
     // Linearity has to hold at *every* iteration, not just on entry. At step k
     // the travelling delta is A_k*w + B_k*d (+ higher order), so require the
@@ -224,7 +356,7 @@ export function buildBla(
 
       // Part of that budget is already spent by the B_k*d term, which exists
       // no matter how small the entry delta is.
-      const injectedLog2 = log2Magnitude(b) + maxDeltaLog2;
+      const injectedLog2 = log2At(r, B) + maxDeltaLog2;
       if (injectedLog2 >= budgetLog2) {
         radiusLog2 = NEVER;
         break;
@@ -235,65 +367,105 @@ export function buildBla(
           : budgetLog2 + Math.log2(1 - 2 ** (injectedLog2 - budgetLog2));
 
       // w_k = A_k * w, so divide through by |A_k|.
-      radiusLog2 = Math.min(radiusLog2, headroomLog2 - log2Magnitude(a));
+      radiusLog2 = Math.min(radiusLog2, headroomLog2 - log2At(r, A));
 
-      const twoX = normalise(2 * refX[start + k], 2 * refY[start + k], 0);
+      normaliseTo(r, TWO_X, 2 * refX[start + k], 2 * refY[start + k], 0);
       // Second-order updates use the *previous* A and B, so compute them first.
-      const nextC = add(multiply(twoX, c), multiply(a, a));
-      const nextD = add(multiply(twoX, d), scale(multiply(a, b), 2));
-      const nextE = add(multiply(twoX, e), multiply(b, b));
-      a = multiply(twoX, a);
-      b = add(multiply(twoX, b), ONE);
       if (quadratic) {
-        c = nextC;
-        d = nextD;
-        e = nextE;
+        // C' = 2X*C + A^2
+        multiplyTo(r, T0, r, TWO_X, r, C);
+        multiplyTo(r, T1, r, A, r, A);
+        addTo(r, NEXT_C, r, T0, r, T1);
+        // D' = 2X*D + 2AB
+        multiplyTo(r, T0, r, TWO_X, r, D);
+        multiplyTo(r, T1, r, A, r, B);
+        scaleTo(r, T1, r, T1, 2);
+        addTo(r, NEXT_D, r, T0, r, T1);
+        // E' = 2X*E + B^2, straight into E: nothing below reads the old E.
+        multiplyTo(r, T0, r, TWO_X, r, E);
+        multiplyTo(r, T1, r, B, r, B);
+        addTo(r, E, r, T0, r, T1);
+      }
+      // A' = 2X*A, B' = 2X*B + 1
+      multiplyTo(r, A, r, TWO_X, r, A);
+      multiplyTo(r, T0, r, TWO_X, r, B);
+      addTo(r, B, r, T0, r, ONE_AT);
+      if (quadratic) {
+        r.copyWithin(C, NEXT_C, NEXT_C + 3);
+        r.copyWithin(D, NEXT_D, NEXT_D + 3);
       }
     }
 
-    level0.push({
-      a,
-      b,
-      c,
-      d,
-      e,
-      radiusLog2: Number.isFinite(radiusLog2) ? radiusLog2 : NEVER,
-    });
+    r[RADIUS] = Number.isFinite(radiusLog2) ? radiusLog2 : NEVER;
+    level0.set(r.subarray(0, STEP_WORDS), s * STEP_WORDS);
   }
   levels.push(level0);
 
   // ---- merge pairs ---------------------------------------------------------
+  // Scratch for compose(): the composite, then products in flight.
+  const m = new Float64Array(STEP_WORDS + 9);
+  const P0 = STEP_WORDS;
+  const P1 = STEP_WORDS + 3;
+  const P2 = STEP_WORDS + 6;
   for (let level = 1; level < maxLevels; level++) {
     const previous = levels[level - 1];
-    const mergedCount = Math.floor(previous.length / 2);
+    const mergedCount = Math.floor(previous.length / STEP_WORDS / 2);
     if (mergedCount < 1) break;
 
-    const merged: Step[] = [];
+    const merged = new Float64Array(mergedCount * STEP_WORDS);
     for (let s = 0; s < mergedCount; s++) {
-      const first = previous[2 * s];
-      const second = previous[2 * s + 1];
-      const composed = compose(first, second);
+      const f = 2 * s * STEP_WORDS;
+      const g = f + STEP_WORDS;
+      const p = previous;
+
+      // compose(first, second), term by term.
+      multiplyTo(m, A, p, g + A, p, f + A);
+      multiplyTo(m, P0, p, g + A, p, f + B);
+      addTo(m, B, m, P0, p, g + B);
+      // C = A2*C1 + C2*A1^2
+      multiplyTo(m, P0, p, g + A, p, f + C);
+      multiplyTo(m, P1, p, f + A, p, f + A);
+      multiplyTo(m, P1, p, g + C, m, P1);
+      addTo(m, C, m, P0, m, P1);
+      // D = A2*D1 + 2*C2*A1*B1 + D2*A1
+      multiplyTo(m, P0, p, g + A, p, f + D);
+      multiplyTo(m, P1, p, f + A, p, f + B);
+      multiplyTo(m, P1, p, g + C, m, P1);
+      scaleTo(m, P1, m, P1, 2);
+      addTo(m, P0, m, P0, m, P1);
+      multiplyTo(m, P1, p, g + D, p, f + A);
+      addTo(m, D, m, P0, m, P1);
+      // E = A2*E1 + C2*B1^2 + D2*B1 + E2
+      multiplyTo(m, P0, p, g + A, p, f + E);
+      multiplyTo(m, P1, p, f + B, p, f + B);
+      multiplyTo(m, P1, p, g + C, m, P1);
+      addTo(m, P0, m, P0, m, P1);
+      multiplyTo(m, P2, p, g + D, p, f + B);
+      addTo(m, P2, m, P2, p, g + E);
+      addTo(m, E, m, P0, m, P2);
 
       // Entering the second half the delta has become |A1*w + B1*d|, which has
       // to land inside the second radius, worst case over the largest |d|.
-      const b1dLog2 = log2Magnitude(first.b) + maxDeltaLog2;
+      const firstRadius = p[f + RADIUS];
+      const secondRadius = p[g + RADIUS];
+      const b1dLog2 = log2At(p, f + B) + maxDeltaLog2;
       let radiusLog2 = NEVER;
-      if (b1dLog2 < second.radiusLog2) {
-        const headroomLog2 =
-          second.radiusLog2 + Math.log2(1 - 2 ** (b1dLog2 - second.radiusLog2));
-        const mapped = headroomLog2 - log2Magnitude(first.a);
-        radiusLog2 = Math.min(first.radiusLog2, mapped) - MERGE_PENALTY_LOG2;
+      if (b1dLog2 < secondRadius) {
+        const headroomLog2 = secondRadius + Math.log2(1 - 2 ** (b1dLog2 - secondRadius));
+        const mapped = headroomLog2 - log2At(p, f + A);
+        radiusLog2 = Math.min(firstRadius, mapped) - MERGE_PENALTY_LOG2;
       }
       if (!Number.isFinite(radiusLog2)) radiusLog2 = NEVER;
 
-      merged.push({ ...composed, radiusLog2 });
+      m[RADIUS] = radiusLog2;
+      merged.set(m.subarray(0, STEP_WORDS), s * STEP_WORDS);
     }
     levels.push(merged);
   }
 
   // ---- pack ----------------------------------------------------------------
   let entryCount = 0;
-  for (const level of levels) entryCount += level.length;
+  for (const level of levels) entryCount += level.length / STEP_WORDS;
 
   const data = new Float32Array(Math.max(1, entryCount) * ENTRY_FLOATS);
   const levelOffsets: number[] = [];
@@ -301,23 +473,18 @@ export function buildBla(
   let offset = 0;
 
   for (const level of levels) {
+    const steps = level.length / STEP_WORDS;
     levelOffsets.push(offset);
-    levelCounts.push(level.length);
-    level.forEach((step, index) => {
-      const target = (offset + index) * ENTRY_FLOATS;
-      const put = (slot: number, v: Scaled) => {
-        data[target + slot * 3 + 0] = v.x;
-        data[target + slot * 3 + 1] = v.y;
-        data[target + slot * 3 + 2] = v.e;
-      };
-      put(0, step.a);
-      put(1, step.b);
-      put(2, step.c);
-      put(3, step.d);
-      put(4, step.e);
-      data[target + 15] = step.radiusLog2;
-    });
-    offset += level.length;
+    levelCounts.push(steps);
+    for (let index = 0; index < steps; index++) {
+      // Five coefficients then the radius: the packed layout is the step's
+      // own first sixteen words, rounded to f32.
+      data.set(
+        level.subarray(index * STEP_WORDS, index * STEP_WORDS + STEP_WORDS),
+        (offset + index) * ENTRY_FLOATS
+      );
+    }
+    offset += steps;
   }
 
   return {
