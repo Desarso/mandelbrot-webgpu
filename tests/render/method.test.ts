@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import Decimal from "decimal.js";
-import { Method, methodForScale } from "../../src/render/webgpu-renderer";
+import { Method, binaryExponent, methodForScale } from "../../src/render/webgpu-renderer";
 
 const upp = (span: string, height = 1080) => new Decimal(span).div(height);
 
@@ -35,5 +35,49 @@ describe("methodForScale", () => {
     // stronger method.
     expect(methodForScale(new Decimal("1e-2").div(100))).toBe(Method.Direct);
     expect(methodForScale(new Decimal("1e-2").div(100000))).toBe(Method.Plain);
+  });
+});
+
+describe("binaryExponent", () => {
+  const original = (v: Decimal) => Math.floor(Number(v.abs().log(2).toFixed(6)));
+
+  function makeRandom(seed: number) {
+    let state = seed >>> 0;
+    return () => {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      return state / 2 ** 32;
+    };
+  }
+
+  it("agrees with the arbitrary-precision logarithm it replaces", () => {
+    const random = makeRandom(1215);
+    // The precisions the renderer sets for 8, 16 and 64 limbs. The oracle is
+    // slow at the top end, hence fewer cases there.
+    for (const [precision, cases] of [[78, 1000], [155, 150], [618, 15]]) {
+      Decimal.set({ precision });
+      for (let i = 0; i < cases; i++) {
+        // Spread over everything from the home view to far past 1e-2000, with
+        // long arbitrary digit strings like a real deep coordinate.
+        const exponent = -Math.floor(random() * 2100);
+        let digits = "";
+        for (let k = 0; k < 40; k++) digits += Math.floor(random() * 10);
+        const sign = random() < 0.5 ? "-" : "";
+        const v = new Decimal(`${sign}${1 + Math.floor(random() * 9)}.${digits}e${exponent}`);
+        expect(binaryExponent(v)).toBe(original(v));
+      }
+    }
+  });
+
+  it("agrees right at the edges, where rounding to six places decides", () => {
+    Decimal.set({ precision: 78 });
+    const two = new Decimal(2);
+    for (let k = -2000; k <= 10; k += 97) {
+      const power = two.pow(k);
+      for (const nudge of ["0", "1e-30", "-1e-30", "1e-12", "-1e-12", "3e-7", "-3e-7",
+        "3.4657e-7", "-3.4657e-7", "3.4658e-7", "-3.4658e-7", "1e-6", "-1e-6"]) {
+        const v = power.times(new Decimal(1).plus(nudge));
+        expect(binaryExponent(v)).toBe(original(v));
+      }
+    }
   });
 });

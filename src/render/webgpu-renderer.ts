@@ -183,10 +183,42 @@ export function limbsForScale(unitsPerPixel: Decimal): number {
   return LIMB_PROFILES[LIMB_PROFILES.length - 1];
 }
 
+const LOG2_10 = Math.log2(10);
+
+/**
+ * `Math.floor(Number(value.abs().log(2).toFixed(6)))`, which is how the binary
+ * exponent of a view's scale and offset has always been chosen, without the
+ * arbitrary-precision logarithm. That logarithm was the largest single cost of
+ * preparing a frame on the CPU -- two per frame, at 70-plus digits -- and a
+ * gesture runs one frame per pointer event.
+ *
+ * log2 of the leading seventeen digits plus the decimal exponent times log2(10)
+ * is good to about 1e-12 even at 1e-2000. Rounding that to six places only
+ * goes wrong if it sits within the error of a rounding boundary, and anything
+ * within 1e-10 of one is handed to the exact expression instead, so the answer
+ * is always the one the original computes.
+ */
+export function binaryExponent(value: Decimal): number {
+  const digits = value.d;
+  const lead = digits[0];
+  const leadDigits = lead >= 1e6 ? 7 : Math.floor(Math.log10(lead)) + 1;
+  let leading = lead;
+  if (digits.length > 1) leading += digits[1] / 1e7;
+  if (digits.length > 2) leading += digits[2] / 1e14;
+  const log2 = Math.log2(leading / 10 ** (leadDigits - 1)) + value.e * LOG2_10;
+
+  const millionths = log2 * 1e6;
+  const fraction = millionths - Math.floor(millionths);
+  if (!Number.isFinite(log2) || Math.abs(fraction - 0.5) < 1e-4) {
+    return Math.floor(Number(value.abs().log(2).toFixed(6)));
+  }
+  return Math.floor(Math.round(millionths) / 1e6);
+}
+
 /** Splits a Decimal into an f32 mantissa and a binary exponent. */
 function splitExponent(value: Decimal): { mantissa: number; exponent: number } {
   if (value.isZero()) return { mantissa: 0, exponent: 0 };
-  const exponent = Math.floor(Number(value.abs().log(2).toFixed(6)));
+  const exponent = binaryExponent(value);
   const mantissa = Number(value.div(new Decimal(2).pow(exponent)).toFixed(12));
   return { mantissa, exponent };
 }
@@ -198,7 +230,7 @@ function splitExponent(value: Decimal): { mantissa: number; exponent: number } {
 function splitComplex(x: Decimal, y: Decimal) {
   const magnitude = Decimal.max(x.abs(), y.abs());
   if (magnitude.isZero()) return { x: 0, y: 0, exponent: 0 };
-  const exponent = Math.floor(Number(magnitude.log(2).toFixed(6)));
+  const exponent = binaryExponent(magnitude);
   const divisor = new Decimal(2).pow(exponent);
   return {
     x: Number(x.div(divisor).toFixed(12)),
