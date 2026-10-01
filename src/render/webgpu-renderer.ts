@@ -263,6 +263,11 @@ export class WebGpuRenderer {
    * last sample instead of starting again from z = 0.
    */
   private orbitBuffers: OrbitBuffers | null = null;
+  /** The orbit decoded for the per-pixel loop; see decodeReference. */
+  private referenceBuffer: GPUBuffer | null = null;
+  private referenceCapacity = 0;
+  private decodePipeline: GPUComputePipeline | null = null;
+  private decodeParams: GPUBuffer;
 
   /** Cached reference orbit: regenerating it per frame would kill panning. */
   private refX = new Decimal(0);
@@ -302,6 +307,11 @@ export class WebGpuRenderer {
       "render-stats",
       GPUBufferUsage.COPY_SRC
     );
+    this.decodeParams = ctx.device.createBuffer({
+      label: "decode-range",
+      size: 16,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
   }
 
   async init() {
@@ -348,6 +358,11 @@ export class WebGpuRenderer {
       label: "perturbation-shade",
       layout: pipelineLayout,
       compute: { module: renderModule, entryPoint: "shadePass" },
+    });
+    this.decodePipeline = device.createComputePipeline({
+      label: "decode-reference",
+      layout: "auto",
+      compute: { module: renderModule, entryPoint: "decodeReference" },
     });
 
     const blitModule = await compileShader(
@@ -684,6 +699,36 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     this.fieldKey = "";
   }
 
+  /**
+   * Decodes the first `length` raw samples into the form the per-pixel loop
+   * reads. Cheap -- one invocation per sample, once per orbit -- so an
+   * extended orbit is simply decoded again from the start.
+   */
+  private decodeReference(length: number) {
+    const { device } = this.ctx;
+    if (this.referenceCapacity < length || !this.referenceBuffer) {
+      this.referenceBuffer?.destroy();
+      this.referenceBuffer = storageBuffer(device, length * 8, "reference-decoded");
+      this.referenceCapacity = length;
+    }
+    device.queue.writeBuffer(this.decodeParams, 0, new Uint32Array([0, length, 0, 0]));
+    const bind = device.createBindGroup({
+      layout: this.decodePipeline!.getBindGroupLayout(1),
+      entries: [
+        { binding: 0, resource: { buffer: this.orbitBuffer! } },
+        { binding: 1, resource: { buffer: this.referenceBuffer } },
+        { binding: 2, resource: { buffer: this.decodeParams } },
+      ],
+    });
+    const encoder = device.createCommandEncoder({ label: "decode-reference" });
+    const pass = encoder.beginComputePass();
+    pass.setPipeline(this.decodePipeline!);
+    pass.setBindGroup(1, bind);
+    pass.dispatchWorkgroups(Math.ceil(length / 64));
+    pass.end();
+    device.queue.submit([encoder.finish()]);
+  }
+
   /** Grows the sample buffer, carrying the first `keep` samples across. */
   private ensureOrbitCapacity(samples: number, keep = 0) {
     if (this.orbitCapacity >= samples && this.orbitBuffer) return;
@@ -837,6 +882,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
       this.refEscaped = orbit.escaped;
       this.refValid = true;
       orbitMs = orbit.ms;
+      this.decodeReference(orbit.length);
       this.tableMs = 0;
       if (method === Method.Hdr) await this.buildApproxTable(request);
     }
@@ -845,6 +891,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     // Every buffer in the bind group must exist even when this method does not
     // read it: the direct path builds neither an orbit nor a skip table.
     this.ensureOrbitCapacity(1);
+    if (!this.referenceBuffer) this.decodeReference(1);
     if (!this.laBuffer || !this.laIndexBuffer) {
       this.laBuffer = storageBuffer(device, ENTRY_FLOATS, "la-table");
       this.laIndexBuffer = storageBuffer(device, 2, "la-index");
@@ -948,7 +995,7 @@ fn fs(in: VsOut) -> @location(0) vec4<f32> {
     const bind = device.createBindGroup({
       layout: this.bindLayout!,
       entries: [
-        { binding: 0, resource: { buffer: this.orbitBuffer! } },
+        { binding: 0, resource: { buffer: this.referenceBuffer! } },
         { binding: 1, resource: { buffer: this.uniformBuffer } },
         { binding: 2, resource: this.target!.createView() },
         { binding: 3, resource: { buffer: this.stopsBuffer } },

@@ -51,7 +51,14 @@ struct Uniforms {
     _pad2: u32,
 };
 
-@group(0) @binding(0) var<storage, read> orbit: array<f32>;   // hi, lo, exp per component
+/**
+ * The reference orbit, decoded: two vec4 per sample, (x, y, then the same
+ * value as a normalised Hdr mantissa) and (its exponent, then padding). Filled
+ * by decodeReference once per orbit, so the per-pixel loop loads what it used
+ * to recompute -- four exp2 a sample, plus a log2 and two more to normalise --
+ * at every iteration of every pixel.
+ */
+@group(0) @binding(0) var<storage, read> reference: array<vec4<f32>>;
 @group(0) @binding(1) var<uniform> u: Uniforms;
 @group(0) @binding(2) var output: texture_storage_2d<rgba8unorm, write>;
 @group(0) @binding(3) var<storage, read> stops: array<vec4<f32>>;
@@ -157,10 +164,7 @@ fn hdrValue(a: Hdr) -> vec2<f32> {
 // ------------------------------------------------------------- reference orbit
 
 fn refSample(i: u32) -> vec2<f32> {
-    let base = i * 6u;
-    let x = (orbit[base + 0u] + orbit[base + 1u]) * exp2(orbit[base + 2u]);
-    let y = (orbit[base + 3u] + orbit[base + 4u]) * exp2(orbit[base + 5u]);
-    return vec2<f32>(x, y);
+    return reference[2u * i].xy;
 }
 
 /// The reference sample as a *normalised* Hdr.
@@ -171,9 +175,50 @@ fn refSample(i: u32) -> vec2<f32> {
 /// mantissa. Wrapping a raw sample as Hdr(x, 0) breaks that: deep inside a
 /// minibrot the reference passes within ~1e-24 of zero every period, and the
 /// unnormalised form claimed exponent 0 there — so |z| < |dz| never fired and
-/// the pixel never rebased.
+/// the pixel never rebased. decodeReference normalises it.
 fn refHdr(i: u32) -> Hdr {
-    return hdrNorm(Hdr(refSample(i), 0));
+    return Hdr(reference[2u * i].zw, i32(reference[2u * i + 1u].x));
+}
+
+/// refSample and refHdr's mantissa together, which is how the loops below
+/// carry the current sample from one iteration to the next instead of
+/// loading it twice.
+fn refPair(i: u32) -> vec4<f32> {
+    return reference[2u * i];
+}
+
+fn refExponent(i: u32) -> i32 {
+    return i32(reference[2u * i + 1u].x);
+}
+
+// ----------------------------------------------------------- decoding the orbit
+//
+// Its own bind group, so it shares this module's helpers -- the decoded values
+// must be exactly what the per-pixel loop used to compute for itself -- without
+// touching the render bindings.
+
+/** Raw samples as the orbit kernel emits them: hi, lo, exp per component. */
+@group(1) @binding(0) var<storage, read> rawOrbit: array<f32>;
+@group(1) @binding(1) var<storage, read_write> decoded: array<vec4<f32>>;
+/** First sample to decode, and how many. */
+@group(1) @binding(2) var<uniform> decodeRange: vec4<u32>;
+
+fn rawSample(i: u32) -> vec2<f32> {
+    let base = i * 6u;
+    let x = (rawOrbit[base + 0u] + rawOrbit[base + 1u]) * exp2(rawOrbit[base + 2u]);
+    let y = (rawOrbit[base + 3u] + rawOrbit[base + 4u]) * exp2(rawOrbit[base + 5u]);
+    return vec2<f32>(x, y);
+}
+
+@compute @workgroup_size(64)
+fn decodeReference(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x >= decodeRange.y) { return; }
+    let i = decodeRange.x + gid.x;
+    let value = rawSample(i);
+    let normalised = hdrNorm(Hdr(value, 0));
+    decoded[2u * i] = vec4<f32>(value, normalised.m);
+    // Exponents are small integers, so an f32 carries them exactly.
+    decoded[2u * i + 1u] = vec4<f32>(f32(normalised.e), 0.0, 0.0, 0.0);
 }
 
 // -------------------------------------------------------------------- colour
@@ -391,6 +436,8 @@ fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
     var skipped: u32 = 0u;
     var skips: u32 = 0u;
     var rebases: u32 = 0u;
+    // The reference at refIter: x, y, then its normalised mantissa.
+    var here = refPair(0u);
 
     while (n < u.maxIterations) {
         // The skip table describes the reference orbit's own map from index j to
@@ -408,13 +455,15 @@ fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
                 skipped = skipped + span;
                 skips = skips + 1u;
 
-                let jumped = hdrAdd(refHdr(refIter), dz);
+                here = refPair(refIter);
+                let jumped = hdrAdd(Hdr(here.zw, refExponent(refIter)), dz);
                 z = hdrValue(jumped);
                 z2 = dot(z, z);
                 if (z2 > ESCAPE_R2) { escaped = true; break; }
                 if (hdrLess(jumped, dz) || refIter >= lastRef) {
                     dz = jumped;
                     refIter = 0u;
+                    here = refPair(0u);
                     rebases = rebases + 1u;
                 }
                 continue;
@@ -422,14 +471,15 @@ fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
         }
 
         // dz <- 2*X_k*dz + dz^2 + delta0
-        let twoX = 2.0 * refSample(refIter);
+        let twoX = 2.0 * here.xy;
         dz = hdrAdd(hdrAdd(hdrMulPlain(dz, twoX), hdrMul(dz, dz)), delta0);
         if (wantDerivative) {
             deriv = hdrAdd(hdrMulPlain(deriv, 2.0 * z), HDR_ONE);
         }
         refIter = refIter + 1u;
+        here = refPair(refIter);
 
-        let zHdr = hdrAdd(refHdr(refIter), dz);
+        let zHdr = hdrAdd(Hdr(here.zw, refExponent(refIter)), dz);
         z = hdrValue(zHdr);
         n = n + 1u;
 
@@ -439,6 +489,7 @@ fn iterate(delta0: Hdr, wantDerivative: bool) -> Sample {
         if (hdrLess(zHdr, dz) || refIter >= lastRef) {
             dz = zHdr;
             refIter = 0u;
+            here = refPair(0u);
             rebases = rebases + 1u;
         }
     }
@@ -530,14 +581,17 @@ fn iteratePlain(delta0: vec2<f32>, wantDerivative: bool) -> Sample {
     var z2: f32 = 0.0;
     var escaped = false;
     var rebases: u32 = 0u;
+    // The reference at refIter, carried rather than loaded twice.
+    var x = refSample(0u);
 
     while (n < u.maxIterations) {
         // 2*X*dz + dz^2 + delta0, factored to one complex multiply.
-        dz = cmul(2.0 * refSample(refIter) + dz, dz) + delta0;
+        dz = cmul(2.0 * x + dz, dz) + delta0;
         if (wantDerivative) { deriv = 2.0 * cmul(z, deriv) + vec2<f32>(1.0, 0.0); }
         refIter = refIter + 1u;
+        x = refSample(refIter);
 
-        z = refSample(refIter) + dz;
+        z = x + dz;
         n = n + 1u;
 
         z2 = dot(z, z);
@@ -546,6 +600,7 @@ fn iteratePlain(delta0: vec2<f32>, wantDerivative: bool) -> Sample {
         if (z2 < dot(dz, dz) || refIter >= lastRef) {
             dz = z;
             refIter = 0u;
+            x = refSample(0u);
             rebases = rebases + 1u;
         }
     }
